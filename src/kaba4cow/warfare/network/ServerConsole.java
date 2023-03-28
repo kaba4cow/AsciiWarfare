@@ -123,9 +123,9 @@ public class ServerConsole implements MainProgram {
 		return server;
 	}
 
-	public boolean startServer(int port) {
+	public boolean startServer(int port, float size, int season) {
 		try {
-			server = new Server(port);
+			server = new Server(port, size, season);
 			return true;
 		} catch (IOException e) {
 			return false;
@@ -142,16 +142,15 @@ public class ServerConsole implements MainProgram {
 	public static void main(String[] args) {
 		Game.loadData();
 
-		try {
-			new Server(5000);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+//		try {
+//			new Server(5000, 0.0f, 2);
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
 
-//		Engine.init("Ascii Warfare Server", 60);
-//		Display.createFullscreen();
-//		Display.createWindowed(50, 40);
-//		Engine.start(new ServerConsole());
+		Engine.init("Ascii Warfare Server", 60);
+		Display.createWindowed(50, 40);
+		Engine.start(new ServerConsole());
 	}
 
 }

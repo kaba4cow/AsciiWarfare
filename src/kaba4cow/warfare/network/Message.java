@@ -6,6 +6,10 @@ public class Message {
 	public static final String DISCONNECT = "D";
 	public static final String PING = "P";
 
+	public static final String TURN = "t";
+	public static final String PROJECTILE = "e";
+	public static final String MOVE = "m";
+
 	private Message() {
 
 	}

@@ -13,7 +13,6 @@ public class TerrainTile {
 	private final float penalty;
 	private final char glyph;
 	private final int color;
-	private final boolean allowTrack;
 	private final boolean allowCrater;
 
 	public TerrainTile(TerrainFile file, BiomeFile biome, float temperature) {
@@ -23,7 +22,6 @@ public class TerrainTile {
 		this.penalty = file.getPenalty(temperature);
 		this.glyph = file.getGlyph();
 		this.color = file.getColor(temperature);
-		this.allowTrack = file.allowsTrack();
 		this.allowCrater = file.allowsCrater();
 	}
 
@@ -45,10 +43,6 @@ public class TerrainTile {
 
 	public float getPenalty() {
 		return penalty;
-	}
-
-	public boolean allowsTrack() {
-		return allowTrack;
 	}
 
 	public boolean allowsCrater() {

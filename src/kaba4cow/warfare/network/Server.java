@@ -6,71 +6,57 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.ArrayList;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import kaba4cow.ascii.toolbox.Printer;
+import kaba4cow.ascii.toolbox.rng.RNG;
 
-public class Server implements Runnable {
-
-	public static final String ADDRESS_REGEX = "(\\d{1,2}|(0|1)\\d{2}|2[0-4]\\d|25[0-5])" + "\\."
-			+ "(\\d{1,2}|(0|1)\\d{2}|2[0-4]\\d|25[0-5])" + "\\." + "(\\d{1,2}|(0|1)\\d{2}|2[0-4]\\d|25[0-5])" + "\\."
-			+ "(\\d{1,2}|(0|1)\\d{2}|2[0-4]\\d|25[0-5])" + ":{1}\\d{4,5}";
+public class Server {
 
 	public static final int MIN_PORT = 1024;
 	public static final int MAX_PORT = 49151;
 
-	public static final int MAX_ATTEMPTS = 5;
+	public static final int MAX_ATTEMPTS = 6;
 
 	private final DatagramSocket socket;
 
 	private final ArrayList<Client> clients;
 	private final ArrayList<Integer> response;
 
-	private AtomicBoolean running;
-
-	private Thread clientThread;
-	private Thread sendThread;
+	private Thread pingThread;
 	private Thread receiveThread;
 
-	public Server(int port) throws IOException {
+	private final long worldSeed;
+	private final float worldSize;
+	private final int worldSeason;
+
+	public Server(int port, float size, int season) throws IOException {
 		this.socket = new DatagramSocket(port);
 		this.clients = new ArrayList<>();
 		this.response = new ArrayList<>();
-		this.running = new AtomicBoolean(false);
-		new Thread(this, "Server").start();
-	}
 
-	@Override
-	public void run() {
-		running.set(true);
+		this.worldSeed = RNG.randomLong();
+		this.worldSize = size;
+		this.worldSeason = season;
+
 		clientThread();
 		receiveThread();
-		while (running.get()) {
-			try {
-				Thread.sleep(1000l);
-			} catch (InterruptedException e) {
-			}
-		}
 	}
 
 	public void close() {
-		running.set(false);
-		if (clientThread != null)
-			clientThread.interrupt();
+		if (pingThread != null)
+			pingThread.interrupt();
 		if (receiveThread != null)
 			receiveThread.interrupt();
-		if (sendThread != null)
-			sendThread.interrupt();
 		synchronized (socket) {
 			socket.close();
 		}
 	}
 
 	private void clientThread() {
-		clientThread = new Thread("Ping") {
+		pingThread = new Thread("Ping") {
 			@Override
 			public void run() {
-				while (running.get()) {
+				while (true) {
 					sendToAll(Message.PING);
 					try {
 						Thread.sleep(1000l);
@@ -93,21 +79,21 @@ public class Server implements Runnable {
 				}
 			}
 		};
-		clientThread.start();
+		pingThread.start();
 	}
 
 	private void receiveThread() {
-		byte[] data = new byte[1024];
 		receiveThread = new Thread("Receive") {
 			@Override
 			public void run() {
-				while (running.get()) {
+				while (true) {
 					try {
 						Thread.sleep(10l);
 					} catch (InterruptedException e) {
 						Thread.currentThread().interrupt();
 						break;
 					}
+					byte[] data = new byte[1024];
 					DatagramPacket packet = new DatagramPacket(data, data.length);
 					try {
 						socket.receive(packet);
@@ -123,13 +109,23 @@ public class Server implements Runnable {
 	}
 
 	private void process(DatagramPacket packet) {
-		String string = new String(packet.getData());
+		String string = new String(packet.getData()).trim();
+		Printer.println("RECEIVED: " + string);
 		if (string.startsWith(Message.CONNECT))
 			connect(string, packet);
 		else if (string.startsWith(Message.DISCONNECT))
 			disconnect(string, true);
 		else if (string.startsWith(Message.PING))
 			response(string);
+		else if (string.startsWith(Message.PROJECTILE) || string.startsWith(Message.MOVE)
+				|| string.startsWith(Message.TURN)) {
+			Printer.println(string);
+			String[] parameters = Message.getString(string).split("/");
+			int id = Integer.parseInt(parameters[0]);
+			for (int i = 0; i < clients.size(); i++)
+				if (clients.get(i).getID() != id)
+					sendByID(string, clients.get(i).getID());
+		}
 	}
 
 	private void response(String string) {
@@ -137,10 +133,14 @@ public class Server implements Runnable {
 	}
 
 	private void connect(String string, DatagramPacket packet) {
+//		if (clients.size() >= 2) {
+//			send(Message.getBytes(Message.DISCONNECT), packet.getAddress(), packet.getPort());
+//			return;
+//		}
 		int id = clients.size();
 		Client client = new Client(packet.getAddress(), packet.getPort(), id);
 		clients.add(client);
-		send(Message.getBytes(Message.CONNECT, id), client);
+		send(Message.getBytes(Message.CONNECT, id, "/", worldSeed, "/", worldSize, "/", worldSeason), client);
 		Printer.println("Client connected [" + id + "]");
 	}
 
@@ -149,6 +149,9 @@ public class Server implements Runnable {
 		for (int i = clients.size() - 1; i >= 0; i--) {
 			Client client = clients.get(i);
 			if (client.getID() == id) {
+				for (int j = response.size() - 1; j >= 0; j--)
+					if (response.get(j) == id)
+						response.remove(j);
 				clients.remove(i);
 				if (manual) {
 					Printer.println("Client disconnected [" + id + "]");
@@ -169,23 +172,29 @@ public class Server implements Runnable {
 		}
 	}
 
+	private void sendByID(String message, int id) {
+		for (int i = 0; i < clients.size(); i++)
+			if (clients.get(i).getID() == id)
+				send(message.getBytes(), clients.get(i));
+	}
+
 	private void send(final byte[] data, Client client) {
 		send(data, client.getAddress(), client.getPort());
 	}
 
 	private void send(final byte[] data, InetAddress address, int port) {
-		sendThread = new Thread("Send") {
+		Printer.println("SENDING: " + new String(data));
+		new Thread("Send") {
 			@Override
 			public void run() {
 				DatagramPacket p = new DatagramPacket(data, data.length, address, port);
 				try {
 					socket.send(p);
-				} catch (IOException e) {
+				} catch (Exception e) {
 					e.printStackTrace();
 				}
 			}
-		};
-		sendThread.start();
+		}.start();
 	}
 
 	public int getPort() {

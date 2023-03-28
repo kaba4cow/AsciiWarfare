@@ -9,11 +9,10 @@ import kaba4cow.ascii.toolbox.tools.Table;
 public class TerrainFile {
 
 	private static final HashMap<String, TerrainFile> map = new HashMap<>();
-	private static TerrainFile water, road, track, crater, ruins;
+	private static TerrainFile water, road, crater, ruins;
 
 	private final String id;
 	private final String name;
-	private final boolean allowTrack;
 	private final boolean allowCrater;
 	private final float penaltyWarm, penaltyCold;
 	private final int colorWarm, colorCold;
@@ -24,7 +23,6 @@ public class TerrainFile {
 
 		this.name = table.getCell("Name", row);
 
-		this.allowTrack = Integer.parseInt(table.getCell("Tracks", row)) != 0;
 		this.allowCrater = Integer.parseInt(table.getCell("Craters", row)) != 0;
 
 		this.penaltyWarm = Float.parseFloat(table.getCell("Warm Penalty", row));
@@ -36,9 +34,7 @@ public class TerrainFile {
 		this.glyph = (char) Integer.parseInt(table.getCell("Glyph", row));
 
 		map.put(id, this);
-		if (id.equals("TRACK"))
-			track = this;
-		else if (id.equals("CRATER"))
+		if (id.equals("CRATER"))
 			crater = this;
 		else if (id.equals("RUINS"))
 			ruins = this;
@@ -78,16 +74,8 @@ public class TerrainFile {
 		return Maths.blend(penaltyCold, penaltyWarm, temperature);
 	}
 
-	public boolean allowsTrack() {
-		return allowTrack;
-	}
-
 	public boolean allowsCrater() {
 		return allowCrater;
-	}
-
-	public static TerrainFile getTrack() {
-		return track;
 	}
 
 	public static TerrainFile getCrater() {

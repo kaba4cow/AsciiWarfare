@@ -50,24 +50,39 @@ public class Console {
 			}
 		};
 
-		new Command("server-start", "[port]", "Starts new server") {
+		new Command("server-start", "[port] [size] [season]", "Starts new server and creates new map") {
 			@Override
 			public void execute(String[] parameters, int numParameters, StringBuilder output) {
 				if (program.getServer() != null) {
 					output.append("Server already running\n");
 					return;
 				}
-				if (invalidParameters(numParameters, 1, output))
+				if (invalidParameters(numParameters, 3, output))
 					return;
 				int port = 0;
 				try {
 					port = Integer.parseInt(parameters[0]);
 				} catch (NumberFormatException e) {
 					output.append("Invalid port");
+					return;
+				}
+				float size = 0f;
+				try {
+					size = Float.parseFloat(parameters[1]);
+				} catch (NumberFormatException e) {
+					output.append("Invalid size");
+					return;
+				}
+				int season = 0;
+				try {
+					season = Integer.parseInt(parameters[2]);
+				} catch (NumberFormatException e) {
+					output.append("Invalid season");
+					return;
 				}
 				if (port < Server.MIN_PORT || port > Server.MAX_PORT)
 					output.append("Port out of range [" + Server.MIN_PORT + "-" + Server.MAX_PORT + "]\n");
-				else if (program.startServer(port))
+				else if (program.startServer(port, size, season))
 					output.append("Server started\n");
 				else
 					output.append("Could not start a server\n");
@@ -80,21 +95,6 @@ public class Console {
 				if (program.getServer() != null) {
 					program.closeServer();
 					output.append("Server closed\n");
-				} else
-					output.append("No server running\n");
-			}
-		};
-
-		new Command("server-restart", "", "Restarts current server") {
-			@Override
-			public void execute(String[] parameters, int numParameters, StringBuilder output) {
-				if (program.getServer() != null) {
-					int port = program.getServer().getPort();
-					program.closeServer();
-					if (program.startServer(port))
-						output.append("Server started");
-					else
-						output.append("Could not start a server\n");
 				} else
 					output.append("No server running\n");
 			}

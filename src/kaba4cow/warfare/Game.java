@@ -1,6 +1,7 @@
 package kaba4cow.warfare;
 
 import java.io.File;
+import java.io.IOException;
 
 import kaba4cow.ascii.MainProgram;
 import kaba4cow.ascii.core.Display;
@@ -16,10 +17,11 @@ import kaba4cow.ascii.drawing.gui.GUIRadioPanel;
 import kaba4cow.ascii.drawing.gui.GUISeparator;
 import kaba4cow.ascii.drawing.gui.GUISlider;
 import kaba4cow.ascii.drawing.gui.GUIText;
+import kaba4cow.ascii.drawing.gui.GUITextField;
 import kaba4cow.ascii.input.Keyboard;
 import kaba4cow.ascii.toolbox.MemoryAnalyzer;
 import kaba4cow.ascii.toolbox.files.TableFile;
-import kaba4cow.ascii.toolbox.maths.Maths;
+import kaba4cow.ascii.toolbox.rng.RNG;
 import kaba4cow.warfare.files.BiomeFile;
 import kaba4cow.warfare.files.BuildingFile;
 import kaba4cow.warfare.files.TerrainFile;
@@ -30,6 +32,7 @@ import kaba4cow.warfare.files.WeaponFile;
 import kaba4cow.warfare.files.WeaponTypeFile;
 import kaba4cow.warfare.game.MenuWorld;
 import kaba4cow.warfare.game.World;
+import kaba4cow.warfare.network.Client;
 
 public class Game implements MainProgram {
 
@@ -38,8 +41,8 @@ public class Game implements MainProgram {
 	public static final int MAX_WORLD_SIZE = 40;
 
 	private static final int STATE_MENU = 0;
-	private static final int STATE_SETTINGS = 1;
-	private static final int STATE_NEWGAME = 2;
+	private static final int STATE_NEWGAME = 1;
+	private static final int STATE_MULTIPLAYER = 2;
 
 	private int state;
 	private boolean game;
@@ -48,14 +51,15 @@ public class Game implements MainProgram {
 	private GUIFrame[] frames;
 	private GUISlider sizeSlider;
 	private GUIRadioPanel seasonPanel;
+	private GUITextField ipTextField;
+	private GUITextField portTextField;
 
 	private GUIFrame progressFrame;
 
-	private int worldSize;
-	private int worldSeason;
-
 	private MenuWorld menuWorld;
 	private World gameWorld;
+
+	private Client client;
 
 	public Game() {
 
@@ -72,8 +76,7 @@ public class Game implements MainProgram {
 		frames = new GUIFrame[5];
 
 		// MENU
-		frames[STATE_MENU] = new GUIFrame(GUI_COLOR, false, false);
-		frames[STATE_MENU].setTitle("Menu");
+		frames[STATE_MENU] = new GUIFrame(GUI_COLOR, false, false).setTitle("Menu");
 		new GUIButton(frames[STATE_MENU], -1, "Start New Game", f -> {
 			state = STATE_NEWGAME;
 		});
@@ -88,23 +91,19 @@ public class Game implements MainProgram {
 			if (gameWorld != null)
 				saveWorld();
 		});
-		new GUIButton(frames[STATE_MENU], -1, "Settings", f -> {
-			state = STATE_SETTINGS;
+		new GUIButton(frames[STATE_MENU], -1, "Multiplayer", f -> {
+			if (client != null) {
+				client.close(true);
+				client = null;
+			}
+			state = STATE_MULTIPLAYER;
 		});
 		new GUIButton(frames[STATE_MENU], -1, "Quit", f -> {
 			Engine.requestClose();
 		});
 
-		// SETTINGS
-		frames[STATE_SETTINGS] = new GUIFrame(GUI_COLOR, false, false);
-		frames[STATE_SETTINGS].setTitle("Settings");
-		new GUIButton(frames[STATE_SETTINGS], -1, "Return", f -> {
-			state = STATE_MENU;
-		});
-
 		// NEW GAME
-		frames[STATE_NEWGAME] = new GUIFrame(GUI_COLOR, false, false);
-		frames[STATE_NEWGAME].setTitle("New Game");
+		frames[STATE_NEWGAME] = new GUIFrame(GUI_COLOR, false, false).setTitle("New Game");
 		new GUIText(frames[STATE_NEWGAME], -1, "Map Size");
 		sizeSlider = new GUISlider(frames[STATE_NEWGAME], -1, 0.25f);
 		new GUISeparator(frames[STATE_NEWGAME], -1, false);
@@ -114,15 +113,31 @@ public class Game implements MainProgram {
 		new GUIRadioButton(seasonPanel, -1, "Spring");
 		new GUIRadioButton(seasonPanel, -1, "Summer");
 		new GUISeparator(frames[STATE_NEWGAME], -1, false);
-		new GUIButton(frames[STATE_NEWGAME], -1, "Start", f -> {
-			worldSize = 10 * (int) Maths.map(sizeSlider.getPosition(), 0f, 1f, MIN_WORLD_SIZE, MAX_WORLD_SIZE);
-			worldSeason = seasonPanel.getIndex();
+		new GUIButton(frames[STATE_NEWGAME], -1, "Start", f ->
+
+		{
 			generateWorld();
 		});
 		new GUIButton(frames[STATE_NEWGAME], -1, "Return", f -> {
 			state = STATE_MENU;
 		});
 
+		// MULTIPLAYER
+		frames[STATE_MULTIPLAYER] = new GUIFrame(GUI_COLOR, false, false).setTitle("Multiplayer");
+		new GUIText(frames[STATE_MULTIPLAYER], -1, "IP");
+		ipTextField = new GUITextField(frames[STATE_MULTIPLAYER], -1, "localhost");
+		ipTextField.setMaxCharacters(15);
+		new GUIText(frames[STATE_MULTIPLAYER], -1, "Port");
+		portTextField = new GUITextField(frames[STATE_MULTIPLAYER], -1, "5000");
+		portTextField.setMaxCharacters(5);
+		new GUIButton(frames[STATE_MULTIPLAYER], -1, "Connect", f -> {
+			connect();
+		});
+		new GUIButton(frames[STATE_MULTIPLAYER], -1, "Return", f -> {
+			state = STATE_MENU;
+		});
+
+		// PROGRESS BAR
 		progressFrame = new GUIFrame(GUI_COLOR, false, false);
 		new GUIProgressBar(progressFrame, -1, (Void) -> {
 			return World.PROGRESS;
@@ -182,18 +197,35 @@ public class Game implements MainProgram {
 
 	private void renderTitle() {
 		int width = Drawer.totalWidth(Display.getTitle());
-		int pos = (int) (10f * Engine.getElapsedTime()) % (Display.getWidth() + width);
+		int pos = (int) (8f * Engine.getElapsedTime()) % (Display.getWidth() + width);
 		Drawer.drawBigString(Display.getWidth() - pos, 0, false, Display.getTitle(), Glyphs.LIGHT_SHADE,
 				Game.GUI_COLOR);
 	}
 
 	private void generateWorld() {
-		new Thread() {
+		new Thread("Generating") {
 			@Override
 			public void run() {
-				progressFrame.setTitle("Generating world");
+				progressFrame.setTitle(getName());
 				waiting = true;
-				gameWorld = new World(worldSize, worldSeason);
+				gameWorld = new World(sizeSlider.getPosition(), seasonPanel.getIndex());
+				gameWorld.setCurrentPlayer(RNG.randomInt(0, 2), true);
+				game = true;
+				waiting = false;
+			}
+		}.start();
+	}
+
+	public void generateWorld(float size, int season, long seed, int currentPlayer) {
+		new Thread("Generating") {
+			@Override
+			public void run() {
+				progressFrame.setTitle(getName());
+				waiting = true;
+				gameWorld = new World(size, season, seed);
+				gameWorld.setCurrentPlayer(currentPlayer, false);
+				client.setWorld(gameWorld);
+				gameWorld.setClient(client);
 				game = true;
 				waiting = false;
 			}
@@ -201,10 +233,10 @@ public class Game implements MainProgram {
 	}
 
 	private void loadWorld() {
-		new Thread() {
+		new Thread("Loading") {
 			@Override
 			public void run() {
-				progressFrame.setTitle("Loading game");
+				progressFrame.setTitle(getName());
 				waiting = true;
 				gameWorld = new World();
 				game = true;
@@ -214,13 +246,39 @@ public class Game implements MainProgram {
 	}
 
 	private void saveWorld() {
-		new Thread() {
+		new Thread("Saving") {
 			@Override
 			public void run() {
-				progressFrame.setTitle("Saving game");
+				progressFrame.setTitle(getName());
 				waiting = true;
 				gameWorld.save(true);
 				game = true;
+				waiting = false;
+			}
+		}.start();
+	}
+
+	private void connect() {
+		String ip = ipTextField.getText();
+		int port;
+		try {
+			port = Integer.parseInt(portTextField.getText());
+		} catch (NumberFormatException e) {
+			return;
+		}
+
+		new Thread("Connecting") {
+			@Override
+			public void run() {
+				World.PROGRESS = 0f;
+				progressFrame.setTitle(getName());
+				waiting = true;
+				try {
+					client = new Client(Game.this, ip, port);
+					client.connect();
+				} catch (IOException e) {
+					client = null;
+				}
 				waiting = false;
 			}
 		}.start();
@@ -249,7 +307,8 @@ public class Game implements MainProgram {
 		InfoPanel.init();
 
 		Engine.init("Ascii Warfare", 60);
-		Display.createFullscreen();
+//		Display.createFullscreen();
+		Display.createWindowed(60, 40);
 		Engine.start(new Game());
 	}
 

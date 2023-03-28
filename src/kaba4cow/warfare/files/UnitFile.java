@@ -15,7 +15,6 @@ public class UnitFile {
 	private final float armor;
 	private final float moves;
 	private final float visibility;
-	private final boolean createTrack;
 	private final int maxUnits;
 	private final String[] weapons;
 
@@ -35,7 +34,6 @@ public class UnitFile {
 
 		this.visibility = Float.parseFloat(table.getCell("Visibility", row));
 
-		this.createTrack = Integer.parseInt(table.getCell("Tracks", row)) != 0;
 		this.maxUnits = Integer.parseInt(table.getCell("Units", row));
 
 		this.weapons = table.getCell("Weapons", row).split(",");
@@ -96,10 +94,6 @@ public class UnitFile {
 
 	public float getMoves() {
 		return moves;
-	}
-
-	public boolean createsTrack() {
-		return createTrack;
 	}
 
 	public int getMaxUnits() {

@@ -6,9 +6,9 @@ import kaba4cow.ascii.toolbox.files.DataFile;
 import kaba4cow.ascii.toolbox.maths.Maths;
 import kaba4cow.ascii.toolbox.maths.vectors.Vector2i;
 import kaba4cow.ascii.toolbox.rng.RNG;
+import kaba4cow.ascii.toolbox.rng.RandomLehmer;
 import kaba4cow.warfare.files.UnitFile;
 import kaba4cow.warfare.files.WeaponFile;
-import kaba4cow.warfare.game.players.Player;
 import kaba4cow.warfare.gui.WeaponFrame;
 import kaba4cow.warfare.pathfinding.AttackPath;
 import kaba4cow.warfare.pathfinding.Node;
@@ -43,13 +43,16 @@ public class Unit {
 
 	private WeaponFrame weaponFrame;
 
-	public Unit(World world, Village village, Player player, UnitFile file) {
+	private RandomLehmer rng;
+
+	public Unit(World world, Village village, Player player, UnitFile file, RNG rng) {
 		this.world = world;
 		this.player = player;
 		this.file = file;
+		this.rng = new RandomLehmer(rng.getNext());
 		do {
-			x = RNG.randomInt(village.x - village.radius, village.x + village.radius);
-			y = RNG.randomInt(village.y - village.radius, village.y + village.radius);
+			x = rng.nextInt(village.x - village.radius, village.x + village.radius);
+			y = rng.nextInt(village.y - village.radius, village.y + village.radius);
 		} while (world.getPenalty(x, y) > 1f || world.isObstacle(x, y));
 
 		this.attacks = new int[file.getWeapons().length];
@@ -65,9 +68,10 @@ public class Unit {
 		this.weaponFrame = new WeaponFrame(this);
 	}
 
-	public Unit(World world, Player player, DataFile data) { // TODO
+	public Unit(World world, Player player, DataFile data) {
 		this.world = world;
 		this.player = player;
+		this.rng = new RandomLehmer(RNG.randomLong());
 
 		String id = data.node("ID").getString();
 		this.file = UnitFile.get(id);
@@ -123,11 +127,10 @@ public class Unit {
 			if (nextNode == null)
 				path = null;
 			else {
-				if (file.createsTrack())
-					world.createTrack(x, y);
 				x = nextNode.x;
 				y = nextNode.y;
 				moves = Maths.max(moves - nextNode.penalty - 1f, 0f);
+				world.moveUnit(getIndex(), x, y, true);
 			}
 		}
 
@@ -149,7 +152,7 @@ public class Unit {
 	}
 
 	public void render(int offX, int offY, int color) {
-		if (!world.isVisible(world.getHumanPlayer(), x, y))
+		if (!world.isVisible(world.getCurrentPlayer(), x, y))
 			return;
 
 		if (isDestroyed())
@@ -211,7 +214,7 @@ public class Unit {
 		if (isDestroyed())
 			return;
 
-		if (!RNG.chance(source.getCurrentWeapon().getAccuracy())) {
+		if (rng.nextFloat(0f, 1f) > source.getCurrentWeapon().getAccuracy()) {
 			world.addAction()//
 					.addText("<" + source.getUnitFile().getName() + ">", source.getPlayer().getColor())//
 					.addText(" misses ", -1)//
@@ -268,9 +271,9 @@ public class Unit {
 		if (path == null)
 			path = Pathfinder.getUnitPath(world, player, this.x, this.y, x, y);
 		else {
-			if (x == path.getEndX() && y == path.getEndY())
+			if (x == path.getEndX() && y == path.getEndY()) {
 				moving = true;
-			else if (path.contains(x, y))
+			} else if (path.contains(x, y))
 				path.shrink(x, y);
 			else
 				path = null;
@@ -289,6 +292,8 @@ public class Unit {
 				moves = Maths.max(moves - getCurrentWeapon().getPenalty(), 0f);
 				attacks[currentWeapon]--;
 				attackPos = 0;
+				if (player == world.getCurrentPlayer())
+					world.createProjectile(getIndex(), currentWeapon, x, y, true);
 			} else
 				attackPath = null;
 			return;
@@ -378,6 +383,15 @@ public class Unit {
 
 	public Player getPlayer() {
 		return player;
+	}
+
+	public int getIndex() {
+		return player.getUnitIndex(this);
+	}
+
+	public void setPos(int x, int y) {
+		this.x = x;
+		this.y = y;
 	}
 
 	public int getX() {

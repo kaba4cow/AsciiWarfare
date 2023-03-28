@@ -46,7 +46,7 @@ public class InfoFrame extends GUIFrame {
 		int y = world.getCamera().getMouseY();
 		TerrainTile terrain = world.getTerrain(x, y);
 		VegetationTile vegetation = world.getVegetation(x, y);
-		if (world.getCamera().isMouseInViewport() && world.isVisible(world.getHumanPlayer(), x, y)) {
+		if (world.getCamera().isMouseInViewport() && world.isVisible(world.getCurrentPlayer(), x, y)) {
 			position.setText("Position: " + x + ", " + y);
 			biome.setText("Biome: " + terrain.getBiomeName());
 

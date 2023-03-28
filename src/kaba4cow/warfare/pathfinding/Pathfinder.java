@@ -4,8 +4,8 @@ import java.util.ArrayList;
 
 import kaba4cow.ascii.toolbox.maths.Maths;
 import kaba4cow.warfare.files.WeaponFile;
+import kaba4cow.warfare.game.Player;
 import kaba4cow.warfare.game.World;
-import kaba4cow.warfare.game.players.Player;
 
 public final class Pathfinder {
 

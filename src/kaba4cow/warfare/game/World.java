@@ -11,14 +11,17 @@ import kaba4cow.ascii.toolbox.Printer;
 import kaba4cow.ascii.toolbox.files.DataFile;
 import kaba4cow.ascii.toolbox.maths.Maths;
 import kaba4cow.ascii.toolbox.rng.RNG;
+import kaba4cow.ascii.toolbox.rng.RandomLehmer;
 import kaba4cow.warfare.Camera;
+import kaba4cow.warfare.Game;
 import kaba4cow.warfare.files.BiomeFile;
 import kaba4cow.warfare.files.TerrainFile;
 import kaba4cow.warfare.files.VegetationFile;
 import kaba4cow.warfare.files.WeaponFile;
-import kaba4cow.warfare.game.players.EnemyPlayer;
-import kaba4cow.warfare.game.players.HumanPlayer;
-import kaba4cow.warfare.game.players.Player;
+import kaba4cow.warfare.game.controllers.AIController;
+import kaba4cow.warfare.game.controllers.ClientController;
+import kaba4cow.warfare.game.controllers.Controller;
+import kaba4cow.warfare.game.controllers.PlayerController;
 import kaba4cow.warfare.game.world.Generator;
 import kaba4cow.warfare.game.world.TerrainTile;
 import kaba4cow.warfare.game.world.VegetationTile;
@@ -27,6 +30,8 @@ import kaba4cow.warfare.gui.ActionFrame;
 import kaba4cow.warfare.gui.CurrentUnitFrame;
 import kaba4cow.warfare.gui.InfoFrame;
 import kaba4cow.warfare.gui.SelectedUnitFrame;
+import kaba4cow.warfare.network.Client;
+import kaba4cow.warfare.network.Message;
 import kaba4cow.warfare.pathfinding.Node;
 
 public class World {
@@ -42,8 +47,7 @@ public class World {
 
 	private final Node[][] nodeMap;
 
-	private HumanPlayer humanPlayer;
-	private EnemyPlayer aiPlayer;
+	private ArrayList<Player> players;
 
 	private Camera camera;
 
@@ -55,22 +59,28 @@ public class World {
 	private Viewport viewport;
 
 	private int turn;
-	private boolean playerTurn;
+	private int turnPlayer;
+	private int currentPlayer;
+
+	private Client client;
 
 	private final DataFile data;
 
-	public World(int size, int season) {
-		this.size = size;
-		this.terrainMap = new TerrainTile[size][size];
-		this.vegetationMap = new VegetationTile[size][size];
-		this.temperatureMap = new float[size][size];
+	public World(float size, int season) {
+		this(size, season, RNG.randomLong());
+	}
+
+	public World(float size, int season, long seed) {
+		this.size = 10 * (int) Maths.mapLimit(size, 0f, 1f, Game.MIN_WORLD_SIZE, Game.MAX_WORLD_SIZE);
+		this.terrainMap = new TerrainTile[this.size][this.size];
+		this.vegetationMap = new VegetationTile[this.size][this.size];
+		this.temperatureMap = new float[this.size][this.size];
 		this.data = new DataFile();
 
 		PROGRESS = 0f;
 
-		long seed = RNG.randomLong();
 		Printer.println("Generating new world [size = " + size + ", seed = " + seed + "]");
-		Generator generator = new Generator(size, season, seed);
+		Generator generator = new Generator(this.size, season % 4, seed);
 		generator.generate();
 		PROGRESS = 0.2f;
 		this.villages = generator.populate(terrainMap, vegetationMap, temperatureMap);
@@ -97,18 +107,20 @@ public class World {
 		}
 		PROGRESS = 0.7f;
 
-		this.humanPlayer = new HumanPlayer(this);
-		this.aiPlayer = new EnemyPlayer(this);
-		this.humanPlayer.createUnits(playerVillages[0]);
-		this.aiPlayer.createUnits(playerVillages[1]);
+		this.players = new ArrayList<>();
+		for (int i = 0; i < 2; i++)
+			players.add(new Player(this));
+		RandomLehmer rng = new RandomLehmer(seed);
+		for (int i = 0; i < players.size(); i++)
+			players.get(i).createUnits(playerVillages[i], rng);
 		this.turn = 0;
-		this.playerTurn = true;
+		this.turnPlayer = 0;
+		this.currentPlayer = 0;
 
 		PROGRESS = 0.8f;
 
 		this.camera = new Camera(this);
 		createGUI();
-		setCameraTarget(humanPlayer.getCurrentUnit());
 
 		PROGRESS = 1f;
 	}
@@ -123,7 +135,8 @@ public class World {
 
 		this.size = data.node("Size").getInt();
 		this.turn = data.node("Turn").getInt();
-		this.playerTurn = true;
+		this.turnPlayer = 0;
+		this.currentPlayer = data.node("Player").getInt();
 
 		PROGRESS = 0.3f;
 
@@ -163,16 +176,25 @@ public class World {
 		PROGRESS = 0.8f;
 
 		node = data.node("Players");
-		this.humanPlayer = new HumanPlayer(this, node.node("PLAYER"));
-		this.aiPlayer = new EnemyPlayer(this, node.node("ENEMY"));
+		players = new ArrayList<>();
+		for (int i = 0; i < node.objectSize(); i++)
+			players.add(new Player(this, node.node(i)));
 
 		PROGRESS = 0.9f;
 
 		this.camera = new Camera(this);
 		createGUI();
-		setCameraTarget(humanPlayer.getCurrentUnit());
+		setCurrentPlayer(currentPlayer, true);
 
 		PROGRESS = 1f;
+	}
+
+	public void setCurrentPlayer(int currentPlayer, boolean ai) {
+		this.currentPlayer = currentPlayer;
+		getCurrentPlayer().setController(new PlayerController());
+		setCameraTarget(getCurrentPlayer().getCurrentUnit());
+		Controller enemyController = ai ? new AIController() : new ClientController();
+		getEnemyPlayer().setController(enemyController);
 	}
 
 	public DataFile save(boolean save) {
@@ -184,12 +206,13 @@ public class World {
 
 		data.node("Size").setInt(size);
 		data.node("Turn").setInt(turn);
+		data.node("Player").setInt(currentPlayer);
 
 		PROGRESS = 0.2f;
 
 		node = data.node("Players");
-		humanPlayer.save(node.node("PLAYER"));
-		aiPlayer.save(node.node("ENEMY"));
+		for (index = 0; index < players.size(); index++)
+			players.get(index).save(node.node(Integer.toString(index)));
 
 		PROGRESS = 0.4f;
 
@@ -234,10 +257,9 @@ public class World {
 	public void update(float dt) {
 		camera.update(dt);
 
-		if (playerTurn)
-			humanPlayer.update(dt);
-		else
-			aiPlayer.update(dt);
+		for (int i = 0; i < players.size(); i++)
+			players.get(i).update(dt);
+		getCurrentPlayer().updateController(dt);
 
 		currentUnitFrame.update();
 		selectedUnitFrame.update();
@@ -254,7 +276,8 @@ public class World {
 		int offY = (int) camera.getY();
 
 		Drawer.setFrame(viewport);
-		viewport.fill(Glyphs.SPACE, 0);
+
+		Player player = getCurrentPlayer();
 
 		int x, y, ix, iy;
 		for (y = 0; y < viewport.height; y++) {
@@ -263,63 +286,100 @@ public class World {
 				continue;
 			for (x = 0; x < viewport.width; x++) {
 				ix = x + offX;
-				if (ix < 0 || ix >= size || !humanPlayer.isVisible(ix, iy))
+				if (ix < 0 || ix >= size)
 					continue;
-
-				if (vegetationMap[ix][iy] == null)
+				if (!player.isVisible(ix, iy))
+					Drawer.draw(x, y, Glyphs.SPACE, 0x000000);
+				else if (vegetationMap[ix][iy] == null)
 					terrainMap[ix][iy].render(x, y);
 				else
 					vegetationMap[ix][iy].render(x, y);
 			}
 		}
-		aiPlayer.render(offX, offY);
-		humanPlayer.render(offX, offY);
+		for (int i = 0; i < players.size(); i++)
+			players.get(i).render(offX, offY);
+		getCurrentPlayer().renderController(offX, offY);
 
 		Drawer.resetFrame();
 
 		viewport.render();
-		currentUnitFrame.render(humanPlayer.getCurrentUnit());
-		Unit mouseUnit = humanPlayer.getUnit(camera.getMouseX(), camera.getMouseY());
-		if (mouseUnit == null)
-			mouseUnit = aiPlayer.getUnit(camera.getMouseX(), camera.getMouseY());
+		currentUnitFrame.render(player.getCurrentUnit());
+		Unit mouseUnit = getUnit(camera.getMouseX(), camera.getMouseY());
 		if (mouseUnit != null)
-			selectedUnitFrame.render(humanPlayer.getCurrentUnit(), mouseUnit);
+			selectedUnitFrame.render(player.getCurrentUnit(), mouseUnit);
 		else
 			worldFrame.render(this);
 		actionFrame.render();
-		if (humanPlayer.isAiming())
-			humanPlayer.getCurrentUnit().renderWeaponFrame();
+		if (player.isAiming())
+			player.getCurrentUnit().renderWeaponFrame();
 
 		if (!camera.isMouseInViewport())
 			Display.setDrawCursor(true);
-		Display.setCursorWaiting(!playerTurn);
+		Display.setCursorWaiting(!isPlayerTurn());
+	}
+
+	public Unit getUnit(int x, int y) {
+		for (int i = 0; i < players.size(); i++) {
+			Unit unit = players.get(i).getUnit(x, y);
+			if (unit != null)
+				return unit;
+		}
+		return null;
 	}
 
 	public void setCameraTarget(Unit unit) {
 		camera.setPosition(unit.getX(), unit.getY());
 	}
 
-	public void createTrack(int x, int y) {
-		if (terrainMap[x][y].allowsTrack())
-			terrainMap[x][y] = new TerrainTile(TerrainFile.getTrack(), terrainMap[x][y].getBiome(),
-					temperatureMap[x][y]);
-	}
-
-	public void createCrater(int x, int y) {
+	public void createExplosion(int x, int y, float radius, boolean send) {
 		vegetationMap[x][y] = null;
 		if (terrainMap[x][y].allowsCrater())
 			terrainMap[x][y] = new TerrainTile(TerrainFile.getCrater(), terrainMap[x][y].getBiome(),
 					temperatureMap[x][y]);
+		if (radius > 0f) {
+			int range = (int) (1f + radius);
+			int ix, iy;
+			float dist;
+			for (iy = y - range; iy <= y + range; iy++)
+				for (ix = x - range; ix <= x + range; ix++) {
+					if (ix == x && iy == y || ix < 0 || ix >= size || iy < 0 || iy >= size)
+						continue;
+					dist = Maths.dist(x, y, ix, iy);
+					if (dist <= radius)
+						vegetationMap[ix][iy] = null;
+				}
+		}
+	}
+
+	public void createProjectile(int index, int weapon, int x, int y, boolean send) {
+		if (client != null && send)
+			client.send(Message.getBytes(Message.PROJECTILE, client.getID(), "/", index, "/", weapon, "/", x, "/", y));
+		else {
+			Unit unit = getEnemyPlayer().getUnit(index);
+			unit.setCurrentWeapon(weapon);
+			unit.createAttackPath(x, y);
+			if (!unit.isShooting())
+				unit.createAttackPath(x, y);
+		}
+	}
+
+	public void moveUnit(int index, int x, int y, boolean send) {
+		if (client != null && send)
+			client.send(Message.getBytes(Message.MOVE, client.getID(), "/", index, "/", x, "/", y));
+		else {
+			Unit unit = getEnemyPlayer().getUnit(index);
+			unit.setPos(x, y);
+		}
 	}
 
 	public void damageUnits(int x, int y, Unit source, WeaponFile weapon) {
-		if (weapon.createsCrater() && vegetationMap[x][y] == null)
-			createCrater(x, y);
+		if (weapon.createsCrater())
+			createExplosion(x, y, weapon.getRadius(), true);
 
 		damageUnit(x, y, source, weapon);
 		float radius = weapon.getRadius();
 		if (radius > 0f) {
-			int range = 1 + (int) radius;
+			int range = (int) (1f + radius);
 			int ix, iy;
 			float dist;
 			for (iy = y - range; iy <= y + range; iy++)
@@ -334,21 +394,21 @@ public class World {
 	}
 
 	private void damageUnit(int x, int y, Unit source, WeaponFile weapon) {
-		if (weapon.createsCrater())
-			vegetationMap[x][y] = null;
-		Unit unit = humanPlayer.getUnit(x, y);
-		if (unit == null)
-			unit = aiPlayer.getUnit(x, y);
+		Unit unit = getUnit(x, y);
 		if (unit == null)
 			return;
 		unit.damage(source);
 	}
 
-	public void newTurn(Player player) { // TODO
+	public void newTurn(Player player, boolean send) {
+		if (client != null && send)
+			client.send(Message.getBytes(Message.TURN, client.getID()));
 		player.onNewTurn();
-//		playerTurn = !playerTurn;
-//		if (playerTurn)
-		turn++;
+		turnPlayer++;
+		if (turnPlayer >= players.size()) {
+			turnPlayer = 0;
+			turn++;
+		}
 	}
 
 	public GUIColorText addAction() {
@@ -362,7 +422,7 @@ public class World {
 	public boolean isObstacle(int x, int y) {
 		if (x < 0 || x >= size || y < 0 || y >= size)
 			return true;
-		return vegetationMap[x][y] != null || humanPlayer.getUnit(x, y) != null || aiPlayer.getUnit(x, y) != null;
+		return vegetationMap[x][y] != null || getUnit(x, y) != null;
 	}
 
 	public boolean isVisible(Player player, int x, int y) {
@@ -407,16 +467,20 @@ public class World {
 		return map;
 	}
 
-	public HumanPlayer getHumanPlayer() {
-		return humanPlayer;
-	}
-
-	public EnemyPlayer getAIPlayer() {
-		return aiPlayer;
-	}
-
 	public boolean isPlayerTurn() {
-		return playerTurn;
+		return turnPlayer == currentPlayer;
+	}
+
+	public Player getCurrentPlayer() {
+		return players.get(currentPlayer);
+	}
+
+	public Player getEnemyPlayer() {
+		return players.get(players.size() - currentPlayer - 1);
+	}
+
+	public void setClient(Client client) {
+		this.client = client;
 	}
 
 	public Camera getCamera() {

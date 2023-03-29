@@ -30,8 +30,8 @@ import kaba4cow.warfare.gui.ActionFrame;
 import kaba4cow.warfare.gui.CurrentUnitFrame;
 import kaba4cow.warfare.gui.InfoFrame;
 import kaba4cow.warfare.gui.SelectedUnitFrame;
-import kaba4cow.warfare.network.Client;
 import kaba4cow.warfare.network.Message;
+import kaba4cow.warfare.network.tcp.Client;
 import kaba4cow.warfare.pathfinding.Node;
 
 public class World {
@@ -259,7 +259,7 @@ public class World {
 
 		for (int i = 0; i < players.size(); i++)
 			players.get(i).update(dt);
-		getCurrentPlayer().updateController(dt);
+		players.get(turnPlayer).updateController(dt);
 
 		currentUnitFrame.update();
 		selectedUnitFrame.update();
@@ -352,8 +352,10 @@ public class World {
 	}
 
 	public void createProjectile(int index, int weapon, int x, int y, boolean send) {
-		if (client != null && send)
-			client.send(Message.getBytes(Message.PROJECTILE, client.getID(), "/", index, "/", weapon, "/", x, "/", y));
+		if (client == null)
+			return;
+		if (send)
+			client.send(Message.PROJECTILE, index, weapon, x, y);
 		else {
 			Unit unit = getEnemyPlayer().getUnit(index);
 			unit.setCurrentWeapon(weapon);
@@ -364,12 +366,12 @@ public class World {
 	}
 
 	public void moveUnit(int index, int x, int y, boolean send) {
-		if (client != null && send)
-			client.send(Message.getBytes(Message.MOVE, client.getID(), "/", index, "/", x, "/", y));
-		else {
-			Unit unit = getEnemyPlayer().getUnit(index);
-			unit.setPos(x, y);
-		}
+		if (client == null)
+			return;
+		if (send)
+			client.send(Message.MOVE, index, x, y);
+		else
+			getEnemyPlayer().getUnit(index).setPos(x, y);
 	}
 
 	public void damageUnits(int x, int y, Unit source, WeaponFile weapon) {
@@ -402,7 +404,7 @@ public class World {
 
 	public void newTurn(Player player, boolean send) {
 		if (client != null && send)
-			client.send(Message.getBytes(Message.TURN, client.getID()));
+			client.send(Message.TURN);
 		player.onNewTurn();
 		turnPlayer++;
 		if (turnPlayer >= players.size()) {

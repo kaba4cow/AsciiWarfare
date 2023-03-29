@@ -3,6 +3,9 @@ package kaba4cow.warfare.network;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
+import kaba4cow.warfare.network.tcp.Connection;
+import kaba4cow.warfare.network.tcp.Server;
+
 public class Console {
 
 	private static LinkedHashMap<String, Command> commands = new LinkedHashMap<>();
@@ -104,13 +107,13 @@ public class Console {
 			@Override
 			public void execute(String[] parameters, int numParameters, StringBuilder output) {
 				if (program.getServer() != null) {
-					ArrayList<Client> list = program.getServer().getClients();
+					ArrayList<Connection> list = program.getServer().getClients();
 					output.append(String.format("%6s | %12s", "ID", "IP"));
 					output.append('\n');
 					for (int i = 0; i < 21; i++)
 						output.append('-');
 					output.append('\n');
-					for (Client client : list) {
+					for (Connection client : list) {
 						output.append(
 								String.format("%6s | %12s", client.getID(), client.getAddress().getHostAddress()));
 						output.append('\n');

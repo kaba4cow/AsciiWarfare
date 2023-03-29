@@ -19,7 +19,6 @@ import kaba4cow.ascii.drawing.gui.GUISlider;
 import kaba4cow.ascii.drawing.gui.GUIText;
 import kaba4cow.ascii.drawing.gui.GUITextField;
 import kaba4cow.ascii.input.Keyboard;
-import kaba4cow.ascii.toolbox.MemoryAnalyzer;
 import kaba4cow.ascii.toolbox.files.TableFile;
 import kaba4cow.ascii.toolbox.rng.RNG;
 import kaba4cow.warfare.files.BiomeFile;
@@ -32,7 +31,7 @@ import kaba4cow.warfare.files.WeaponFile;
 import kaba4cow.warfare.files.WeaponTypeFile;
 import kaba4cow.warfare.game.MenuWorld;
 import kaba4cow.warfare.game.World;
-import kaba4cow.warfare.network.Client;
+import kaba4cow.warfare.network.tcp.Client;
 
 public class Game implements MainProgram {
 
@@ -47,6 +46,7 @@ public class Game implements MainProgram {
 	private int state;
 	private boolean game;
 	private boolean waiting;
+	private boolean showFPS;
 
 	private GUIFrame[] frames;
 	private GUISlider sizeSlider;
@@ -70,6 +70,7 @@ public class Game implements MainProgram {
 		state = STATE_MENU;
 		game = false;
 		waiting = false;
+		showFPS = false;
 
 		menuWorld = new MenuWorld();
 
@@ -77,6 +78,7 @@ public class Game implements MainProgram {
 
 		// MENU
 		frames[STATE_MENU] = new GUIFrame(GUI_COLOR, false, false).setTitle("Menu");
+		new GUISeparator(frames[STATE_MENU], -1, true);
 		new GUIButton(frames[STATE_MENU], -1, "Start New Game", f -> {
 			state = STATE_NEWGAME;
 		});
@@ -93,7 +95,7 @@ public class Game implements MainProgram {
 		});
 		new GUIButton(frames[STATE_MENU], -1, "Multiplayer", f -> {
 			if (client != null) {
-				client.close(true);
+				client.close();
 				client = null;
 			}
 			state = STATE_MULTIPLAYER;
@@ -104,18 +106,17 @@ public class Game implements MainProgram {
 
 		// NEW GAME
 		frames[STATE_NEWGAME] = new GUIFrame(GUI_COLOR, false, false).setTitle("New Game");
+		new GUISeparator(frames[STATE_NEWGAME], -1, true);
 		new GUIText(frames[STATE_NEWGAME], -1, "Map Size");
 		sizeSlider = new GUISlider(frames[STATE_NEWGAME], -1, 0.25f);
-		new GUISeparator(frames[STATE_NEWGAME], -1, false);
+		new GUISeparator(frames[STATE_NEWGAME], -1, true);
 		seasonPanel = new GUIRadioPanel(frames[STATE_NEWGAME], -1, "Season:");
 		new GUIRadioButton(seasonPanel, -1, "Winter");
 		new GUIRadioButton(seasonPanel, -1, "Autumn");
 		new GUIRadioButton(seasonPanel, -1, "Spring");
 		new GUIRadioButton(seasonPanel, -1, "Summer");
-		new GUISeparator(frames[STATE_NEWGAME], -1, false);
-		new GUIButton(frames[STATE_NEWGAME], -1, "Start", f ->
-
-		{
+		new GUISeparator(frames[STATE_NEWGAME], -1, true);
+		new GUIButton(frames[STATE_NEWGAME], -1, "Start", f -> {
 			generateWorld();
 		});
 		new GUIButton(frames[STATE_NEWGAME], -1, "Return", f -> {
@@ -124,11 +125,12 @@ public class Game implements MainProgram {
 
 		// MULTIPLAYER
 		frames[STATE_MULTIPLAYER] = new GUIFrame(GUI_COLOR, false, false).setTitle("Multiplayer");
+		new GUISeparator(frames[STATE_MULTIPLAYER], -1, true);
 		new GUIText(frames[STATE_MULTIPLAYER], -1, "IP");
-		ipTextField = new GUITextField(frames[STATE_MULTIPLAYER], -1, "localhost");
+		ipTextField = new GUITextField(frames[STATE_MULTIPLAYER], -1, "");
 		ipTextField.setMaxCharacters(15);
 		new GUIText(frames[STATE_MULTIPLAYER], -1, "Port");
-		portTextField = new GUITextField(frames[STATE_MULTIPLAYER], -1, "5000");
+		portTextField = new GUITextField(frames[STATE_MULTIPLAYER], -1, "");
 		portTextField.setMaxCharacters(5);
 		new GUIButton(frames[STATE_MULTIPLAYER], -1, "Connect", f -> {
 			connect();
@@ -148,9 +150,12 @@ public class Game implements MainProgram {
 	public void update(float dt) {
 		if (Keyboard.isKeyDown(Keyboard.KEY_F) && Keyboard.isKey(Keyboard.KEY_CONTROL_LEFT))
 			if (Display.isFullscreen())
-				Display.createWindowed(80, 42);
+				Display.createWindowed(70, 40);
 			else
 				Display.createFullscreen();
+
+		if (Keyboard.isKeyDown(Keyboard.KEY_F3))
+			showFPS = !showFPS;
 
 		if (!waiting) {
 			if (Keyboard.isKeyDown(Keyboard.KEY_ESCAPE)) {
@@ -166,9 +171,6 @@ public class Game implements MainProgram {
 			else
 				frames[state].update();
 		}
-
-		MemoryAnalyzer.update();
-		InfoPanel.update(dt);
 	}
 
 	@Override
@@ -181,8 +183,7 @@ public class Game implements MainProgram {
 		else {
 			menuWorld.render();
 			renderTitle();
-			frames[state].render(Display.getWidth() / 2, (Display.getHeight() + Display.getGlyphSize()) / 2,
-					Display.getWidth() / 3, Display.getHeight() / 2, true);
+			frames[state].render(0, Display.getGlyphSize(), 22, Display.getHeight() - Display.getGlyphSize(), false);
 		}
 
 		if (waiting) {
@@ -192,7 +193,8 @@ public class Game implements MainProgram {
 			BoxDrawer.enableCollision();
 		}
 
-		InfoPanel.render();
+		if (showFPS)
+			Drawer.drawString(0, 0, false, "FPS: " + Engine.getCurrentFramerate(), GUI_COLOR);
 	}
 
 	private void renderTitle() {
@@ -259,6 +261,12 @@ public class Game implements MainProgram {
 	}
 
 	private void connect() {
+		if (client != null) {
+			client.close();
+			gameWorld = null;
+			return;
+		}
+
 		String ip = ipTextField.getText();
 		int port;
 		try {
@@ -274,22 +282,20 @@ public class Game implements MainProgram {
 				progressFrame.setTitle(getName());
 				waiting = true;
 				try {
-					client = new Client(Game.this, ip, port);
-					client.connect();
+					new Client(Game.this, ip, port);
 				} catch (IOException e) {
-					client = null;
+					setClient(null);
 				}
 				waiting = false;
 			}
 		}.start();
 	}
 
-	@Override
-	public void onClose() {
-		MemoryAnalyzer.printFinalInfo();
+	public void setClient(Client client) {
+		this.client = client;
 	}
 
-	public static void loadData() {
+	public static void main(String[] args) {
 		TableFile data = TableFile.read(new File("DATA"));
 
 		TerrainFile.loadFiles(data.getTable("Terrain"));
@@ -300,15 +306,9 @@ public class Game implements MainProgram {
 		UnitTypeFile.loadFiles(data.getTable("Unit Types"));
 		UnitFile.loadFiles(data.getTable("Units"));
 		BuildingFile.loadFiles(data.getTable("Buildings"));
-	}
-
-	public static void main(String[] args) {
-		loadData();
-		InfoPanel.init();
 
 		Engine.init("Ascii Warfare", 60);
-//		Display.createFullscreen();
-		Display.createWindowed(60, 40);
+		Display.createFullscreen();
 		Engine.start(new Game());
 	}
 

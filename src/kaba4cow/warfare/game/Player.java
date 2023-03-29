@@ -166,7 +166,7 @@ public class Player {
 	}
 
 	public boolean isVisible(int x, int y) {
-		return true | visibility[x][y]; // TODO
+		return !true | visibility[x][y]; // TODO
 	}
 
 	public Unit getUnit(int x, int y) {

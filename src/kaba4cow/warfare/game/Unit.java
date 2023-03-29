@@ -226,11 +226,13 @@ public class Unit {
 		if (armorLeft < 0f)
 			armorLeft = 0f;
 		float damageTaken = source.getUnits() * source.getCurrentWeapon().getDamage() - armorLeft;
+		if (damageTaken < 0f)
+			damageTaken = 0f;
 		world.addAction()//
 				.addText("<" + source.getUnitFile().getName() + ">", source.getPlayer().getColor())//
 				.addText(" hits ", -1)//
 				.addText("<" + file.getName() + ">", player.getColor())//
-				.addText(" (-" + (int) damageTaken + ")", -1);
+				.addText(" (" + (int) -damageTaken + ")", -1);
 
 		int killed = 0;
 		int maxUnits = units;

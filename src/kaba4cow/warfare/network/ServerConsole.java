@@ -10,7 +10,7 @@ import kaba4cow.ascii.drawing.drawers.Drawer;
 import kaba4cow.ascii.input.Input;
 import kaba4cow.ascii.input.Keyboard;
 import kaba4cow.ascii.input.Mouse;
-import kaba4cow.warfare.Game;
+import kaba4cow.warfare.network.tcp.Server;
 
 public class ServerConsole implements MainProgram {
 
@@ -140,8 +140,6 @@ public class ServerConsole implements MainProgram {
 	}
 
 	public static void main(String[] args) {
-		Game.loadData();
-
 //		try {
 //			new Server(5000, 0.0f, 2);
 //		} catch (IOException e) {

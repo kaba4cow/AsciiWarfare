@@ -15,7 +15,7 @@ public class ActionFrame extends GUIFrame {
 
 	public GUIColorText addAction(World world) {
 		GUIColorText gui = new GUIColorText(this).addText("[" + (world.getWorldWeek() + 1) + ":"
-				+ (world.getWorldDay() + 1) + ":" + (world.getWorldHour() + 1) + "] ", color);
+				+ (world.getWorldDay() + 1) + ":" + (world.getWorldHour() + 1) + "] ", getColor());
 		resetScrollMax();
 		return gui;
 	}

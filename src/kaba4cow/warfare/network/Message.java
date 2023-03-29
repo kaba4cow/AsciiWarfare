@@ -1,5 +1,10 @@
 package kaba4cow.warfare.network;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+
+import kaba4cow.ascii.toolbox.Printer;
+
 public class Message {
 
 	public static final String CONNECT = "C";
@@ -12,6 +17,23 @@ public class Message {
 
 	private Message() {
 
+	}
+
+	public static synchronized void send(BufferedWriter writer, String message, Object... parameters) {
+		try {
+			StringBuilder builder = new StringBuilder(message);
+			if (parameters != null)
+				for (int i = 0; i < parameters.length; i++) {
+					builder.append(parameters[i].toString());
+					if (i < parameters.length - 1)
+						builder.append(',');
+				}
+			writer.write(builder.toString());
+			writer.newLine();
+			writer.flush();
+			Printer.println("Sent: " + builder.toString());
+		} catch (IOException e) {
+		}
 	}
 
 	public static String getString(String input) {

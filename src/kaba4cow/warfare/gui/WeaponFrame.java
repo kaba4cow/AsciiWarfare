@@ -50,10 +50,10 @@ public class WeaponFrame extends GUIFrame {
 					unit.getUnitFile().getWeapons()[i].getAttacks()));
 			if (i == unit.getCurrentWeaponIndex()) {
 				buttons[i].setText("Selected");
-				buttons[i].setColor(0x000888 & color);
+				buttons[i].setColor(0x000888 & getColor());
 			} else {
 				buttons[i].setText("Select");
-				buttons[i].setColor(color);
+				buttons[i].setColor(getColor());
 			}
 		}
 

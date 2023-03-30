@@ -8,9 +8,9 @@ import java.io.OutputStreamWriter;
 import java.net.Socket;
 
 import kaba4cow.ascii.toolbox.Printer;
-import kaba4cow.warfare.Game;
 import kaba4cow.warfare.game.World;
 import kaba4cow.warfare.network.Message;
+import kaba4cow.warfare.states.MultiplayerState;
 
 public class Client implements Runnable {
 
@@ -23,10 +23,10 @@ public class Client implements Runnable {
 
 	private Thread thread;
 
-	private final Game game;
+	private final MultiplayerState game;
 	private World world;
 
-	public Client(Game game, String address, int port) throws IOException {
+	public Client(MultiplayerState game, String address, int port) throws IOException {
 		game.setClient(this);
 		this.game = game;
 		this.client = new Socket(address, port);
@@ -71,7 +71,7 @@ public class Client implements Runnable {
 			long seed = Long.parseLong(parameters[1]);
 			float size = Float.parseFloat(parameters[2]);
 			int season = Integer.parseInt(parameters[3]);
-			game.generateWorld(size, season, seed, id);
+			game.generateWorld(seed, size, season, id);
 		} else if (message.startsWith(Message.DISCONNECT)) {
 			close();
 		} else if (message.startsWith(Message.TURN)) {
@@ -100,12 +100,15 @@ public class Client implements Runnable {
 		try {
 			Printer.println("Client closing");
 			send(Message.DISCONNECT);
-			Thread.sleep(500l);
+			try {
+				Thread.sleep(500l);
+			} catch (InterruptedException e) {
+			}
 			client.close();
 			reader.close();
 			writer.close();
 			Printer.println("Client closed");
-		} catch (Exception e) {
+		} catch (IOException e) {
 		}
 	}
 
@@ -119,14 +122,6 @@ public class Client implements Runnable {
 
 	public int getID() {
 		return id;
-	}
-
-	public static void main(String[] args) {
-		try {
-			new Client(null, "localhost", 6000);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 	}
 
 }

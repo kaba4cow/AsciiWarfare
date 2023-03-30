@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedList;
-import java.util.Scanner;
 
 import kaba4cow.ascii.toolbox.Printer;
 import kaba4cow.ascii.toolbox.rng.RNG;
@@ -84,6 +84,7 @@ public class Server implements Runnable {
 		if (client == null || !clients.contains(client))
 			return;
 		ids.add(client.getID());
+		Collections.sort(ids);
 		clients.remove(client);
 		client.send(Message.DISCONNECT);
 		client.close();
@@ -116,22 +117,6 @@ public class Server implements Runnable {
 
 	public synchronized boolean isClosed() {
 		return server.isClosed();
-	}
-
-	public static void main(String[] args) {
-		Server server;
-		try {
-			server = new Server(6000, 0f, 2);
-		} catch (IOException e) {
-			e.printStackTrace();
-			return;
-		}
-
-		Scanner scanner = new Scanner(System.in);
-		scanner.next();
-
-		server.close();
-		scanner.close();
 	}
 
 }

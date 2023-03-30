@@ -1,6 +1,7 @@
 package kaba4cow.warfare.game;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 
 import kaba4cow.ascii.core.Display;
@@ -33,10 +34,9 @@ import kaba4cow.warfare.gui.SelectedUnitFrame;
 import kaba4cow.warfare.network.Message;
 import kaba4cow.warfare.network.tcp.Client;
 import kaba4cow.warfare.pathfinding.Node;
+import kaba4cow.warfare.states.State;
 
 public class World {
-
-	public static float PROGRESS = 0f;
 
 	private final int size;
 
@@ -77,17 +77,17 @@ public class World {
 		this.temperatureMap = new float[this.size][this.size];
 		this.data = new DataFile();
 
-		PROGRESS = 0f;
+		State.PROGRESS = 0f;
 
 		Printer.println("Generating new world [size = " + size + ", seed = " + seed + "]");
 		Generator generator = new Generator(this.size, season % 4, seed);
 		generator.generate();
-		PROGRESS = 0.2f;
+		State.PROGRESS = 0.2f;
 		this.villages = generator.populate(terrainMap, vegetationMap, temperatureMap);
-		PROGRESS = 0.4f;
+		State.PROGRESS = 0.4f;
 
 		this.nodeMap = createNodeMap();
-		PROGRESS = 0.5f;
+		State.PROGRESS = 0.5f;
 
 		Village[] playerVillages = new Village[2];
 		float maxVillageDistSq = 0f;
@@ -105,7 +105,7 @@ public class World {
 				}
 			}
 		}
-		PROGRESS = 0.7f;
+		State.PROGRESS = 0.7f;
 
 		this.players = new ArrayList<>();
 		for (int i = 0; i < 2; i++)
@@ -117,28 +117,32 @@ public class World {
 		this.turnPlayer = 0;
 		this.currentPlayer = 0;
 
-		PROGRESS = 0.8f;
+		State.PROGRESS = 0.8f;
 
 		this.camera = new Camera(this);
 		createGUI();
 
-		PROGRESS = 1f;
+		State.PROGRESS = 1f;
 	}
 
-	public World() {
-		PROGRESS = 0f;
+	public World() throws IOException {
+		State.PROGRESS = 0f;
 
-		data = DataFile.read(new File("SAVE"));
+		File file = new File("SAVE");
+		if (!file.exists() || !file.isFile())
+			throw new IOException();
+
+		data = DataFile.read(file);
 		DataFile node;
 
-		PROGRESS = 0.2f;
+		State.PROGRESS = 0.2f;
 
 		this.size = data.node("Size").getInt();
 		this.turn = data.node("Turn").getInt();
 		this.turnPlayer = 0;
 		this.currentPlayer = data.node("Player").getInt();
 
-		PROGRESS = 0.3f;
+		State.PROGRESS = 0.3f;
 
 		this.terrainMap = new TerrainTile[size][size];
 		this.vegetationMap = new VegetationTile[size][size];
@@ -162,31 +166,31 @@ public class World {
 			vegetationMap[x][y] = vegetation == null ? null : new VegetationTile(vegetation, temperature);
 		}
 
-		PROGRESS = 0.6f;
+		State.PROGRESS = 0.6f;
 
 		this.villages = new ArrayList<>();
 		node = data.node("Villages");
 		for (int i = 0; i < node.objectSize(); i++)
 			villages.add(new Village(node.node(i)));
 
-		PROGRESS = 0.7f;
+		State.PROGRESS = 0.7f;
 
 		this.nodeMap = createNodeMap();
 
-		PROGRESS = 0.8f;
+		State.PROGRESS = 0.8f;
 
 		node = data.node("Players");
 		players = new ArrayList<>();
 		for (int i = 0; i < node.objectSize(); i++)
 			players.add(new Player(this, node.node(i)));
 
-		PROGRESS = 0.9f;
+		State.PROGRESS = 0.9f;
 
 		this.camera = new Camera(this);
 		createGUI();
 		setCurrentPlayer(currentPlayer, true);
 
-		PROGRESS = 1f;
+		State.PROGRESS = 1f;
 	}
 
 	public void setCurrentPlayer(int currentPlayer, boolean ai) {
@@ -200,7 +204,7 @@ public class World {
 	public DataFile save(boolean save) {
 		DataFile node;
 
-		PROGRESS = 0f;
+		State.PROGRESS = 0f;
 
 		int x, y, index;
 
@@ -208,20 +212,20 @@ public class World {
 		data.node("Turn").setInt(turn);
 		data.node("Player").setInt(currentPlayer);
 
-		PROGRESS = 0.2f;
+		State.PROGRESS = 0.2f;
 
 		node = data.node("Players");
 		for (index = 0; index < players.size(); index++)
 			players.get(index).save(node.node(Integer.toString(index)));
 
-		PROGRESS = 0.4f;
+		State.PROGRESS = 0.4f;
 
 		node = data.node("Villages").clear();
 		index = 0;
 		for (index = 0; index < villages.size(); index++)
 			villages.get(index).save(node.node(Integer.toString(index)));
 
-		PROGRESS = 0.5f;
+		State.PROGRESS = 0.5f;
 
 		node = data.node("Map");
 		index = 0;
@@ -235,12 +239,12 @@ public class World {
 				index++;
 			}
 
-		PROGRESS = 0.8f;
+		State.PROGRESS = 0.8f;
 
 		if (save)
 			DataFile.write(data, new File("SAVE"));
 
-		PROGRESS = 1f;
+		State.PROGRESS = 1f;
 
 		return data;
 	}
@@ -471,6 +475,10 @@ public class World {
 
 	public boolean isPlayerTurn() {
 		return turnPlayer == currentPlayer;
+	}
+
+	public int getTurnPlayer() {
+		return turnPlayer;
 	}
 
 	public Player getCurrentPlayer() {

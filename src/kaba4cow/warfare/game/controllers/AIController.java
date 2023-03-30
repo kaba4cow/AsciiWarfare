@@ -1,5 +1,7 @@
 package kaba4cow.warfare.game.controllers;
 
+import kaba4cow.ascii.toolbox.rng.RNG;
+
 public class AIController extends Controller {
 
 	public AIController() {
@@ -11,7 +13,8 @@ public class AIController extends Controller {
 		if (player.getCurrentUnit().isShooting())
 			return;
 
-		world.newTurn(player, false);
+		if (RNG.chance(0.05f))
+			world.newTurn(player, false);
 	}
 
 	@Override

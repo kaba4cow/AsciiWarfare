@@ -1,7 +1,5 @@
 package kaba4cow.warfare.states;
 
-import java.io.IOException;
-
 import kaba4cow.ascii.input.Keyboard;
 import kaba4cow.warfare.Game;
 import kaba4cow.warfare.game.World;
@@ -22,7 +20,7 @@ public class SingleplayerState extends State {
 
 	@Override
 	public void update(float dt) {
-		if (world.isPlayerTurn() && Keyboard.isKeyDown(Keyboard.KEY_ESCAPE))
+		if (!world.inShop() && world.isPlayerTurn() && Keyboard.isKeyDown(Keyboard.KEY_ESCAPE))
 			Game.switchState(SingleplayerPauseState.getInstance());
 
 		world.update(dt);
@@ -39,7 +37,7 @@ public class SingleplayerState extends State {
 		}
 	}
 
-	public void generateWorld(float size, int season) {
+	public void generateWorld(int size, int season) {
 		State.thread("Generating", f -> {
 			world = new World(size, season);
 			world.setCurrentPlayer(0, true);
@@ -49,7 +47,7 @@ public class SingleplayerState extends State {
 
 	public void saveWorld() {
 		State.thread("Saving", f -> {
-			world.save(true);
+			world.save();
 		});
 	}
 
@@ -58,7 +56,7 @@ public class SingleplayerState extends State {
 			World newWorld;
 			try {
 				newWorld = new World();
-			} catch (IOException e) {
+			} catch (Exception e) {
 				newWorld = null;
 			}
 			if (newWorld != null) {

@@ -10,6 +10,7 @@ import kaba4cow.ascii.drawing.drawers.Drawer;
 import kaba4cow.ascii.input.Input;
 import kaba4cow.ascii.input.Keyboard;
 import kaba4cow.ascii.input.Mouse;
+import kaba4cow.warfare.Game;
 import kaba4cow.warfare.network.tcp.Server;
 
 public class ServerConsole implements MainProgram {
@@ -77,6 +78,9 @@ public class ServerConsole implements MainProgram {
 			text = history.get(index);
 		} else
 			text = Input.typeString(text);
+
+		if (server != null)
+			server.update(dt);
 	}
 
 	@Override
@@ -123,7 +127,7 @@ public class ServerConsole implements MainProgram {
 		return server;
 	}
 
-	public boolean startServer(int port, float size, int season) {
+	public boolean startServer(int port, int size, int season) {
 		try {
 			server = new Server(port, size, season);
 			return true;
@@ -140,15 +144,15 @@ public class ServerConsole implements MainProgram {
 	}
 
 	public static void main(String[] args) {
-//		try {
-//			new Server(5000, 0.0f, 2);
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
-
-		Engine.init("Ascii Warfare Server", 60);
-		Display.createWindowed(50, 40);
-		Engine.start(new ServerConsole());
+		Game.loadData();
+//		Engine.init("Ascii Warfare Server", 60);
+//		Display.createWindowed(50, 40);
+//		Engine.start(new ServerConsole());
+		try {
+			new Server(6000, 0, 2);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 }

@@ -1,20 +1,26 @@
 package kaba4cow.warfare.files;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import kaba4cow.ascii.toolbox.tools.Table;
 
 public class UnitFile {
 
 	private static final HashMap<String, UnitFile> map = new HashMap<>();
+	private static final LinkedHashMap<String, ArrayList<UnitFile>> sorted = new LinkedHashMap<>();
 
 	private final String id;
 	private final String name;
 	private final String type;
+	private final int price;
 	private final float health;
 	private final float armor;
 	private final float moves;
-	private final float visibility;
+	private final int visibility;
 	private final int maxUnits;
 	private final String[] weapons;
 
@@ -25,20 +31,23 @@ public class UnitFile {
 
 		this.name = table.getCell("Name", row);
 		this.type = table.getCell("Type", row);
+		this.price = Integer.parseInt(table.getCell("Price", row));
 
 		this.health = Float.parseFloat(table.getCell("Health", row));
-
 		this.armor = Float.parseFloat(table.getCell("Armor", row));
-
 		this.moves = Float.parseFloat(table.getCell("Moves", row));
-
-		this.visibility = Float.parseFloat(table.getCell("Visibility", row));
-
+		this.visibility = Integer.parseInt(table.getCell("Visibility", row));
 		this.maxUnits = Integer.parseInt(table.getCell("Units", row));
-
 		this.weapons = table.getCell("Weapons", row).split(",");
 
 		map.put(id, this);
+
+		ArrayList<UnitFile> list;
+		if (!sorted.containsKey(type))
+			sorted.put(type, new ArrayList<>());
+		list = sorted.get(type);
+		list.add(this);
+		Collections.sort(list, Sorter.instance);
 	}
 
 	public static UnitFile get(String id) {
@@ -55,6 +64,10 @@ public class UnitFile {
 		return map;
 	}
 
+	public static LinkedHashMap<String, ArrayList<UnitFile>> getSorted() {
+		return sorted;
+	}
+
 	public String getID() {
 		return id;
 	}
@@ -69,6 +82,10 @@ public class UnitFile {
 
 	public char getGlyph() {
 		return UnitTypeFile.get(type).getGlyph();
+	}
+
+	public int getPrice() {
+		return price;
 	}
 
 	public WeaponFile[] getWeapons() {
@@ -88,7 +105,7 @@ public class UnitFile {
 		return armor;
 	}
 
-	public float getVisibility() {
+	public int getVisibility() {
 		return visibility;
 	}
 
@@ -98,6 +115,17 @@ public class UnitFile {
 
 	public int getMaxUnits() {
 		return maxUnits;
+	}
+
+	private static class Sorter implements Comparator<UnitFile> {
+
+		public static Sorter instance = new Sorter();
+
+		@Override
+		public int compare(UnitFile arg0, UnitFile arg1) {
+			return Integer.compare(arg0.getPrice(), arg1.getPrice());
+		}
+
 	}
 
 }

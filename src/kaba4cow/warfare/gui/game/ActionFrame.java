@@ -1,4 +1,4 @@
-package kaba4cow.warfare.gui;
+package kaba4cow.warfare.gui.game;
 
 import kaba4cow.ascii.core.Display;
 import kaba4cow.ascii.drawing.gui.GUIColorText;

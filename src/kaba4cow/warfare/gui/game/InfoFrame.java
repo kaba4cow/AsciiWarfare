@@ -1,4 +1,4 @@
-package kaba4cow.warfare.gui;
+package kaba4cow.warfare.gui.game;
 
 import kaba4cow.ascii.core.Display;
 import kaba4cow.ascii.drawing.gui.GUIFrame;
@@ -15,6 +15,9 @@ public class InfoFrame extends GUIFrame {
 	private final GUIText days;
 	private final GUIText hours;
 
+	private final GUIText cash;
+	private final GUIText income;
+
 	private final GUIText position;
 	private final GUIText biome;
 	private final GUIText tile;
@@ -27,6 +30,10 @@ public class InfoFrame extends GUIFrame {
 		weeks = new GUIText(this, -1, "");
 		days = new GUIText(this, -1, "");
 		hours = new GUIText(this, -1, "");
+		new GUISeparator(this, -1, false);
+
+		cash = new GUIText(this, -1, "");
+		income = new GUIText(this, -1, "");
 		new GUISeparator(this, -1, false);
 
 		position = new GUIText(this, -1, "");
@@ -42,11 +49,14 @@ public class InfoFrame extends GUIFrame {
 		days.setText("Day: " + (world.getWorldDay() + 1));
 		hours.setText("Hour: " + (world.getWorldHour() + 1));
 
+		cash.setText("Cash: " + world.getPlayer().getCash());
+		income.setText("Income: " + world.getPlayer().getIncome());
+
 		int x = world.getCamera().getMouseX();
 		int y = world.getCamera().getMouseY();
 		TerrainTile terrain = world.getTerrain(x, y);
 		VegetationTile vegetation = world.getVegetation(x, y);
-		if (world.getCamera().isMouseInViewport() && world.isVisible(world.getCurrentPlayer(), x, y)) {
+		if (world.getCamera().isMouseInViewport() && world.isVisible(world.getPlayer(), x, y)) {
 			position.setText("Position: " + x + ", " + y);
 			biome.setText("Biome: " + terrain.getBiomeName());
 

@@ -2,7 +2,6 @@ package kaba4cow.warfare.states;
 
 import kaba4cow.ascii.drawing.gui.GUIButton;
 import kaba4cow.ascii.drawing.gui.GUIFrame;
-import kaba4cow.ascii.drawing.gui.GUISeparator;
 import kaba4cow.ascii.drawing.gui.GUIText;
 import kaba4cow.ascii.drawing.gui.GUITextField;
 import kaba4cow.warfare.Game;
@@ -11,21 +10,19 @@ public class ConnectState extends State {
 
 	private static final ConnectState instance = new ConnectState();
 
-	private GUIFrame frame;
-	private GUITextField ipTextField;
-	private GUITextField portTextField;
+	private final GUIFrame frame;
+	private final GUITextField ipTextField;
+	private final GUITextField portTextField;
 
 	public ConnectState() {
 		frame = new GUIFrame(Game.GUI_COLOR, false, false).setTitle("Multiplayer");
 
-		new GUISeparator(frame, -1, true);
-
 		new GUIText(frame, -1, "IP");
-		ipTextField = new GUITextField(frame, -1, "");
+		ipTextField = new GUITextField(frame, -1, "localhost");
 		ipTextField.setMaxCharacters(15);
 
 		new GUIText(frame, -1, "Port");
-		portTextField = new GUITextField(frame, -1, "");
+		portTextField = new GUITextField(frame, -1, "6000");
 		portTextField.setMaxCharacters(5);
 
 		new GUIButton(frame, -1, "Connect", f -> {

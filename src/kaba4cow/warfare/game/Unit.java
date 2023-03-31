@@ -6,10 +6,9 @@ import kaba4cow.ascii.toolbox.files.DataFile;
 import kaba4cow.ascii.toolbox.maths.Maths;
 import kaba4cow.ascii.toolbox.maths.vectors.Vector2i;
 import kaba4cow.ascii.toolbox.rng.RNG;
-import kaba4cow.ascii.toolbox.rng.RandomLehmer;
 import kaba4cow.warfare.files.UnitFile;
 import kaba4cow.warfare.files.WeaponFile;
-import kaba4cow.warfare.gui.WeaponFrame;
+import kaba4cow.warfare.gui.game.WeaponFrame;
 import kaba4cow.warfare.pathfinding.AttackPath;
 import kaba4cow.warfare.pathfinding.Node;
 import kaba4cow.warfare.pathfinding.Pathfinder;
@@ -29,6 +28,7 @@ public class Unit {
 
 	private UnitPath path = null;
 	private AttackPath attackPath = null;
+	private long attackSeed;
 	private boolean moving = false;
 
 	private float moveDelayTime;
@@ -43,16 +43,13 @@ public class Unit {
 
 	private WeaponFrame weaponFrame;
 
-	private RandomLehmer rng;
-
-	public Unit(World world, Village village, Player player, UnitFile file, RNG rng) {
+	public Unit(World world, Village village, Player player, UnitFile file) {
 		this.world = world;
 		this.player = player;
 		this.file = file;
-		this.rng = new RandomLehmer(rng.getNext());
 		do {
-			x = rng.nextInt(village.x - village.radius, village.x + village.radius);
-			y = rng.nextInt(village.y - village.radius, village.y + village.radius);
+			x = RNG.randomInt(village.x - 2 * village.radius, village.x + 2 * village.radius);
+			y = RNG.randomInt(village.y - 2 * village.radius, village.y + 2 * village.radius);
 		} while (world.getPenalty(x, y) > 1f || world.isObstacle(x, y));
 
 		this.attacks = new int[file.getWeapons().length];
@@ -66,21 +63,22 @@ public class Unit {
 		onNewTurn();
 
 		this.weaponFrame = new WeaponFrame(this);
+		player.updateVisibility(x, y, getVisibilityRadius());
 	}
 
 	public Unit(World world, Player player, DataFile data) {
 		this.world = world;
 		this.player = player;
-		this.rng = new RandomLehmer(RNG.randomLong());
 
-		String id = data.node("ID").getString();
-		this.file = UnitFile.get(id);
-		this.x = data.node("Position").getInt(0);
-		this.y = data.node("Position").getInt(1);
-		this.health = data.node("Health").getFloat();
-		this.units = data.node("Units").getInt();
-		this.moves = data.node("Moves").getFloat();
-		this.attacks = data.node("Attacks").toIntArray();
+		this.file = UnitFile.get(data.getString(0));
+		this.x = data.getInt(1);
+		this.y = data.getInt(2);
+		this.health = data.getFloat(3);
+		this.units = data.getInt(4);
+		this.moves = data.getFloat(5);
+		this.attacks = new int[file.getWeapons().length];
+		for (int i = 0; i < attacks.length; i++)
+			attacks[i] = data.getInt(6 + i);
 
 		this.currentWeapon = 0;
 		this.moveDelayTime = 0f;
@@ -90,15 +88,14 @@ public class Unit {
 	}
 
 	public void save(DataFile data) {
-		data.node("ID").setString(file.getID());
-		data.node("Position").setInt(x).setInt(y);
-		if (!isDestroyed()) {
-			data.node("Health").setFloat(health);
-			data.node("Units").setInt(units);
-			data.node("Moves").setFloat(moves);
-			for (int i = 0; i < attacks.length; i++)
-				data.node("Attacks").setInt(attacks[i]);
-		}
+		data.clear();
+		data.setString(file.getID());
+		data.setInt(x).setInt(y);
+		data.setFloat(health);
+		data.setInt(units);
+		data.setFloat(moves);
+		for (int i = 0; i < attacks.length; i++)
+			data.setInt(attacks[i]);
 	}
 
 	public void onNewTurn() {
@@ -129,8 +126,9 @@ public class Unit {
 			else {
 				x = nextNode.x;
 				y = nextNode.y;
+				player.updateVisibility(x, y, getVisibilityRadius());
 				moves = Maths.max(moves - nextNode.penalty - 1f, 0f);
-				world.moveUnit(getIndex(), x, y, true);
+				world.moveUnit(player.getIndex(), getIndex(), x, y, true);
 			}
 		}
 
@@ -142,7 +140,7 @@ public class Unit {
 			}
 			if (attackPos >= attackPath.getLength()) {
 				Vector2i pos = attackPath.getNode(attackPos - 1);
-				world.damageUnits(pos.x, pos.y, this, getCurrentWeapon());
+				world.damageUnits(pos.x, pos.y, this, attackSeed, getCurrentWeapon());
 				attackPos = -1;
 				attackPath = null;
 			}
@@ -152,7 +150,7 @@ public class Unit {
 	}
 
 	public void render(int offX, int offY, int color) {
-		if (!world.isVisible(world.getCurrentPlayer(), x, y))
+		if (!world.isVisible(world.getPlayer(), x, y))
 			return;
 
 		if (isDestroyed())
@@ -210,11 +208,11 @@ public class Unit {
 		weaponFrame.render();
 	}
 
-	public void damage(Unit source) {
+	public void damage(Unit source, float chance) {
 		if (isDestroyed())
 			return;
 
-		if (rng.nextFloat(0f, 1f) > source.getCurrentWeapon().getAccuracy()) {
+		if (chance > source.getCurrentWeapon().getAccuracy()) {
 			world.addAction()//
 					.addText("<" + source.getUnitFile().getName() + ">", source.getPlayer().getColor())//
 					.addText(" misses ", -1)//
@@ -287,15 +285,20 @@ public class Unit {
 	}
 
 	public void createAttackPath(int x, int y) {
+		createAttackPath(x, y, RNG.randomLong());
+	}
+
+	public void createAttackPath(int x, int y, long seed) {
 		if (attacks[currentWeapon] <= 0)
 			return;
 		if (attackPath != null) {
 			if (x == attackPath.getEndX() && y == attackPath.getEndY()) {
 				moves = Maths.max(moves - getCurrentWeapon().getPenalty(), 0f);
 				attacks[currentWeapon]--;
+				attackSeed = seed;
 				attackPos = 0;
-				if (player == world.getCurrentPlayer())
-					world.createProjectile(getIndex(), currentWeapon, x, y, true);
+				if (player == world.getPlayer())
+					world.createProjectile(player.getIndex(), getIndex(), currentWeapon, x, y, attackSeed, true);
 			} else
 				attackPath = null;
 			return;
@@ -355,7 +358,7 @@ public class Unit {
 		return file.getArmor();
 	}
 
-	public float getVisibilityRadius() {
+	public int getVisibilityRadius() {
 		return file.getVisibility();
 	}
 

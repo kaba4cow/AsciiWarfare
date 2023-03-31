@@ -13,8 +13,8 @@ public class AIController extends Controller {
 		if (player.getCurrentUnit().isShooting())
 			return;
 
-		if (RNG.chance(0.05f))
-			world.newTurn(player, false);
+		if (RNG.chance(0.1f))
+			world.newTurn(player.getIndex(), false);
 	}
 
 	@Override

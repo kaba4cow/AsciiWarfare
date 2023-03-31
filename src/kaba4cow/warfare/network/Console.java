@@ -69,9 +69,9 @@ public class Console {
 					output.append("Invalid port");
 					return;
 				}
-				float size = 0f;
+				int size = 0;
 				try {
-					size = Float.parseFloat(parameters[1]);
+					size = Integer.parseInt(parameters[1]);
 				} catch (NumberFormatException e) {
 					output.append("Invalid size");
 					return;

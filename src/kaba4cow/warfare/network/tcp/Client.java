@@ -8,6 +8,7 @@ import java.io.OutputStreamWriter;
 import java.net.Socket;
 
 import kaba4cow.ascii.toolbox.Printer;
+import kaba4cow.ascii.toolbox.files.DataFile;
 import kaba4cow.warfare.game.World;
 import kaba4cow.warfare.network.Message;
 import kaba4cow.warfare.states.MultiplayerState;
@@ -26,12 +27,15 @@ public class Client implements Runnable {
 	private final MultiplayerState game;
 	private World world;
 
+	private StringBuilder worldBuilder;
+
 	public Client(MultiplayerState game, String address, int port) throws IOException {
 		game.setClient(this);
 		this.game = game;
 		this.client = new Socket(address, port);
 
 		this.id = -1;
+		this.worldBuilder = null;
 
 		this.reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
 		this.writer = new BufferedWriter(new OutputStreamWriter(client.getOutputStream()));
@@ -45,7 +49,7 @@ public class Client implements Runnable {
 		String message;
 		while (!isClosed()) {
 			try {
-				Thread.sleep(50l);
+				Thread.sleep(10l);
 			} catch (InterruptedException e) {
 			}
 
@@ -55,8 +59,8 @@ public class Client implements Runnable {
 					continue;
 				Printer.println("Received: " + message);
 				if (message.length() > 1) {
-					String[] parameters = message.substring(1).split(",");
-					message = message.substring(0, 1);
+					String[] parameters = Message.getParameters(message);
+					message = Message.getMessage(message);
 					process(message, parameters);
 				} else
 					process(message);
@@ -66,27 +70,43 @@ public class Client implements Runnable {
 	}
 
 	private void process(String message, String... parameters) {
-		if (message.startsWith(Message.CONNECT)) {
+		if (message.equals(Message.CONNECT)) {
 			id = Integer.parseInt(parameters[0]);
-			long seed = Long.parseLong(parameters[1]);
-			float size = Float.parseFloat(parameters[2]);
-			int season = Integer.parseInt(parameters[3]);
-			game.generateWorld(seed, size, season, id);
-		} else if (message.startsWith(Message.DISCONNECT)) {
+		} else if (message.equals(Message.WORLD)) {
+			if (worldBuilder == null) {
+				worldBuilder = new StringBuilder();
+			} else if (parameters[0].equals(Message.EOF)) {
+				DataFile data = Message.decompressData(worldBuilder);
+				game.generateWorld(data, id);
+				worldBuilder = null;
+			} else {
+				worldBuilder.append(parameters[0]);
+			}
+		} else if (message.equals(Message.DISCONNECT)) {
 			close();
-		} else if (message.startsWith(Message.TURN)) {
-			world.newTurn(world.getEnemyPlayer(), false);
-		} else if (message.startsWith(Message.MOVE)) {
-			int index = Integer.parseInt(parameters[0]);
-			int x = Integer.parseInt(parameters[1]);
-			int y = Integer.parseInt(parameters[2]);
-			world.moveUnit(index, x, y, false);
-		} else if (message.startsWith(Message.PROJECTILE)) {
-			int index = Integer.parseInt(parameters[0]);
-			int weapon = Integer.parseInt(parameters[1]);
+		} else if (message.equals(Message.TURN)) {
+			int player = Integer.parseInt(parameters[0]);
+			world.newTurn(player, false);
+		} else if (message.equals(Message.MOVE)) {
+			int player = Integer.parseInt(parameters[0]);
+			int index = Integer.parseInt(parameters[1]);
 			int x = Integer.parseInt(parameters[2]);
 			int y = Integer.parseInt(parameters[3]);
-			world.createProjectile(index, weapon, x, y, false);
+			world.moveUnit(player, index, x, y, false);
+		} else if (message.equals(Message.PROJECTILE)) {
+			int player = Integer.parseInt(parameters[0]);
+			int index = Integer.parseInt(parameters[1]);
+			int weapon = Integer.parseInt(parameters[2]);
+			int x = Integer.parseInt(parameters[3]);
+			int y = Integer.parseInt(parameters[4]);
+			long seed = Long.parseLong(parameters[5]);
+			world.createProjectile(player, index, weapon, x, y, seed, false);
+		} else if (message.equals(Message.UNIT)) {
+			int player = Integer.parseInt(parameters[0]);
+			String unit = parameters[1];
+			int x = Integer.parseInt(parameters[2]);
+			int y = Integer.parseInt(parameters[3]);
+			world.addUnit(player, unit, x, y, false);
 		}
 	}
 

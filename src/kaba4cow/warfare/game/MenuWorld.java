@@ -1,7 +1,6 @@
 package kaba4cow.warfare.game;
 
 import kaba4cow.ascii.core.Display;
-import kaba4cow.ascii.toolbox.Printer;
 import kaba4cow.ascii.toolbox.maths.Maths;
 import kaba4cow.ascii.toolbox.rng.RNG;
 import kaba4cow.warfare.game.world.Generator;
@@ -17,14 +16,13 @@ public class MenuWorld {
 	private final float[][] temperatureMap;
 
 	public MenuWorld() {
-		this.size = 2 * Maths.max(Display.getWidth(), Display.getHeight());
+		this.size = Maths.max(Display.getScreenWidth(), Display.getScreenHeight()) / Display.getGlyphSize();
 		this.terrainMap = new TerrainTile[size][size];
 		this.vegetationMap = new VegetationTile[size][size];
 		this.temperatureMap = new float[size][size];
 
 		long seed = RNG.randomLong();
-		Printer.println("Generating new world [size = " + size + ", seed = " + seed + "]");
-		Generator generator = new Generator(size, RNG.randomInt(0, 4), seed);
+		Generator generator = new Generator(-100, RNG.randomInt(0, 4), size, seed);
 		generator.generate();
 		generator.populate(terrainMap, vegetationMap, temperatureMap);
 	}

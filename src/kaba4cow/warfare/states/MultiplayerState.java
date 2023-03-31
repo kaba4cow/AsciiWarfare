@@ -3,6 +3,7 @@ package kaba4cow.warfare.states;
 import java.io.IOException;
 
 import kaba4cow.ascii.input.Keyboard;
+import kaba4cow.ascii.toolbox.files.DataFile;
 import kaba4cow.warfare.Game;
 import kaba4cow.warfare.game.World;
 import kaba4cow.warfare.network.tcp.Client;
@@ -24,7 +25,7 @@ public class MultiplayerState extends State {
 
 	@Override
 	public void update(float dt) {
-		if (world.isPlayerTurn() && Keyboard.isKeyDown(Keyboard.KEY_ESCAPE))
+		if (!world.inShop() && Keyboard.isKeyDown(Keyboard.KEY_ESCAPE))
 			Game.switchState(MultiplayerPauseState.getInstance());
 
 		world.update(dt);
@@ -41,12 +42,21 @@ public class MultiplayerState extends State {
 		}
 	}
 
-	public void generateWorld(long seed, float size, int season, int id) {
+	public void generateWorld(long seed, int size, int season, int id) {
 		State.thread("Generating", f -> {
 			world = new World(size, season, seed);
 			client.setWorld(world);
 			world.setClient(client);
 			world.setCurrentPlayer(id, false);
+			Game.switchState(instance);
+		});
+	}
+
+	public void generateWorld(DataFile data, int id) {
+		State.thread("Generating", f -> {
+			world = new World(data, id);
+			client.setWorld(world);
+			world.setClient(client);
 			Game.switchState(instance);
 		});
 	}

@@ -39,8 +39,9 @@ public class Generator {
 	private static final int ROAD = 0x03;
 	private static final int HOUSE = 0x04;
 
+	private final int inputSize;
+	private final int inputSeason;
 	private final int size;
-	private final int season;
 
 	private final float[][] biomeMap;
 	private final int[][] terrainMap;
@@ -51,9 +52,10 @@ public class Generator {
 	private final RNG rng;
 	private final Noise noise;
 
-	public Generator(int size, int season, long seed) {
+	public Generator(int inputSize, int inputSeason, int size, long seed) {
+		this.inputSize = inputSize;
+		this.inputSeason = inputSeason;
 		this.size = size;
-		this.season = season;
 		this.rng = new RandomLehmer(seed);
 		this.noise = new Noise(seed);
 		this.biomeMap = new float[size][size];
@@ -128,7 +130,7 @@ public class Generator {
 		final float heightOffset = rng.nextFloat(-1000f, 1000f);
 		final float temperatureOffset = rng.nextFloat(-1000f, 1000f);
 
-		float minTemperature = Maths.limit(0.25f * season + rng.nextFloat(-0.1f, 0.1f));
+		float minTemperature = Maths.limit(0.25f * inputSeason + rng.nextFloat(-0.1f, 0.1f));
 		float maxTemperature = Maths.limit(minTemperature + 0.25f + rng.nextFloat(-0.1f, 0.1f));
 
 		for (y = 0; y < size; y++)
@@ -246,6 +248,8 @@ public class Generator {
 		int maxIterations = 32;
 		int iterations;
 
+		int totalHouses = 0;
+
 		int x, y, ix, iy, w, h;
 		for (int i = 0; i < numHouses; i++) {
 			if (rng.nextBoolean()) {
@@ -278,10 +282,12 @@ public class Generator {
 					break;
 			}
 
-			if (iterations <= maxIterations)
+			if (iterations <= maxIterations) {
+				totalHouses += w * h;
 				for (ix = x; ix < x + w; ix++)
 					for (iy = y; iy < y + h; iy++)
 						houses[ix][iy] = 1;
+			}
 		}
 
 		float pathRadiusSq = VILLAGE_PATH_RADIUS * VILLAGE_PATH_RADIUS;
@@ -299,6 +305,8 @@ public class Generator {
 							houses[ix][iy] = 2;
 					}
 			}
+
+		village.calculateIncome(totalHouses);
 	}
 
 	private int[][] createHouseMap(RNG rng) {
@@ -312,7 +320,9 @@ public class Generator {
 		int maxIterations = 32;
 		int iterations;
 
-		int numVillages = rng.nextInt(4, 7);
+		int numVillages = rng.nextInt(8, 11) + inputSize;
+		if (numVillages <= 0)
+			numVillages = 1;
 		Village village;
 		for (int i = 0; i < numVillages; i++) {
 			radius = rng.nextInt(6, 12);
@@ -324,7 +334,7 @@ public class Generator {
 				boolean blocked = false;
 				for (int j = 0; j < villages.size(); j++) {
 					village = villages.get(j);
-					if (Maths.distSq(x, y, village.x, village.y) < 12f * Maths.sqr(radius + village.radius)) {
+					if (Maths.distSq(x, y, village.x, village.y) < 9f * Maths.sqr(radius + village.radius)) {
 						blocked = true;
 						break;
 					}

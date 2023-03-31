@@ -22,8 +22,9 @@ import kaba4cow.warfare.states.State;
 public class Game implements MainProgram {
 
 	public static final int GUI_COLOR = 0x0009FC;
+	public static final int WORLD_SIZES = 3;
 	public static final int MIN_WORLD_SIZE = 20;
-	public static final int MAX_WORLD_SIZE = 40;
+	public static final int MAX_WORLD_SIZE = 32;
 
 	private boolean showFPS;
 
@@ -71,7 +72,7 @@ public class Game implements MainProgram {
 		Game.state = state;
 	}
 
-	public static void main(String[] args) {
+	public static void loadData() {
 		TableFile data = TableFile.read(new File("DATA"));
 
 		TerrainFile.loadFiles(data.getTable("Terrain"));
@@ -82,10 +83,14 @@ public class Game implements MainProgram {
 		UnitTypeFile.loadFiles(data.getTable("Unit Types"));
 		UnitFile.loadFiles(data.getTable("Units"));
 		BuildingFile.loadFiles(data.getTable("Buildings"));
+	}
 
+	public static void main(String[] args) throws Exception {
+		loadData();
 		Engine.init("Ascii Warfare", 60);
-		Display.createFullscreen();
 		State.init();
+//		Display.createFullscreen();
+		Display.createWindowed(60, 40);
 		Engine.start(new Game());
 	}
 

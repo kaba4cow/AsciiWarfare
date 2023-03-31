@@ -2,7 +2,6 @@ package kaba4cow.warfare.states;
 
 import kaba4cow.ascii.drawing.gui.GUIButton;
 import kaba4cow.ascii.drawing.gui.GUIFrame;
-import kaba4cow.ascii.drawing.gui.GUISeparator;
 import kaba4cow.ascii.input.Keyboard;
 import kaba4cow.warfare.Game;
 
@@ -10,12 +9,10 @@ public class MultiplayerPauseState extends State {
 
 	private static final MultiplayerPauseState instance = new MultiplayerPauseState();
 
-	private GUIFrame frame;
+	private final GUIFrame frame;
 
 	public MultiplayerPauseState() {
 		frame = new GUIFrame(Game.GUI_COLOR, false, false).setTitle("Pause");
-
-		new GUISeparator(frame, -1, true);
 
 		new GUIButton(frame, -1, "Continue", f -> {
 			Game.switchState(MultiplayerState.getInstance());

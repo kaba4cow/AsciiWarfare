@@ -1,4 +1,4 @@
-package kaba4cow.warfare.game.world;
+package kaba4cow.warfare.gui;
 
 import kaba4cow.ascii.drawing.Frame;
 import kaba4cow.ascii.drawing.drawers.Drawer;

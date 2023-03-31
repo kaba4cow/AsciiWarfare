@@ -32,14 +32,19 @@ public class Connection implements Runnable {
 		this.reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
 		this.writer = new BufferedWriter(new OutputStreamWriter(client.getOutputStream()));
 
-		this.thread = new Thread(this, "Client #" + id);
+		this.thread = new Thread(this, "Client:" + id);
 		this.thread.start();
 
 		if (id == -1) {
 			send(Message.DISCONNECT);
 			close();
 		} else {
-			send(Message.CONNECT, id, server.getWorldSeed(), server.getWorldSize(), server.getWorldSeason());
+			send(Message.CONNECT, id);
+			send(Message.WORLD);
+			String[] parts = Message.compressData(server.getWorldData(id));
+			for (int i = 0; i < parts.length; i++)
+				send(Message.WORLD, parts[i]);
+			send(Message.WORLD, Message.EOF);
 		}
 	}
 

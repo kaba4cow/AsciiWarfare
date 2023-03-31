@@ -9,6 +9,7 @@ import kaba4cow.ascii.drawing.drawers.Drawer;
 import kaba4cow.ascii.drawing.glyphs.Glyphs;
 import kaba4cow.ascii.toolbox.files.DataFile;
 import kaba4cow.ascii.toolbox.maths.Maths;
+import kaba4cow.ascii.toolbox.maths.vectors.Vector2i;
 import kaba4cow.ascii.toolbox.rng.RNG;
 import kaba4cow.warfare.files.UnitFile;
 import kaba4cow.warfare.game.controllers.Controller;
@@ -24,41 +25,58 @@ public class Player {
 
 	protected boolean aiming = false;
 
-	private boolean[][] visibility;
+	private int cash;
+	private int income;
+
+	private HashMap<Vector2i, Integer> visibility;
+	private boolean[][] visibilityMap;
+
+	private final int index;
+	private final int village;
 
 	private int color;
 
-	public Player(World world) {
+	public Player(World world, int village, int index) {
 		this.world = world;
+		this.index = index;
+		this.village = village;
 		this.units = new ArrayList<Unit>();
-		this.visibility = new boolean[world.getSize()][world.getSize()];
+		this.visibility = new HashMap<>();
+		this.visibilityMap = new boolean[world.getSize()][world.getSize()];
 		this.currentUnit = 0;
 		this.aiming = false;
+		this.cash = 100;
 		this.color = 0xAAA;
 	}
 
-	public Player(World world, DataFile data) {
-		this(world);
+	public Player(World world, int index, DataFile data) {
+		this(world, data.node("Village").getInt(), index);
 		DataFile node;
 
-		node = data.node("Visibility");
-		for (int i = 0; i < node.objectSize(); i++) {
-			DataFile tile = node.node(i);
-			int x = tile.getInt(0);
-			int y = tile.getInt(1);
-			visibility[x][y] = true;
-		}
+		cash = data.node("Cash").getInt();
 
 		node = data.node("Units");
 		for (int i = 0; i < node.objectSize(); i++) {
 			DataFile unit = node.node(i);
 			units.add(new Unit(world, this, unit));
 		}
+
+		node = data.node("Visibility");
+		for (int i = 0; i < node.objectSize(); i++) {
+			DataFile point = node.node(i);
+			int x = point.getInt(0);
+			int y = point.getInt(1);
+			int radius = point.getInt(2);
+			updateVisibility(x, y, radius);
+		}
 	}
 
 	public void save(DataFile data) {
 		DataFile node;
-		int x, y, index;
+		int index;
+
+		data.node("Village").clear().setInt(village);
+		data.node("Cash").clear().setInt(cash);
 
 		node = data.node("Units").clear();
 		for (index = 0; index < units.size(); index++)
@@ -66,22 +84,25 @@ public class Player {
 
 		node = data.node("Visibility").clear();
 		index = 0;
-		int size = world.getSize();
-		for (y = 0; y < size; y++)
-			for (x = 0; x < size; x++)
-				if (visibility[x][y])
-					node.node(Integer.toString(index++)).setInt(x).setInt(y);
+		for (Vector2i pos : visibility.keySet())
+			node.node(Integer.toString(index++)).setInt(pos.x).setInt(pos.y).setInt(visibility.get(pos));
 	}
 
 	public void setController(Controller controller) {
-		this.controller = controller.setPlayer(world, this);
-		this.color = controller.getColor();
+		if (controller == null) {
+			this.controller = null;
+			this.color = 0xAAA;
+		} else {
+			this.controller = controller.setPlayer(world, this);
+			this.color = controller.getColor();
+		}
 	}
 
-	public void createUnits(Village village, RNG rng) {
+	public void createUnits() {
 		HashMap<String, UnitFile> files = UnitFile.getFiles();
 		for (String file : files.keySet())
-			units.add(new Unit(world, village, this, files.get(file), rng));
+			if (RNG.randomBoolean())
+				units.add(new Unit(world, world.getVillage(village), this, files.get(file)));
 	}
 
 	public void update(float dt) {
@@ -92,26 +113,34 @@ public class Player {
 	}
 
 	public void render(int offX, int offY) {
-		int i, x, y;
-
-		for (i = 0; i < units.size(); i++) {
+		for (int i = 0; i < units.size(); i++) {
 			Unit unit = units.get(i);
 			unit.render(offX, offY, Drawer.IGNORE_BACKGROUND | color);
 
-			int uX = unit.getX();
-			int uY = unit.getY();
-			int unitVisibility = (int) unit.getVisibilityRadius();
-			for (y = uY - unitVisibility; y <= uY + unitVisibility; y++)
-				for (x = uX - unitVisibility; x <= uX + unitVisibility; x++) {
-					if (x < 0 || x >= visibility.length || y < 0 || y >= visibility.length || visibility[x][y])
-						continue;
-					float dist = Maths.dist(uX, uY, x, y);
-					if (dist < unitVisibility)
-						visibility[x][y] = true;
-				}
-
 			if (i == currentUnit)
 				unit.renderPaths(offX, offY);
+		}
+	}
+
+	public void updateVisibility(int x, int y, int radius) {
+		Vector2i pos = new Vector2i(x, y);
+		int prevRadius = 0;
+		if (visibility.containsKey(pos))
+			prevRadius = visibility.get(pos);
+
+		if (radius > prevRadius) {
+			visibility.put(pos, radius);
+
+			int oX, oY;
+			for (oY = y - radius; oY <= y + radius; oY++)
+				for (oX = x - radius; oX <= x + radius; oX++) {
+					if (oX < 0 || oX >= visibilityMap.length || oY < 0 || oY >= visibilityMap.length
+							|| visibilityMap[oX][oY])
+						continue;
+					float dist = Maths.dist(x, y, oX, oY);
+					if (dist < radius)
+						visibilityMap[oX][oY] = true;
+				}
 		}
 	}
 
@@ -165,8 +194,52 @@ public class Player {
 		} while (getCurrentUnit().isDestroyed() && ++killed < units.size());
 	}
 
+	public void addUnit(String id, int x, int y) {
+		Unit unit = new Unit(world, world.getVillage(village), this, UnitFile.get(id));
+		units.add(unit);
+		if (x != -1 && y != -1)
+			unit.setPos(x, y);
+		else
+			world.addUnit(getIndex(), id, unit.getX(), unit.getY(), true);
+	}
+
+	public Player resetIncome() {
+		this.income = 0;
+		return this;
+	}
+
+	public int getIncome() {
+		return income;
+	}
+
+	public void addIncome(int amount) {
+		this.income += amount;
+	}
+
+	public void addIncomeCash() {
+		this.cash += income;
+		world.setCash(getIndex(), cash, true);
+	}
+
+	public void removeCash(int amount) {
+		this.cash -= amount;
+		world.setCash(getIndex(), cash, true);
+	}
+
+	public void setCash(int amount) {
+		this.cash = amount;
+	}
+
+	public int getCash() {
+		return cash;
+	}
+
+	public boolean canAccessShop() {
+		return this == world.getVillage(village).getOccupier(world);
+	}
+
 	public boolean isVisible(int x, int y) {
-		return !true | visibility[x][y]; // TODO
+		return true | visibilityMap[x][y]; // TODO
 	}
 
 	public Unit getUnit(int x, int y) {
@@ -212,6 +285,10 @@ public class Player {
 
 	public int getColor() {
 		return color;
+	}
+
+	public int getIndex() {
+		return index;
 	}
 
 }

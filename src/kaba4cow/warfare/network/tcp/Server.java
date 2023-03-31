@@ -8,7 +8,9 @@ import java.util.Collections;
 import java.util.LinkedList;
 
 import kaba4cow.ascii.toolbox.Printer;
+import kaba4cow.ascii.toolbox.files.DataFile;
 import kaba4cow.ascii.toolbox.rng.RNG;
+import kaba4cow.warfare.game.World;
 import kaba4cow.warfare.network.Message;
 
 public class Server implements Runnable {
@@ -25,16 +27,12 @@ public class Server implements Runnable {
 
 	private Thread thread;
 
-	private final long worldSeed;
-	private final float worldSize;
-	private final int worldSeason;
+	private final World world;
 
-	public Server(int port, float worldSize, int worldSeason) throws IOException {
+	public Server(int port, int worldSize, int worldSeason) throws IOException {
 		this.server = new ServerSocket(port);
 
-		this.worldSeed = RNG.randomLong();
-		this.worldSize = worldSize;
-		this.worldSeason = worldSeason;
+		this.world = new World(worldSize, worldSeason, RNG.randomLong());
 
 		this.clients = new ArrayList<>();
 		this.ids = new LinkedList<>();
@@ -45,14 +43,13 @@ public class Server implements Runnable {
 		this.thread.start();
 	}
 
+	public void update(float dt) {
+		world.update(dt);
+	}
+
 	@Override
 	public void run() {
 		while (!isClosed()) {
-			try {
-				Thread.sleep(50l);
-			} catch (InterruptedException e) {
-			}
-
 			try {
 				Socket socket = server.accept();
 				if (ids.isEmpty()) {
@@ -71,9 +68,47 @@ public class Server implements Runnable {
 	public synchronized void send(Connection sender, String message) {
 		if (message == null)
 			return;
+		Printer.println("Received: " + message);
+		process(message);
 		for (Connection client : clients)
 			if (client != sender)
 				client.send(message);
+	}
+
+	private void process(String message) {
+		if (message.length() <= 1)
+			return;
+		String[] parameters = Message.getParameters(message);
+		message = Message.getMessage(message);
+		if (message.equals(Message.TURN)) {
+			int player = Integer.parseInt(parameters[0]);
+			world.newTurn(player, false);
+		} else if (message.equals(Message.MOVE)) {
+			int player = Integer.parseInt(parameters[0]);
+			int index = Integer.parseInt(parameters[1]);
+			int x = Integer.parseInt(parameters[2]);
+			int y = Integer.parseInt(parameters[3]);
+			world.moveUnit(player, index, x, y, false);
+		} else if (message.equals(Message.PROJECTILE)) {
+			int player = Integer.parseInt(parameters[0]);
+			int index = Integer.parseInt(parameters[1]);
+			int weapon = Integer.parseInt(parameters[2]);
+			int x = Integer.parseInt(parameters[3]);
+			int y = Integer.parseInt(parameters[4]);
+			long seed = Long.parseLong(parameters[5]);
+			world.createProjectile(player, index, weapon, x, y, seed, false);
+		} else if (message.equals(Message.CASH)) {
+			int player = Integer.parseInt(parameters[0]);
+			int cash = Integer.parseInt(parameters[1]);
+			world.getPlayer(player).setCash(cash);
+		} else if (message.equals(Message.UNIT)) {
+			int player = Integer.parseInt(parameters[0]);
+			String unit = parameters[1];
+			int x = Integer.parseInt(parameters[2]);
+			int y = Integer.parseInt(parameters[3]);
+			if (x != -1 && y != -1)
+				world.addUnit(player, unit, x, y, false);
+		}
 	}
 
 	public ArrayList<Connection> getClients() {
@@ -103,16 +138,11 @@ public class Server implements Runnable {
 		}
 	}
 
-	public long getWorldSeed() {
-		return worldSeed;
-	}
-
-	public float getWorldSize() {
-		return worldSize;
-	}
-
-	public int getWorldSeason() {
-		return worldSeason;
+	public DataFile getWorldData(int id) {
+		DataFile data = world.getDataFile();
+		world.setCurrentPlayer(id);
+//		data.node("Turn").setInt(1 - world.getTurnPlayer(), 1);
+		return data;
 	}
 
 	public synchronized boolean isClosed() {

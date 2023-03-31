@@ -6,6 +6,7 @@ import kaba4cow.ascii.drawing.gui.GUIRadioButton;
 import kaba4cow.ascii.drawing.gui.GUIRadioPanel;
 import kaba4cow.ascii.drawing.gui.GUISeparator;
 import kaba4cow.warfare.Game;
+import kaba4cow.warfare.Settings;
 
 public class GenerateState extends State {
 
@@ -22,6 +23,7 @@ public class GenerateState extends State {
 		new GUIRadioButton(sizePanel, -1, "Small");
 		new GUIRadioButton(sizePanel, -1, "Medium");
 		new GUIRadioButton(sizePanel, -1, "Large");
+		sizePanel.setIndex(Settings.getWorldSize());
 
 		new GUISeparator(frame, -1, true);
 
@@ -30,10 +32,12 @@ public class GenerateState extends State {
 		new GUIRadioButton(seasonPanel, -1, "Autumn");
 		new GUIRadioButton(seasonPanel, -1, "Spring");
 		new GUIRadioButton(seasonPanel, -1, "Summer");
+		seasonPanel.setIndex(Settings.getWorldSeason());
 
 		new GUISeparator(frame, -1, true);
 
 		new GUIButton(frame, -1, "Start", f -> {
+			Settings.setWorldInfo(sizePanel.getIndex(), seasonPanel.getIndex());
 			SingleplayerState.getInstance().generateWorld(sizePanel.getIndex(), seasonPanel.getIndex());
 		});
 

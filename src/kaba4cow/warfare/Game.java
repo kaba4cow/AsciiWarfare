@@ -21,6 +21,9 @@ import kaba4cow.warfare.states.State;
 
 public class Game implements MainProgram {
 
+	private static final int DEFAULT_WIDTH = 65;
+	private static final int DEFAULT_HEIGHT = 40;
+
 	public static final int GUI_COLOR = 0x0009FC;
 	public static final int WORLD_SIZES = 3;
 	public static final int MIN_WORLD_SIZE = 20;
@@ -42,11 +45,13 @@ public class Game implements MainProgram {
 
 	@Override
 	public void update(float dt) {
-		if (Keyboard.isKeyDown(Keyboard.KEY_F) && Keyboard.isKey(Keyboard.KEY_CONTROL_LEFT))
+		if (Keyboard.isKeyDown(Keyboard.KEY_F) && Keyboard.isKey(Keyboard.KEY_CONTROL_LEFT)) {
 			if (Display.isFullscreen())
-				Display.createWindowed(60, 40);
+				Display.createWindowed(DEFAULT_WIDTH, DEFAULT_HEIGHT);
 			else
 				Display.createFullscreen();
+			Settings.setFullscreen(Display.isFullscreen());
+		}
 
 		if (Keyboard.isKeyDown(Keyboard.KEY_F3))
 			showFPS = !showFPS;
@@ -68,6 +73,11 @@ public class Game implements MainProgram {
 			Drawer.drawString(0, 0, false, "FPS: " + Engine.getCurrentFramerate(), GUI_COLOR);
 	}
 
+	@Override
+	public void onClose() {
+		Settings.save();
+	}
+
 	public static void switchState(State state) {
 		Game.state = state;
 	}
@@ -86,11 +96,14 @@ public class Game implements MainProgram {
 	}
 
 	public static void main(String[] args) throws Exception {
+		Settings.init();
 		loadData();
 		Engine.init("Ascii Warfare", 60);
 		State.init();
-//		Display.createFullscreen();
-		Display.createWindowed(60, 40);
+		if (Settings.isFullscreen())
+			Display.createFullscreen();
+		else
+			Display.createWindowed(DEFAULT_WIDTH, DEFAULT_HEIGHT);
 		Engine.start(new Game());
 	}
 

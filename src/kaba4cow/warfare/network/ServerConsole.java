@@ -145,14 +145,9 @@ public class ServerConsole implements MainProgram {
 
 	public static void main(String[] args) {
 		Game.loadData();
-//		Engine.init("Ascii Warfare Server", 60);
-//		Display.createWindowed(50, 40);
-//		Engine.start(new ServerConsole());
-		try {
-			new Server(6000, 0, 2);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		Engine.init("Ascii Warfare Server", 60);
+		Display.createWindowed(60, 40);
+		Engine.start(new ServerConsole());
 	}
 
 }

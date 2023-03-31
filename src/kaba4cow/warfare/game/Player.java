@@ -16,14 +16,14 @@ import kaba4cow.warfare.game.controllers.Controller;
 
 public class Player {
 
-	protected final World world;
+	private final World world;
 
-	protected Controller controller;
+	private Controller controller;
 
-	protected ArrayList<Unit> units;
-	protected int currentUnit;
+	private ArrayList<Unit> units;
+	private int currentUnit;
 
-	protected boolean aiming = false;
+	private boolean aiming = false;
 
 	private int cash;
 	private int income;
@@ -239,7 +239,7 @@ public class Player {
 	}
 
 	public boolean isVisible(int x, int y) {
-		return true | visibilityMap[x][y]; // TODO
+		return !true | visibilityMap[x][y]; // TODO
 	}
 
 	public Unit getUnit(int x, int y) {

@@ -1,21 +1,11 @@
 package kaba4cow.warfare;
 
-import java.io.File;
-
 import kaba4cow.ascii.MainProgram;
 import kaba4cow.ascii.core.Display;
 import kaba4cow.ascii.core.Engine;
 import kaba4cow.ascii.drawing.drawers.Drawer;
 import kaba4cow.ascii.input.Keyboard;
-import kaba4cow.ascii.toolbox.files.TableFile;
-import kaba4cow.warfare.files.BiomeFile;
-import kaba4cow.warfare.files.BuildingFile;
-import kaba4cow.warfare.files.TerrainFile;
-import kaba4cow.warfare.files.UnitFile;
-import kaba4cow.warfare.files.UnitTypeFile;
-import kaba4cow.warfare.files.VegetationFile;
-import kaba4cow.warfare.files.WeaponFile;
-import kaba4cow.warfare.files.WeaponTypeFile;
+import kaba4cow.warfare.files.GameFiles;
 import kaba4cow.warfare.states.MenuState;
 import kaba4cow.warfare.states.State;
 
@@ -82,22 +72,9 @@ public class Game implements MainProgram {
 		Game.state = state;
 	}
 
-	public static void loadData() {
-		TableFile data = TableFile.read(new File("DATA"));
-
-		TerrainFile.loadFiles(data.getTable("Terrain"));
-		VegetationFile.loadFiles(data.getTable("Vegetation"));
-		BiomeFile.loadFiles(data.getTable("Biomes"));
-		WeaponTypeFile.loadFiles(data.getTable("Weapon Types"));
-		WeaponFile.loadFiles(data.getTable("Weapons"));
-		UnitTypeFile.loadFiles(data.getTable("Unit Types"));
-		UnitFile.loadFiles(data.getTable("Units"));
-		BuildingFile.loadFiles(data.getTable("Buildings"));
-	}
-
 	public static void main(String[] args) throws Exception {
 		Settings.init();
-		loadData();
+		GameFiles.init();
 		Engine.init("Ascii Warfare", 60);
 		State.init();
 		if (Settings.isFullscreen())

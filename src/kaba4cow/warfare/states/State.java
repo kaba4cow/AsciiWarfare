@@ -21,6 +21,8 @@ public abstract class State {
 	private static boolean waiting;
 	protected static GUIFrame progressBar;
 
+	private static int titleWidth;
+
 	public State() {
 
 	}
@@ -37,12 +39,13 @@ public abstract class State {
 		new GUIProgressBar(progressBar, -1, (Void) -> {
 			return PROGRESS;
 		});
+
+		titleWidth = Drawer.totalWidth(Display.getTitle());
 	}
 
 	protected static void renderTitle() {
 		menuWorld.render();
-		int width = Drawer.totalWidth(Display.getTitle());
-		int pos = (int) (8f * Engine.getElapsedTime()) % (Display.getWidth() + width);
+		int pos = (int) (12f * Engine.getElapsedTime()) % (Display.getWidth() + titleWidth);
 		Drawer.drawBigString(Display.getWidth() - pos, 0, false, Display.getTitle(), Glyphs.LIGHT_SHADE,
 				Game.GUI_COLOR);
 	}

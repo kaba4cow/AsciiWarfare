@@ -28,6 +28,7 @@ import kaba4cow.warfare.game.world.VegetationTile;
 import kaba4cow.warfare.gui.Viewport;
 import kaba4cow.warfare.gui.game.ActionFrame;
 import kaba4cow.warfare.gui.game.CurrentUnitFrame;
+import kaba4cow.warfare.gui.game.GameOverFrame;
 import kaba4cow.warfare.gui.game.InfoFrame;
 import kaba4cow.warfare.gui.game.SelectedUnitFrame;
 import kaba4cow.warfare.gui.shop.ShopFrame;
@@ -60,6 +61,7 @@ public class World {
 	private SelectedUnitFrame selectedUnitFrame;
 	private InfoFrame worldFrame;
 	private ActionFrame actionFrame;
+	private GameOverFrame gameOverFrame;
 
 	private ShopFrame shopFrame;
 	private boolean shop;
@@ -208,8 +210,9 @@ public class World {
 
 	public void setCurrentPlayer(int currentPlayer, boolean ai) {
 		this.currentPlayer = currentPlayer;
-		getPlayer(currentPlayer).setController(new PlayerController());
-		setCameraTarget(getPlayer(currentPlayer).getCurrentUnit());
+		getPlayer().setController(new PlayerController());
+		if (getPlayer().hasUnits())
+			setCameraTarget(getPlayer().getCurrentUnit());
 		Controller enemyController = ai ? new AIController() : new ClientController();
 		getPlayer(1 - currentPlayer).setController(enemyController);
 	}
@@ -270,8 +273,8 @@ public class World {
 		shopFrame = new ShopFrame(getPlayer());
 	}
 
-	public boolean inShop() {
-		return shop;
+	public boolean canExit() {
+		return !shop && gameOverFrame == null;
 	}
 
 	private void createViewport() {
@@ -280,6 +283,18 @@ public class World {
 	}
 
 	public void update(float dt) {
+		if (!isGameOver())
+			for (int i = 0; i < players.size(); i++)
+				if (!players.get(i).hasUnits()) {
+					gameOverFrame = new GameOverFrame(this, players.get(1 - i), getPlayer());
+					getPlayer().setAiming(false);
+					break;
+				}
+		if (isGameOver()) {
+			gameOverFrame.update();
+			return;
+		}
+
 		if (!shop && Keyboard.isKeyDown(Keyboard.KEY_R) && getPlayer().canAccessShop())
 			openShop();
 		else if (shop && Keyboard.isKeyDown(Keyboard.KEY_ESCAPE) && shopFrame.canExit())
@@ -349,12 +364,15 @@ public class World {
 		else
 			worldFrame.render(this);
 		actionFrame.render();
-		if (player.isAiming())
+		if (player.isAiming() && player.hasUnits())
 			player.getCurrentUnit().renderWeaponFrame();
+
+		if (isGameOver())
+			gameOverFrame.render();
 
 		if (!camera.isMouseInViewport())
 			Display.setDrawCursor(true);
-		Display.setCursorWaiting(!isPlayerTurn());
+		Display.setCursorWaiting(!isPlayerTurn() && gameOverFrame == null);
 	}
 
 	public Unit getUnit(int x, int y) {
@@ -431,6 +449,15 @@ public class World {
 				client.send(Message.UNIT, player, unit, x, y);
 		} else
 			getPlayer(player).addUnit(unit, x, y);
+	}
+
+	public void setStats(int player, int cashEarned, int cashSpent, int unitsHired, int unitsLost, int unitsKilled,
+			boolean send) {
+		if (send) {
+			if (client != null)
+				client.send(Message.STATS, player, cashEarned, cashSpent, unitsHired, unitsLost, unitsKilled);
+		} else
+			getPlayer(player).setStats(cashEarned, cashSpent, unitsHired, unitsLost, unitsKilled);
 	}
 
 	public void damageUnits(int x, int y, Unit source, long seed, WeaponFile weapon) {
@@ -563,6 +590,10 @@ public class World {
 		return getPlayer(currentPlayer);
 	}
 
+	public Client getClient() {
+		return client;
+	}
+
 	public void setClient(Client client) {
 		this.client = client;
 	}
@@ -601,6 +632,10 @@ public class World {
 
 	public int getWorldHour() {
 		return turn % 24;
+	}
+
+	public boolean isGameOver() {
+		return gameOverFrame != null;
 	}
 
 }

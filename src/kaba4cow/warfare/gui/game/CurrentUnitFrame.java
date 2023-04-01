@@ -40,16 +40,18 @@ public class CurrentUnitFrame extends GUIFrame {
 	}
 
 	public void render(Unit unit) {
-		name.setText("Name: " + unit.getUnitFile().getName());
-		type.setText("Type: " + unit.getUnitFile().getType());
+		if (unit != null) {
+			name.setText("Name: " + unit.getUnitFile().getName());
+			type.setText("Type: " + unit.getUnitFile().getType());
 
-		amount.setText("Amount: " + unit.getUnits() + " / " + unit.getMaxUnits());
-		moves.setText("Moves: " + (int) unit.getMoves() + " / " + (int) unit.getMaxMoves());
+			amount.setText("Amount: " + unit.getUnits() + " / " + unit.getMaxUnits());
+			moves.setText("Moves: " + (int) unit.getMoves() + " / " + (int) unit.getMaxMoves());
 
-		health.setText("Health: " + (int) unit.getHealth() + " / " + (int) unit.getMaxHealth());
-		armor.setText("Armor: " + (int) unit.getArmor());
+			health.setText("Health: " + (int) unit.getHealth() + " / " + (int) unit.getMaxHealth());
+			armor.setText("Armor: " + (int) unit.getArmor());
 
-		visibility.setText("Visibility: " + (int) unit.getVisibilityRadius());
+			visibility.setText("Visibility: " + (int) unit.getVisibilityRadius());
+		}
 
 		super.render(0, 0, Display.getWidth() / 4, Display.getHeight() / 2, false);
 	}

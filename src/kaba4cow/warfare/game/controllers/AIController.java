@@ -10,9 +10,6 @@ public class AIController extends Controller {
 
 	@Override
 	public void update(float dt) {
-		if (player.getCurrentUnit().isShooting())
-			return;
-
 		if (RNG.chance(0.1f))
 			world.newTurn(player.getIndex(), false);
 	}

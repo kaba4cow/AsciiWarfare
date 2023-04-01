@@ -16,6 +16,7 @@ import kaba4cow.ascii.drawing.gui.GUITextField;
 import kaba4cow.ascii.input.Keyboard;
 import kaba4cow.ascii.input.Mouse;
 import kaba4cow.warfare.Game;
+import kaba4cow.warfare.files.GameFiles;
 import kaba4cow.warfare.network.tcp.Server;
 
 public class ServerConsole implements MainProgram {
@@ -189,7 +190,7 @@ public class ServerConsole implements MainProgram {
 	}
 
 	public static void main(String[] args) {
-		Game.loadData();
+		GameFiles.init();
 		Engine.init("Ascii Warfare Server", 60);
 		Display.createWindowed(70, 30);
 		Engine.start(new ServerConsole());

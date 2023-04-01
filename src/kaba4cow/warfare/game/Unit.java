@@ -257,8 +257,10 @@ public class Unit {
 		units = maxUnits;
 		health = remainingHealth;
 
-		if (isDestroyed())
+		if (isDestroyed()) {
 			player.removeDestroyedUnits();
+			source.getPlayer().onUnitKilled();
+		}
 	}
 
 	public void createPath(int x, int y) {

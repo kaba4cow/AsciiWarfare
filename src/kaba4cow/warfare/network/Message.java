@@ -17,6 +17,7 @@ public class Message {
 	public static final String MOVE = "m";
 	public static final String CASH = "c";
 	public static final String UNIT = "u";
+	public static final String STATS = "s";
 
 	public static final String EOF = "/EOF/";
 

@@ -107,6 +107,14 @@ public class Client implements Runnable {
 			int x = Integer.parseInt(parameters[2]);
 			int y = Integer.parseInt(parameters[3]);
 			world.addUnit(player, unit, x, y, false);
+		} else if (message.equals(Message.STATS)) {
+			int player = Integer.parseInt(parameters[0]);
+			int cashEarned = Integer.parseInt(parameters[1]);
+			int cashSpent = Integer.parseInt(parameters[2]);
+			int unitsHired = Integer.parseInt(parameters[3]);
+			int unitsLost = Integer.parseInt(parameters[4]);
+			int unitsKilled = Integer.parseInt(parameters[5]);
+			world.setStats(player, cashEarned, cashSpent, unitsHired, unitsLost, unitsKilled, false);
 		}
 	}
 

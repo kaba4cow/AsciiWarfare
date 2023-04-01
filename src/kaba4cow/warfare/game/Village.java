@@ -44,6 +44,8 @@ public class Village {
 	}
 
 	private boolean inVillage(Player player) {
+		if (!player.hasUnits())
+			return false;
 		ArrayList<Unit> units = player.getUnits();
 		float maxDistSq = radius * radius;
 		float distSq;

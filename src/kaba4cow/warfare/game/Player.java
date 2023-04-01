@@ -10,7 +10,6 @@ import kaba4cow.ascii.drawing.glyphs.Glyphs;
 import kaba4cow.ascii.toolbox.files.DataFile;
 import kaba4cow.ascii.toolbox.maths.Maths;
 import kaba4cow.ascii.toolbox.maths.vectors.Vector2i;
-import kaba4cow.ascii.toolbox.rng.RNG;
 import kaba4cow.warfare.files.UnitFile;
 import kaba4cow.warfare.game.controllers.Controller;
 
@@ -36,6 +35,12 @@ public class Player {
 
 	private int color;
 
+	private int unitsHired;
+	private int unitsLost;
+	private int unitsKilled;
+	private int cashEarned;
+	private int cashSpent;
+
 	public Player(World world, int village, int index) {
 		this.world = world;
 		this.index = index;
@@ -54,6 +59,12 @@ public class Player {
 		DataFile node;
 
 		cash = data.node("Cash").getInt();
+
+		unitsHired = data.node("Stats").getInt(0);
+		unitsLost = data.node("Stats").getInt(1);
+		unitsKilled = data.node("Stats").getInt(2);
+		cashEarned = data.node("Stats").getInt(3);
+		cashSpent = data.node("Stats").getInt(4);
 
 		node = data.node("Units");
 		for (int i = 0; i < node.objectSize(); i++) {
@@ -78,6 +89,9 @@ public class Player {
 		data.node("Village").clear().setInt(village);
 		data.node("Cash").clear().setInt(cash);
 
+		data.node("Stats").setInt(unitsHired).setInt(unitsLost).setInt(unitsKilled).setInt(cashEarned)
+				.setInt(cashSpent);
+
 		node = data.node("Units").clear();
 		for (index = 0; index < units.size(); index++)
 			units.get(index).save(node.node(Integer.toString(index)));
@@ -100,9 +114,10 @@ public class Player {
 
 	public void createUnits() {
 		HashMap<String, UnitFile> files = UnitFile.getFiles();
-		for (String file : files.keySet())
-			if (RNG.randomBoolean())
-				units.add(new Unit(world, world.getVillage(village), this, files.get(file)));
+		for (String file : files.keySet()) {
+			units.add(new Unit(world, world.getVillage(village), this, files.get(file)));
+			break;
+		}
 	}
 
 	public void update(float dt) {
@@ -143,12 +158,12 @@ public class Player {
 	}
 
 	public void updateController(float dt) {
-		if (controller != null)
+		if (controller != null && hasUnits() && !getCurrentUnit().isShooting())
 			controller.update(dt);
 	}
 
 	public void renderController(int offX, int offY) {
-		if (controller != null)
+		if (controller != null && hasUnits() && !getCurrentUnit().isShooting())
 			controller.render(offX, offY);
 	}
 
@@ -173,12 +188,13 @@ public class Player {
 	}
 
 	public void onNewTurn() {
+		world.setStats(getIndex(), cashEarned, cashSpent, unitsHired, unitsLost, unitsKilled, true);
 		for (Unit unit : units)
 			unit.onNewTurn();
 	}
 
 	public void prevUnit() {
-		if (units.isEmpty())
+		if (!hasUnits())
 			return;
 		currentUnit--;
 		if (currentUnit < 0)
@@ -186,7 +202,7 @@ public class Player {
 	}
 
 	public void nextUnit() {
-		if (units.isEmpty())
+		if (!hasUnits())
 			return;
 		currentUnit++;
 		if (currentUnit >= units.size())
@@ -200,6 +216,7 @@ public class Player {
 		for (int i = units.size() - 1; i >= 0; i--) {
 			Unit unit = units.get(i);
 			if (unit.isDestroyed()) {
+				unitsLost++;
 				units.remove(i);
 				if (i == currentUnit)
 					nextUnit();
@@ -226,10 +243,19 @@ public class Player {
 	public void addUnit(String id, int x, int y) {
 		Unit unit = new Unit(world, world.getVillage(village), this, UnitFile.get(id));
 		units.add(unit);
+		unitsHired++;
 		if (x != -1 && y != -1)
 			unit.setPos(x, y);
 		else
 			world.addUnit(getIndex(), id, unit.getX(), unit.getY(), true);
+	}
+
+	public void setStats(int cashEarned, int cashSpent, int unitsHired, int unitsLost, int unitsKilled) {
+		this.cashEarned = cashEarned;
+		this.cashSpent = cashSpent;
+		this.unitsHired = unitsHired;
+		this.unitsLost = unitsLost;
+		this.unitsKilled = unitsKilled;
 	}
 
 	public Player resetIncome() {
@@ -247,11 +273,13 @@ public class Player {
 
 	public void addIncomeCash() {
 		this.cash += income;
+		cashEarned += income;
 		world.setCash(getIndex(), cash, true);
 	}
 
 	public void removeCash(int amount) {
 		this.cash -= amount;
+		cashSpent -= amount;
 		world.setCash(getIndex(), cash, true);
 	}
 
@@ -263,12 +291,16 @@ public class Player {
 		return cash;
 	}
 
+	public boolean hasUnits() {
+		return !units.isEmpty();
+	}
+
 	public boolean canAccessShop() {
 		return this == world.getVillage(village).getOccupier(world);
 	}
 
 	public boolean isVisible(int x, int y) {
-		return !true | visibilityMap[x][y]; // TODO
+		return true | visibilityMap[x][y]; // TODO
 	}
 
 	public Unit getUnit(int x, int y) {
@@ -297,11 +329,17 @@ public class Player {
 	}
 
 	public Unit getCurrentUnit() {
+		if (!hasUnits())
+			return null;
 		return units.get(currentUnit);
 	}
 
 	public void setCurrentUnit(int currentUnit) {
 		this.currentUnit = currentUnit;
+	}
+
+	public void onUnitKilled() {
+		unitsKilled++;
 	}
 
 	public boolean isAiming() {
@@ -318,6 +356,36 @@ public class Player {
 
 	public int getIndex() {
 		return index;
+	}
+
+	public int getUnitsHired() {
+		return unitsHired;
+	}
+
+	public int getUnitsLost() {
+		return unitsLost;
+	}
+
+	public int getUnitsKilled() {
+		return unitsKilled;
+	}
+
+	public int getCashEarned() {
+		return cashEarned;
+	}
+
+	public int getCashSpent() {
+		return cashSpent;
+	}
+
+	public float getMapUncovered() {
+		int uncovered = 0;
+		for (int y = 0; y < visibilityMap.length; y++)
+			for (int x = 0; x < visibilityMap.length; x++)
+				if (visibilityMap[x][y])
+					uncovered++;
+		int total = visibilityMap.length * visibilityMap.length;
+		return (float) uncovered / (float) total;
 	}
 
 }

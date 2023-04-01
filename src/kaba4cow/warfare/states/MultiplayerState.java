@@ -25,7 +25,7 @@ public class MultiplayerState extends State {
 
 	@Override
 	public void update(float dt) {
-		if (!world.inShop() && Keyboard.isKeyDown(Keyboard.KEY_ESCAPE))
+		if (world.canExit() && Keyboard.isKeyDown(Keyboard.KEY_ESCAPE))
 			Game.switchState(MultiplayerPauseState.getInstance());
 
 		world.update(dt);
@@ -35,7 +35,7 @@ public class MultiplayerState extends State {
 	public void render() {
 		world.render();
 
-		if (!world.isPlayerTurn()) {
+		if (!world.isPlayerTurn() && !world.isGameOver()) {
 			PROGRESS = 0f;
 			progressBar.setTitle("Waiting for Player " + (world.getTurnPlayer() + 1));
 			State.renderProgressBar();

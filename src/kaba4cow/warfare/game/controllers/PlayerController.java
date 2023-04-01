@@ -13,9 +13,6 @@ public class PlayerController extends Controller {
 
 	@Override
 	public void update(float dt) {
-		if (player.getCurrentUnit().isShooting())
-			return;
-
 		Camera camera = world.getCamera();
 		int mX = camera.getMouseX();
 		int mY = camera.getMouseY();

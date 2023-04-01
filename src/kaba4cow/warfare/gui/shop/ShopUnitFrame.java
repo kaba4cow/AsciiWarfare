@@ -27,7 +27,7 @@ public class ShopUnitFrame extends GUIFrame {
 		new GUISeparator(this, -1, false);
 
 		new GUIText(this, -1, "Name: " + unit.getName());
-		new GUIText(this, -1, "Type: " + unit.getType());
+		new GUIText(this, -1, "Type: " + unit.getTypeName());
 		new GUISeparator(this, -1, true);
 
 		new GUIText(this, -1, "Amount: " + unit.getMaxUnits());

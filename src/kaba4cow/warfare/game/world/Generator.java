@@ -6,6 +6,7 @@ import java.util.Stack;
 import kaba4cow.ascii.toolbox.maths.Easing;
 import kaba4cow.ascii.toolbox.maths.Maths;
 import kaba4cow.ascii.toolbox.maths.vectors.Vector2f;
+import kaba4cow.ascii.toolbox.maths.vectors.Vector2i;
 import kaba4cow.ascii.toolbox.maths.vectors.Vectors;
 import kaba4cow.ascii.toolbox.noise.Noise;
 import kaba4cow.ascii.toolbox.rng.RNG;
@@ -15,6 +16,7 @@ import kaba4cow.warfare.files.BuildingFile;
 import kaba4cow.warfare.files.TerrainFile;
 import kaba4cow.warfare.files.VegetationFile;
 import kaba4cow.warfare.game.Village;
+import kaba4cow.warfare.states.State;
 
 public class Generator {
 
@@ -24,9 +26,7 @@ public class Generator {
 	private static final int PATH_RADIUS = 3;
 	private static final int VILLAGE_PATH_RADIUS = 4;
 
-	private static final float BIOME_FREQ = 0.007f;
 	private static final float PATH_FREQ = 0.058f;
-	private static final float HEIGHT_FREQ = 0.084f;
 	private static final float RIVER_FREQ = 0.015f;
 	private static final float TEMPERATURE_FREQ = 0.012f;
 
@@ -43,10 +43,11 @@ public class Generator {
 	private final int inputSeason;
 	private final int size;
 
-	private final float[][] biomeMap;
-	private final int[][] terrainMap;
-	private final float[][] heightMap;
-	private final float[][] temperatureMap;
+	private final int[][] biomeIndexMap;
+	private final int[][] terrainTypeMap;
+	private final int[][] terrainIndexMap;
+	private final int[][] vegetationIndexMap;
+	private final float[][] temperatureValueMap;
 	private final ArrayList<Village> villages;
 
 	private final RNG rng;
@@ -58,59 +59,53 @@ public class Generator {
 		this.size = size;
 		this.rng = new RandomLehmer(seed);
 		this.noise = new Noise(seed);
-		this.biomeMap = new float[size][size];
-		this.terrainMap = new int[size][size];
-		this.heightMap = new float[size][size];
-		this.temperatureMap = new float[size][size];
+		this.biomeIndexMap = new int[size][size];
+		this.terrainTypeMap = new int[size][size];
+		this.terrainIndexMap = new int[size][size];
+		this.vegetationIndexMap = new int[size][size];
+		this.temperatureValueMap = new float[size][size];
 		this.villages = new ArrayList<>();
 	}
 
 	public ArrayList<Village> populate(TerrainTile[][] terrainMap, VegetationTile[][] vegetationMap,
 			float[][] temperatureMap) {
-		ArrayList<BiomeFile> biomes = BiomeFile.getBiomes(rng);
+		ArrayList<BiomeFile> biomes = BiomeFile.getBiomes();
 
-		for (int y = 0; y < size; y++)
-			for (int x = 0; x < size; x++) {
-				float biomeIndex = this.biomeMap[x][y];
-				BiomeFile biome = BiomeFile.getRiver();
-				if (biomeIndex >= 0f) {
-					int index = (int) (biomeIndex * biomes.size()) % biomes.size();
-					biome = biomes.get(index);
-				}
+		int x, y, terrainType, biomeIndex, terrainIndex, vegetationIndex;
+		float temperature;
+
+		for (y = 0; y < size; y++)
+			for (x = 0; x < size; x++) {
+				biomeIndex = biomeIndexMap[x][y] % biomes.size();
+				BiomeFile biome = biomeIndex == -1 ? BiomeFile.getRiver() : biomes.get(biomeIndex);
 
 				String[] terrainTiles = biome.getTerrain();
 				String[] vegetationTiles = biome.getVegetation();
 
-				int terrain = this.terrainMap[x][y];
+				terrainType = terrainTypeMap[x][y];
 				TerrainFile terrainFile;
 				VegetationFile vegetationFile;
-				if (terrain == RIVER || biomeIndex < 0f) {
+				if (terrainType == RIVER || biomeIndexMap[x][y] == -1 || terrainIndexMap[x][y] == -1) {
 					terrainFile = TerrainFile.getWater();
 					vegetationFile = null;
-				} else if (terrain == ROAD) {
+				} else if (terrainType == ROAD) {
 					terrainFile = TerrainFile.getRoad();
 					vegetationFile = null;
-				} else if (terrain == HOUSE) {
+				} else if (terrainType == HOUSE) {
 					terrainFile = TerrainFile.getRuins();
 					vegetationFile = VegetationFile.getBuilding();
 				} else {
-					float normIndex = Maths.bias(this.heightMap[x][y], biome.getTerrainBias());
-					int terrainIndex = (int) Maths.mapLimit(normIndex, 0f, 1f, 0, terrainTiles.length);
-					if (terrainIndex >= terrainTiles.length)
-						terrainIndex--;
+					terrainIndex = (terrainIndexMap[x][y] + biomeIndex) % terrainTiles.length;
 					terrainFile = TerrainFile.get(terrainTiles[terrainIndex]);
-					if (terrain == VEGETATION && vegetationTiles.length > 0
+					if (terrainType == VEGETATION && vegetationTiles.length > 0
 							&& rng.nextFloat(0f, 1f) < biome.getVegetationDensity()) {
-						normIndex = 1f - this.heightMap[x][y];
-						int vegetationIndex = (int) Maths.mapLimit(normIndex, 0f, 1f, 0, vegetationTiles.length);
-						if (vegetationIndex >= vegetationTiles.length)
-							vegetationIndex--;
+						vegetationIndex = (vegetationIndexMap[x][y] + terrainIndex) % vegetationTiles.length;
 						vegetationFile = VegetationFile.get(vegetationTiles[vegetationIndex]);
 					} else
 						vegetationFile = null;
 				}
-				temperatureMap[x][y] = this.temperatureMap[x][y];
-				float temperature = this.temperatureMap[x][y];
+				temperature = temperatureValueMap[x][y];
+				temperatureMap[x][y] = temperature;
 				terrainMap[x][y] = new TerrainTile(terrainFile, biome, temperature);
 				if (vegetationFile == null || vegetationFile.isDestroyed(temperature))
 					vegetationMap[x][y] = null;
@@ -118,16 +113,16 @@ public class Generator {
 					vegetationMap[x][y] = new VegetationTile(vegetationFile, temperature);
 			}
 
+		State.PROGRESS = 0.5f;
+
 		return villages;
 	}
 
 	public void generate() {
 		int x, y, ix, iy;
 
-		final float biomeOffset = rng.nextFloat(-1000f, 1000f);
 		final float pathOffset = rng.nextFloat(-1000f, 1000f);
 		final float riverOffset = rng.nextFloat(-1000f, 1000f);
-		final float heightOffset = rng.nextFloat(-1000f, 1000f);
 		final float temperatureOffset = rng.nextFloat(-1000f, 1000f);
 
 		float minTemperature = Maths.limit(0.25f * inputSeason + rng.nextFloat(-0.1f, 0.1f));
@@ -135,10 +130,6 @@ public class Generator {
 
 		for (y = 0; y < size; y++)
 			for (x = 0; x < size; x++) {
-				float height_x = HEIGHT_FREQ * x + heightOffset;
-				float height_y = HEIGHT_FREQ * y + heightOffset;
-				float height = noise.getCombinedValue(height_x, height_y, 5);
-
 				float temperature_x = TEMPERATURE_FREQ * x - temperatureOffset;
 				float temperature_y = TEMPERATURE_FREQ * y - temperatureOffset;
 				float temperature = noise.getCombinedValue(temperature_x, temperature_y, 2);
@@ -154,79 +145,111 @@ public class Generator {
 				float river = Maths.blend(river1, river2, 0.75f);
 				river = Maths.abs(Noise.to11(river));
 
-				heightMap[x][y] = height;
-				temperatureMap[x][y] = temperature;
+				temperatureValueMap[x][y] = temperature;
 				if (river < RIVER_THRESHOLD)
-					terrainMap[x][y] = RIVER;
+					terrainTypeMap[x][y] = RIVER;
 				else
-					terrainMap[x][y] = VEGETATION;
+					terrainTypeMap[x][y] = VEGETATION;
 			}
+
+		State.PROGRESS = 0.1f;
 
 		for (y = 0; y < size; y++)
 			for (x = 0; x < size; x++) {
-				if (terrainMap[x][y] == RIVER || terrainMap[x][y] == TEMP)
+				if (terrainTypeMap[x][y] == RIVER || terrainTypeMap[x][y] == TEMP)
 					continue;
-				int area = floodFill(terrainMap, x, y, VEGETATION, TEMP);
+				int area = floodFill(terrainTypeMap, x, y, VEGETATION, TEMP);
 				if (area <= MIN_BIOME_AREA)
-					floodFill(terrainMap, x, y, TEMP, RIVER);
+					floodFill(terrainTypeMap, x, y, TEMP, RIVER);
 			}
 		for (y = 0; y < size; y++)
 			for (x = 0; x < size; x++)
-				if (terrainMap[x][y] == TEMP)
-					terrainMap[x][y] = VEGETATION;
+				if (terrainTypeMap[x][y] == TEMP)
+					terrainTypeMap[x][y] = VEGETATION;
 
-		int[][] houseMap = createHouseMap(rng);
-		int[][] pathMap = createPathMap(rng);
+		populateVoronoiIndices(biomeIndexMap, 7, 12, 1f);
+		State.PROGRESS = 0.15f;
+		populateVoronoiIndices(terrainIndexMap, 50, 60, 30f);
+		State.PROGRESS = 0.2f;
+		populateVoronoiIndices(vegetationIndexMap, 60, 70, 50f);
+		State.PROGRESS = 0.25f;
 
-		for (y = 0; y < size; y++)
-			for (x = 0; x < size; x++) {
-				if (terrainMap[x][y] == RIVER) {
-					biomeMap[x][y] = -1f;
-					continue;
-				}
+		int[][] houseMap_gen = createHouseMap();
+		int[][] pathMap_gen = createPathMap();
 
-				float px = BIOME_FREQ * x + biomeOffset;
-				float py = BIOME_FREQ * y + biomeOffset;
-				float value1 = noise.getCombinedValue(px, py, 3);
-				float value2 = noise.getCombinedValue(-px, -py, 3);
-				float value3 = noise.getNoiseValue(2f * value1, 2f * value2);
-				float value = Maths.blend(value1, value2, value3);
-
-				biomeMap[x][y] = value;
-			}
+		State.PROGRESS = 0.3f;
 
 		for (y = 0; y < size; y++)
 			for (x = 0; x < size; x++) {
-				if (terrainMap[x][y] == RIVER)
+				if (terrainTypeMap[x][y] == RIVER)
 					continue;
 
-				if (houseMap[x][y] == 1)
-					terrainMap[x][y] = HOUSE;
-				else if (pathMap[x][y] == 1 || houseMap[x][y] == 2)
-					terrainMap[x][y] = ROAD;
-				else if (terrainMap[x][y] != RIVER && rng.nextFloat(0f, 1f) < 0.9f) {
+				if (houseMap_gen[x][y] == 1)
+					terrainTypeMap[x][y] = HOUSE;
+				else if (pathMap_gen[x][y] == 1 || houseMap_gen[x][y] == 2)
+					terrainTypeMap[x][y] = ROAD;
+				else if (terrainTypeMap[x][y] != RIVER && rng.nextFloat(0f, 1f) < 0.9f) {
 					float px = -0.5f * PATH_FREQ * x - pathOffset;
 					float py = 0.5f * PATH_FREQ * y - pathOffset;
 					float value = noise.getCombinedValue(px, py, 2);
 					if (value < 0.3f || value > 0.7f)
-						terrainMap[x][y] = TERRAIN;
+						terrainTypeMap[x][y] = TERRAIN;
 				}
 			}
 
 		for (y = 0; y < size; y++)
 			for (x = 0; x < size; x++) {
-				if (terrainMap[x][y] != ROAD)
+				if (terrainTypeMap[x][y] != ROAD)
 					continue;
 				for (iy = y - PATH_RADIUS; iy <= y + PATH_RADIUS; iy++)
 					for (ix = x - PATH_RADIUS; ix <= x + PATH_RADIUS; ix++) {
 						if (rng.nextBoolean() || ix < 0 || ix >= size || iy < 0 || iy >= size
-								|| terrainMap[ix][iy] == ROAD || terrainMap[ix][iy] == RIVER
-								|| terrainMap[ix][iy] == HOUSE)
+								|| terrainTypeMap[ix][iy] == ROAD || terrainTypeMap[ix][iy] == RIVER
+								|| terrainTypeMap[ix][iy] == HOUSE)
 							continue;
 						float dist = Maths.dist(x, y, ix, iy);
 						if (dist < PATH_RADIUS)
-							terrainMap[ix][iy] = TERRAIN;
+							terrainTypeMap[ix][iy] = TERRAIN;
 					}
+			}
+
+		State.PROGRESS = 0.4f;
+	}
+
+	private void populateVoronoiIndices(int[][] map, int minPoints, int maxPoints, float offsetScale) {
+		int i, x, y, closest;
+		float minDistSq, distSq, offset;
+
+		final float offsetFreq = offsetScale * rng.nextFloat(0.042f, 0.064f);
+		final float offsetPower = rng.nextFloat(16f, 20f);
+
+		Vector2i[] points = new Vector2i[rng.nextInt(minPoints, maxPoints + 1)];
+		for (i = 0; i < points.length; i++) {
+			x = rng.nextInt(0, size);
+			y = rng.nextInt(0, size);
+			points[i] = new Vector2i(x, y);
+		}
+
+		for (y = 0; y < size; y++)
+			for (x = 0; x < size; x++) {
+				if (terrainTypeMap[x][y] == RIVER) {
+					map[x][y] = -1;
+					continue;
+				}
+				closest = 0;
+				minDistSq = Float.POSITIVE_INFINITY;
+				for (i = 0; i < points.length; i++) {
+					offset = noise.getCombinedValue(offsetFreq * x, offsetFreq * y, 3);
+					offset = offsetPower * Noise.to11(offset);
+
+					distSq = Maths.distSq(x - offset, y + offset, points[i].x, points[i].y);
+					if (distSq < minDistSq) {
+						minDistSq = distSq;
+						closest = i;
+					}
+				}
+
+				map[x][y] = closest;
 			}
 	}
 
@@ -270,7 +293,7 @@ public class Generator {
 				boolean blocked = false;
 				for (ix = x - 2; ix < x + w + 2; ix++)
 					for (iy = y - 2; iy < y + h + 2; iy++) {
-						if (ix < 0 || ix >= size || iy < 0 || iy >= size || terrainMap[ix][iy] == RIVER
+						if (ix < 0 || ix >= size || iy < 0 || iy >= size || terrainTypeMap[ix][iy] == RIVER
 								|| houses[ix][iy] == 1) {
 							blocked = true;
 							break;
@@ -298,7 +321,7 @@ public class Generator {
 				for (ix = x - VILLAGE_PATH_RADIUS; ix <= x + VILLAGE_PATH_RADIUS; ix++)
 					for (iy = y - VILLAGE_PATH_RADIUS; iy <= y + VILLAGE_PATH_RADIUS; iy++) {
 						if (ix < 0 || ix >= size || iy < 0 || iy >= size || houses[ix][iy] != 0
-								|| terrainMap[ix][iy] == RIVER || rng.nextFloat(0f, 1f) < pathDensity)
+								|| terrainTypeMap[ix][iy] == RIVER || rng.nextFloat(0f, 1f) < pathDensity)
 							continue;
 						float distSq = Maths.distSq(x, y, ix, iy);
 						if (distSq < pathRadiusSq)
@@ -309,7 +332,7 @@ public class Generator {
 		village.calculateIncome(totalHouses);
 	}
 
-	private int[][] createHouseMap(RNG rng) {
+	private int[][] createHouseMap() {
 		int x, y, radius;
 
 		final int[][] houses = new int[size][size];
@@ -354,7 +377,7 @@ public class Generator {
 		return houses;
 	}
 
-	private int[][] createPathMap(RNG rng) {
+	private int[][] createPathMap() {
 		int x, y, ix, iy;
 
 		final int[][] paths = new int[size][size];
@@ -467,7 +490,7 @@ public class Generator {
 						e += dx;
 						y0 += sy;
 					}
-					if (x0 >= 0 && x0 < size && y0 >= 0 && y0 < size && terrainMap[x0][y0] != RIVER)
+					if (x0 >= 0 && x0 < size && y0 >= 0 && y0 < size && terrainTypeMap[x0][y0] != RIVER)
 						paths[x0][y0] = 1;
 				}
 			}

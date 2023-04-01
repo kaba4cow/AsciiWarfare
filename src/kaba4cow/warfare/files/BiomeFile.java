@@ -2,7 +2,6 @@ package kaba4cow.warfare.files;
 
 import java.util.ArrayList;
 
-import kaba4cow.ascii.toolbox.rng.RNG;
 import kaba4cow.ascii.toolbox.tools.Table;
 
 public class BiomeFile {
@@ -12,7 +11,6 @@ public class BiomeFile {
 
 	private final String id;
 	private final String name;
-	private final float terrainBias;
 	private final float vegetationDensity;
 	private final String[] terrain;
 	private final String[] vegetation;
@@ -22,7 +20,6 @@ public class BiomeFile {
 
 		this.name = table.getCell("Name", row);
 
-		this.terrainBias = Float.parseFloat(table.getCell("Terrain Bias", row));
 		this.vegetationDensity = Float.parseFloat(table.getCell("Vegetation Density", row));
 
 		this.terrain = table.getCell("Terrain", row).split(",");
@@ -34,24 +31,8 @@ public class BiomeFile {
 			list.add(this);
 	}
 
-	public static ArrayList<BiomeFile> getBiomes(RNG rng) {
-		ArrayList<BiomeFile> shuffled = new ArrayList<>(list);
-
-		for (int i = list.size() - 1; i > 0; i--) {
-			int j = rng.nextInt(0, i);
-			BiomeFile temp = shuffled.get(i);
-			shuffled.set(i, shuffled.get(j));
-			shuffled.set(j, temp);
-		}
-
-		return shuffled;
-	}
-
-	public static BiomeFile get(String id) {
-		for (int i = 0; i < list.size(); i++)
-			if (list.get(i).id.equalsIgnoreCase(id))
-				return list.get(i);
-		return river;
+	public static ArrayList<BiomeFile> getBiomes() {
+		return list;
 	}
 
 	public static void loadFiles(Table table) {
@@ -70,10 +51,6 @@ public class BiomeFile {
 
 	public String getName() {
 		return name;
-	}
-
-	public float getTerrainBias() {
-		return terrainBias;
 	}
 
 	public String[] getTerrain() {

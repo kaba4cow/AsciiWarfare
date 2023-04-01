@@ -45,7 +45,7 @@ public class SelectedUnitFrame extends GUIFrame {
 
 	public void render(Unit currentUnit, Unit selectedUnit) {
 		name.setText("Name: " + selectedUnit.getUnitFile().getName());
-		type.setText("Type: " + selectedUnit.getUnitFile().getType());
+		type.setText("Type: " + selectedUnit.getUnitFile().getTypeName());
 
 		distance.setText("Distance: "
 				+ (int) Maths.dist(currentUnit.getX(), currentUnit.getY(), selectedUnit.getX(), selectedUnit.getY()));

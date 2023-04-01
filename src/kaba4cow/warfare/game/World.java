@@ -91,16 +91,11 @@ public class World {
 		this.temperatureMap = new float[this.size][this.size];
 		this.data = new DataFile();
 
-		State.PROGRESS = 0f;
-
 		Generator generator = new Generator(inputSize, inputSeason, this.size, seed);
 		generator.generate();
-		State.PROGRESS = 0.2f;
 		this.villages = generator.populate(terrainMap, vegetationMap, temperatureMap);
-		State.PROGRESS = 0.4f;
 
 		this.nodeMap = createNodeMap();
-		State.PROGRESS = 0.5f;
 
 		int[] playerVillages = new int[2];
 		float maxVillageDistSq = 0f;
@@ -118,6 +113,7 @@ public class World {
 				}
 			}
 		}
+
 		State.PROGRESS = 0.7f;
 
 		this.players = new ArrayList<>();
@@ -128,7 +124,6 @@ public class World {
 		this.turn = 0;
 		this.turnPlayer = 0;
 		this.currentPlayer = 0;
-
 		this.terrain = new HashMap<>();
 
 		State.PROGRESS = 0.8f;
@@ -141,7 +136,6 @@ public class World {
 
 	public World(DataFile data, int id) {
 		this.data = data;
-		State.PROGRESS = 0f;
 
 		DataFile node;
 
@@ -153,7 +147,6 @@ public class World {
 		this.turn = data.node("Turn").getInt(0);
 		this.turnPlayer = data.node("Turn").getInt(1);
 		this.currentPlayer = id < 0 ? data.node("Player").getInt() : id;
-		State.PROGRESS = 0.2f;
 
 		this.terrainMap = new TerrainTile[size][size];
 		this.vegetationMap = new VegetationTile[size][size];
@@ -161,11 +154,9 @@ public class World {
 
 		Generator generator = new Generator(inputSize, inputSeason, size, inputSeed);
 		generator.generate();
-		State.PROGRESS = 0.5f;
 
 		this.villages = generator.populate(terrainMap, vegetationMap, temperatureMap);
 		this.terrain = new HashMap<>();
-		State.PROGRESS = 0.6f;
 
 		node = data.node("Map");
 		for (int i = 0; i < node.objectSize(); i++) {
@@ -179,28 +170,28 @@ public class World {
 			vegetationMap[x][y] = null;
 			terrain.put(new Vector2i(x, y), terrainID);
 		}
+
 		State.PROGRESS = 0.7f;
 
 		this.nodeMap = createNodeMap();
-		State.PROGRESS = 0.8f;
 
 		node = data.node("Players");
 		players = new ArrayList<>();
 		for (int i = 0; i < node.objectSize(); i++)
 			players.add(new Player(this, i, node.node(i)));
-		State.PROGRESS = 0.9f;
+
+		State.PROGRESS = 1f;
 
 		this.camera = new Camera(this);
 		createGUI();
 		setCurrentPlayer(currentPlayer, id < 0);
-		State.PROGRESS = 1f;
 	}
 
 	public World(int id) throws Exception {
 		this(DataFile.read(new File("SAVE")), id);
 	}
 
-	private static int calculateSize(int size) {
+	public static int calculateSize(int size) {
 		if (size < 0)
 			size = 0;
 		else if (size >= Game.WORLD_SIZES)
@@ -496,6 +487,7 @@ public class World {
 	public void newTurn(int player, boolean send) {
 		if (client != null && send)
 			client.send(Message.TURN, player);
+		State.PROGRESS = 0f;
 		players.get(player).onNewTurn();
 		turnPlayer++;
 		if (turnPlayer >= players.size()) {
@@ -512,6 +504,10 @@ public class World {
 			for (int i = 0; i < 2; i++)
 				players.get(i).addIncomeCash();
 		}
+	}
+
+	public ArrayList<Village> getVillages() {
+		return villages;
 	}
 
 	public Village getVillage(int index) {

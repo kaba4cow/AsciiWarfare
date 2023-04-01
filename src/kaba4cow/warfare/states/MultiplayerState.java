@@ -36,8 +36,7 @@ public class MultiplayerState extends State {
 		world.render();
 
 		if (!world.isPlayerTurn() && !world.isGameOver()) {
-			PROGRESS = 0f;
-			progressBar.setTitle("Waiting for Player " + (world.getTurnPlayer() + 1));
+			progressBar.setTitle("Opponent's turn");
 			State.renderProgressBar();
 		}
 	}

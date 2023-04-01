@@ -10,6 +10,7 @@ import kaba4cow.ascii.drawing.glyphs.Glyphs;
 import kaba4cow.ascii.toolbox.files.DataFile;
 import kaba4cow.ascii.toolbox.maths.Maths;
 import kaba4cow.ascii.toolbox.maths.vectors.Vector2i;
+import kaba4cow.ascii.toolbox.rng.RNG;
 import kaba4cow.warfare.files.UnitFile;
 import kaba4cow.warfare.game.controllers.Controller;
 
@@ -41,6 +42,8 @@ public class Player {
 	private int cashEarned;
 	private int cashSpent;
 
+	private boolean ignoreVisibility;
+
 	public Player(World world, int village, int index) {
 		this.world = world;
 		this.index = index;
@@ -52,6 +55,7 @@ public class Player {
 		this.aiming = false;
 		this.cash = 100;
 		this.color = 0xAAA;
+		this.ignoreVisibility = false;
 	}
 
 	public Player(World world, int index, DataFile data) {
@@ -114,10 +118,9 @@ public class Player {
 
 	public void createUnits() {
 		HashMap<String, UnitFile> files = UnitFile.getFiles();
-		for (String file : files.keySet()) {
-			units.add(new Unit(world, world.getVillage(village), this, files.get(file)));
-			break;
-		}
+		for (String file : files.keySet())
+			if (RNG.chance(0.3f))
+				units.add(new Unit(world, world.getVillage(village), this, files.get(file)));
 	}
 
 	public void update(float dt) {
@@ -130,7 +133,7 @@ public class Player {
 			Unit unit = units.get(i);
 			unit.render(offX, offY, Drawer.IGNORE_BACKGROUND | color);
 
-			if (i == currentUnit)
+			if (i == currentUnit && this == world.getPlayer())
 				unit.renderPaths(offX, offY);
 		}
 	}
@@ -279,7 +282,7 @@ public class Player {
 
 	public void removeCash(int amount) {
 		this.cash -= amount;
-		cashSpent -= amount;
+		cashSpent += amount;
 		world.setCash(getIndex(), cash, true);
 	}
 
@@ -300,7 +303,15 @@ public class Player {
 	}
 
 	public boolean isVisible(int x, int y) {
-		return true | visibilityMap[x][y]; // TODO
+		if (ignoreVisibility)
+			return true;
+//		if (controller instanceof PlayerController)
+//			return true;
+		return visibilityMap[x][y]; // TODO
+	}
+
+	public int getVillage() {
+		return village;
 	}
 
 	public Unit getUnit(int x, int y) {
@@ -356,6 +367,10 @@ public class Player {
 
 	public int getIndex() {
 		return index;
+	}
+
+	public void setIgnoreVisibility(boolean ignoreVisibility) {
+		this.ignoreVisibility = ignoreVisibility;
 	}
 
 	public int getUnitsHired() {

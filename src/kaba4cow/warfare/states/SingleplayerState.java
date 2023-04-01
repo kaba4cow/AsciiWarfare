@@ -20,7 +20,7 @@ public class SingleplayerState extends State {
 
 	@Override
 	public void update(float dt) {
-		if (world.canExit() && world.isPlayerTurn() && Keyboard.isKeyDown(Keyboard.KEY_ESCAPE))
+		if (world.canExit() && Keyboard.isKeyDown(Keyboard.KEY_ESCAPE))
 			Game.switchState(SingleplayerPauseState.getInstance());
 
 		world.update(dt);
@@ -31,8 +31,7 @@ public class SingleplayerState extends State {
 		world.render();
 
 		if (!world.isPlayerTurn() && !world.isGameOver()) {
-			PROGRESS = 0f;
-			progressBar.setTitle("Waiting for Player " + (world.getTurnPlayer() + 1));
+			progressBar.setTitle("Opponent's turn");
 			State.renderProgressBar();
 		}
 	}

@@ -48,8 +48,8 @@ public class Unit {
 		this.player = player;
 		this.file = file;
 		do {
-			x = RNG.randomInt(village.x - 2 * village.radius, village.x + 2 * village.radius);
-			y = RNG.randomInt(village.y - 2 * village.radius, village.y + 2 * village.radius);
+			x = RNG.randomInt(village.x - village.radius, village.x + village.radius);
+			y = RNG.randomInt(village.y - village.radius, village.y + village.radius);
 		} while (world.getPenalty(x, y) > 1f || world.isObstacle(x, y));
 
 		this.attacks = new int[file.getWeapons().length];
@@ -148,13 +148,10 @@ public class Unit {
 	}
 
 	public void render(int offX, int offY, int color) {
-		if (!world.isVisible(world.getPlayer(), x, y))
+		if (isDestroyed() || !world.isVisible(world.getPlayer(), x, y))
 			return;
 
-		if (isDestroyed())
-			Drawer.draw(x - offX, y - offY, Glyphs.CROSS, color);
-		else
-			Drawer.draw(x - offX, y - offY, file.getGlyph(), color);
+		Drawer.draw(x - offX, y - offY, file.getTypeGlyph(), color);
 
 		if (isShooting()) {
 			Vector2i pos = attackPath.getNode(attackPos);

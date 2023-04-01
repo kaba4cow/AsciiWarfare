@@ -42,7 +42,7 @@ public class CurrentUnitFrame extends GUIFrame {
 	public void render(Unit unit) {
 		if (unit != null) {
 			name.setText("Name: " + unit.getUnitFile().getName());
-			type.setText("Type: " + unit.getUnitFile().getType());
+			type.setText("Type: " + unit.getUnitFile().getTypeName());
 
 			amount.setText("Amount: " + unit.getUnits() + " / " + unit.getMaxUnits());
 			moves.setText("Moves: " + (int) unit.getMoves() + " / " + (int) unit.getMaxMoves());

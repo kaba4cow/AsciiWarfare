@@ -13,6 +13,9 @@ public class UnitFile {
 	private static final HashMap<String, UnitFile> map = new HashMap<>();
 	private static final LinkedHashMap<String, ArrayList<UnitFile>> sorted = new LinkedHashMap<>();
 
+	private static int minPrice = Integer.MAX_VALUE;
+	private static int maxPrice = 0;
+
 	private final String id;
 	private final String name;
 	private final String type;
@@ -48,6 +51,11 @@ public class UnitFile {
 		list = sorted.get(type);
 		list.add(this);
 		Collections.sort(list, Sorter.instance);
+
+		if (price < minPrice)
+			minPrice = price;
+		else if (price > maxPrice)
+			maxPrice = price;
 	}
 
 	public static UnitFile get(String id) {
@@ -68,6 +76,14 @@ public class UnitFile {
 		return sorted;
 	}
 
+	public static int getMinPrice() {
+		return minPrice;
+	}
+
+	public static int getMaxPrice() {
+		return maxPrice;
+	}
+
 	public String getID() {
 		return id;
 	}
@@ -77,10 +93,14 @@ public class UnitFile {
 	}
 
 	public String getType() {
+		return type;
+	}
+
+	public String getTypeName() {
 		return UnitTypeFile.get(type).getName();
 	}
 
-	public char getGlyph() {
+	public char getTypeGlyph() {
 		return UnitTypeFile.get(type).getGlyph();
 	}
 

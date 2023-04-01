@@ -16,7 +16,7 @@ public class ShopUnitFrame extends GUIFrame {
 		super(Game.GUI_COLOR, false, false);
 		setTitle("Unit");
 
-		new GUIButton(this, -1, "Hire for " + unit.getPrice(), f -> {
+		new GUIButton(this, -1, "Hire (" + unit.getPrice() + ")", f -> {
 			int price = unit.getPrice();
 			int cash = player.getCash();
 			if (cash >= price) {
@@ -39,13 +39,14 @@ public class ShopUnitFrame extends GUIFrame {
 		new GUISeparator(this, -1, true);
 
 		new GUIText(this, -1, "Visibility: " + unit.getVisibility());
-		new GUISeparator(this, -1, true);
+		new GUISeparator(this, -1, false);
 
 		new GUIText(this, -1, "Weapons:");
 		new GUISeparator(this, -1, true);
 
 		WeaponFile[] weapons = unit.getWeapons();
 		for (int i = 0; i < weapons.length; i++) {
+			new GUISeparator(this, -1, false);
 			new GUIText(this, -1, weapons[i].getName() + " " + weapons[i].getType());
 			new GUISeparator(this, -1, true);
 			new GUIText(this, -1, "Damage: " + weapons[i].getDamage());
@@ -54,7 +55,6 @@ public class ShopUnitFrame extends GUIFrame {
 			new GUIText(this, -1, "Accuracy: " + weapons[i].getAccuracy());
 			new GUISeparator(this, -1, true);
 			new GUIText(this, -1, "Attacks: " + weapons[i].getAttacks());
-			new GUISeparator(this, -1, false);
 		}
 
 	}

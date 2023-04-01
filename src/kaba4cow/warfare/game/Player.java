@@ -106,10 +106,8 @@ public class Player {
 	}
 
 	public void update(float dt) {
-		for (int i = 0; i < units.size(); i++) {
-			Unit unit = units.get(i);
-			unit.update(dt);
-		}
+		for (int i = 0; i < units.size(); i++)
+			units.get(i).update(dt);
 	}
 
 	public void render(int offX, int offY) {
@@ -155,6 +153,9 @@ public class Player {
 	}
 
 	public void renderAiming(int offX, int offY) {
+		if (world.getTurnPlayer() != getIndex())
+			return;
+
 		Display.setDrawCursor(!aiming);
 		if (aiming) {
 			if (Engine.getElapsedTime() % 0.75f < 0.5f) {
@@ -177,21 +178,49 @@ public class Player {
 	}
 
 	public void prevUnit() {
-		int killed = 0;
-		do {
-			currentUnit--;
-			if (currentUnit < 0)
-				currentUnit = units.size() - 1;
-		} while (getCurrentUnit().isDestroyed() && ++killed < units.size());
+		if (units.isEmpty())
+			return;
+		currentUnit--;
+		if (currentUnit < 0)
+			currentUnit = units.size() - 1;
 	}
 
 	public void nextUnit() {
-		int killed = 0;
-		do {
-			currentUnit++;
-			if (currentUnit >= units.size())
-				currentUnit = 0;
-		} while (getCurrentUnit().isDestroyed() && ++killed < units.size());
+		if (units.isEmpty())
+			return;
+		currentUnit++;
+		if (currentUnit >= units.size())
+			currentUnit = 0;
+	}
+
+	public void removeDestroyedUnits() {
+		Unit current = getCurrentUnit();
+		Unit closest = null;
+		float minDist = Float.POSITIVE_INFINITY;
+		for (int i = units.size() - 1; i >= 0; i--) {
+			Unit unit = units.get(i);
+			if (unit.isDestroyed()) {
+				units.remove(i);
+				if (i == currentUnit)
+					nextUnit();
+			} else {
+				float dist = Maths.dist(current.getX(), current.getY(), unit.getX(), unit.getY());
+				if (dist < minDist) {
+					minDist = dist;
+					closest = unit;
+				}
+			}
+		}
+		if ((currentUnit >= units.size() || current != getCurrentUnit()) && closest != null) {
+			aiming = false;
+			int closestIndex = 0;
+			for (int i = 0; i < units.size(); i++)
+				if (units.get(i) == closest) {
+					closestIndex = i;
+					break;
+				}
+			currentUnit = closestIndex;
+		}
 	}
 
 	public void addUnit(String id, int x, int y) {

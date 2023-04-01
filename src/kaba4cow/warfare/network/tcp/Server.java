@@ -15,11 +15,6 @@ import kaba4cow.warfare.network.Message;
 
 public class Server implements Runnable {
 
-	public static final int MIN_PORT = 1024;
-	public static final int MAX_PORT = 49151;
-
-	public static final int MAX_ATTEMPTS = 6;
-
 	private final ServerSocket server;
 
 	private final ArrayList<Connection> clients;
@@ -29,8 +24,12 @@ public class Server implements Runnable {
 
 	private final World world;
 
+	private final StringBuilder output;
+
 	public Server(int port, int worldSize, int worldSeason) throws IOException {
 		this.server = new ServerSocket(port);
+		this.output = new StringBuilder();
+		log("Server started on port " + server.getLocalPort());
 
 		this.world = new World(worldSize, worldSeason, RNG.randomLong());
 
@@ -54,11 +53,9 @@ public class Server implements Runnable {
 				Socket socket = server.accept();
 				if (ids.isEmpty()) {
 					new Connection(Server.this, socket, -1);
-					Printer.println("Connection rejected");
 				} else {
 					Connection client = new Connection(Server.this, socket, ids.removeFirst());
 					clients.add(client);
-					Printer.println("Connected [" + client.getID() + "] : " + socket.getInetAddress().getHostAddress());
 				}
 			} catch (IOException e) {
 			}
@@ -68,7 +65,7 @@ public class Server implements Runnable {
 	public synchronized void send(Connection sender, String message) {
 		if (message == null)
 			return;
-		Printer.println("Received: " + message);
+		log("Received: " + message);
 		process(message);
 		for (Connection client : clients)
 			if (client != sender)
@@ -132,7 +129,7 @@ public class Server implements Runnable {
 			clients.get(i).close();
 		try {
 			server.close();
-			Printer.println("Server closed");
+			log("Server closed");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -141,12 +138,21 @@ public class Server implements Runnable {
 	public DataFile getWorldData(int id) {
 		DataFile data = world.getDataFile();
 		world.setCurrentPlayer(id);
-//		data.node("Turn").setInt(1 - world.getTurnPlayer(), 1);
 		return data;
 	}
 
 	public synchronized boolean isClosed() {
 		return server.isClosed();
+	}
+
+	public void log(String message) {
+		output.append(message);
+		output.append('\n');
+		Printer.println(message);
+	}
+
+	public String getOutput() {
+		return output.toString();
 	}
 
 }

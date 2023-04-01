@@ -42,16 +42,6 @@ public class MultiplayerState extends State {
 		}
 	}
 
-	public void generateWorld(long seed, int size, int season, int id) {
-		State.thread("Generating", f -> {
-			world = new World(size, season, seed);
-			client.setWorld(world);
-			world.setClient(client);
-			world.setCurrentPlayer(id, false);
-			Game.switchState(instance);
-		});
-	}
-
 	public void generateWorld(DataFile data, int id) {
 		State.thread("Generating", f -> {
 			world = new World(data, id);

@@ -8,7 +8,6 @@ import java.io.OutputStreamWriter;
 import java.net.InetAddress;
 import java.net.Socket;
 
-import kaba4cow.ascii.toolbox.Printer;
 import kaba4cow.warfare.network.Message;
 
 public class Connection implements Runnable {
@@ -36,9 +35,11 @@ public class Connection implements Runnable {
 		this.thread.start();
 
 		if (id == -1) {
+			server.log("Connection rejected: " + client.getInetAddress().getHostAddress());
 			send(Message.DISCONNECT);
 			close();
 		} else {
+			server.log("Connected [" + id + "] : " + client.getInetAddress().getHostAddress());
 			send(Message.CONNECT, id);
 			send(Message.WORLD);
 			String[] parts = Message.compressData(server.getWorldData(id));
@@ -68,7 +69,9 @@ public class Connection implements Runnable {
 	}
 
 	public synchronized void send(String message, Object... parameters) {
-		Message.send(writer, message, parameters);
+		String output = Message.send(writer, message, parameters);
+		if (output != null)
+			server.log("Sent: " + output);
 	}
 
 	public synchronized void close() {
@@ -78,7 +81,8 @@ public class Connection implements Runnable {
 			client.close();
 			reader.close();
 			writer.close();
-			Printer.println("Connection [" + id + "] closed");
+			if (id != -1)
+				server.log("Connection [" + id + "] closed");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

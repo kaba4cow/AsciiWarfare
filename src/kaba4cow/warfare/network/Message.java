@@ -3,7 +3,6 @@ package kaba4cow.warfare.network;
 import java.io.BufferedWriter;
 import java.io.IOException;
 
-import kaba4cow.ascii.toolbox.Printer;
 import kaba4cow.ascii.toolbox.files.DataFile;
 import kaba4cow.ascii.toolbox.utils.StringUtils;
 
@@ -40,7 +39,7 @@ public class Message {
 		return DataFile.fromString(string);
 	}
 
-	public static synchronized void send(BufferedWriter writer, String message, Object... parameters) {
+	public static synchronized String send(BufferedWriter writer, String message, Object... parameters) {
 		try {
 			StringBuilder builder = new StringBuilder(message);
 			if (parameters != null)
@@ -52,8 +51,9 @@ public class Message {
 			writer.write(builder.toString());
 			writer.newLine();
 			writer.flush();
-			Printer.println("Sent: " + builder.toString());
+			return builder.toString();
 		} catch (IOException e) {
+			return null;
 		}
 	}
 

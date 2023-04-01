@@ -111,7 +111,8 @@ public class Client implements Runnable {
 	}
 
 	public synchronized void send(String message, Object... parameters) {
-		Message.send(writer, message, parameters);
+		String output = Message.send(writer, message, parameters);
+		Printer.println("Sent: " + output);
 	}
 
 	public synchronized void close() {

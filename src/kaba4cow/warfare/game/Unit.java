@@ -85,6 +85,7 @@ public class Unit {
 		this.attackDelayTime = 0f;
 
 		this.weaponFrame = new WeaponFrame(this);
+		player.updateVisibility(x, y, getVisibilityRadius());
 	}
 
 	public void save(DataFile data) {
@@ -124,10 +125,7 @@ public class Unit {
 			if (nextNode == null)
 				path = null;
 			else {
-				x = nextNode.x;
-				y = nextNode.y;
-				player.updateVisibility(x, y, getVisibilityRadius());
-				moves = Maths.max(moves - nextNode.penalty - 1f, 0f);
+				move(nextNode.x, nextNode.y);
 				world.moveUnit(player.getIndex(), getIndex(), x, y, true);
 			}
 		}
@@ -260,7 +258,7 @@ public class Unit {
 		health = remainingHealth;
 
 		if (isDestroyed())
-			onNewTurn();
+			player.removeDestroyedUnits();
 	}
 
 	public void createPath(int x, int y) {
@@ -311,6 +309,13 @@ public class Unit {
 	public void resetAttackPath() {
 		attackPath = null;
 		attackPos = -1;
+	}
+
+	public void move(int x, int y) {
+		this.x = x;
+		this.y = y;
+		player.updateVisibility(x, y, getVisibilityRadius());
+		moves = Maths.max(moves - world.getPenalty(x, y) - 1f, 0f);
 	}
 
 	public void switchMoving() {

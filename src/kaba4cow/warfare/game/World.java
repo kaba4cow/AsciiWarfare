@@ -9,7 +9,6 @@ import kaba4cow.ascii.drawing.drawers.Drawer;
 import kaba4cow.ascii.drawing.glyphs.Glyphs;
 import kaba4cow.ascii.drawing.gui.GUIColorText;
 import kaba4cow.ascii.input.Keyboard;
-import kaba4cow.ascii.toolbox.Printer;
 import kaba4cow.ascii.toolbox.files.DataFile;
 import kaba4cow.ascii.toolbox.maths.Maths;
 import kaba4cow.ascii.toolbox.maths.vectors.Vector2i;
@@ -195,8 +194,8 @@ public class World {
 		State.PROGRESS = 1f;
 	}
 
-	public World() throws Exception {
-		this(DataFile.read(new File("SAVE")), 0);
+	public World(int id) throws Exception {
+		this(DataFile.read(new File("SAVE")), id);
 	}
 
 	private static int calculateSize(int size) {
@@ -293,7 +292,8 @@ public class World {
 
 		camera.update(dt);
 
-		players.get(turnPlayer).update(dt);
+		for (int i = 0; i < players.size(); i++)
+			players.get(i).update(dt);
 		players.get(turnPlayer).updateController(dt);
 
 		currentUnitFrame.update();
@@ -413,7 +413,7 @@ public class World {
 			if (client != null)
 				client.send(Message.MOVE, player, index, x, y);
 		} else
-			getPlayer(player).getUnit(index).setPos(x, y);
+			getPlayer(player).getUnit(index).move(x, y);
 	}
 
 	public void setCash(int player, int cash, boolean send) {
@@ -459,7 +459,6 @@ public class World {
 
 	public void damageUnit(Unit source, int x, int y, float chance) {
 		Unit target = getUnit(x, y);
-		Printer.println(x + " " + y + " : " + target);
 		if (target == null)
 			return;
 		if (chance < 0f)

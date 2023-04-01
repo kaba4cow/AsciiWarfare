@@ -1,13 +1,18 @@
 package kaba4cow.warfare.network;
 
 import java.io.IOException;
-import java.util.ArrayList;
 
 import kaba4cow.ascii.MainProgram;
 import kaba4cow.ascii.core.Display;
 import kaba4cow.ascii.core.Engine;
 import kaba4cow.ascii.drawing.drawers.Drawer;
-import kaba4cow.ascii.input.Input;
+import kaba4cow.ascii.drawing.gui.GUIButton;
+import kaba4cow.ascii.drawing.gui.GUIFrame;
+import kaba4cow.ascii.drawing.gui.GUIRadioButton;
+import kaba4cow.ascii.drawing.gui.GUIRadioPanel;
+import kaba4cow.ascii.drawing.gui.GUISeparator;
+import kaba4cow.ascii.drawing.gui.GUIText;
+import kaba4cow.ascii.drawing.gui.GUITextField;
 import kaba4cow.ascii.input.Keyboard;
 import kaba4cow.ascii.input.Mouse;
 import kaba4cow.warfare.Game;
@@ -15,16 +20,22 @@ import kaba4cow.warfare.network.tcp.Server;
 
 public class ServerConsole implements MainProgram {
 
-	private ArrayList<String> history;
-	private int index;
-
-	private String output;
-	private String text;
-
 	private int scroll;
 	private int maxScroll;
+	private int prevOutput;
 
 	private Server server;
+
+	private GUIFrame infoFrame;
+	private GUIText portText;
+	private GUIText clientText;
+	private GUIButton serverButton;
+
+	private boolean starting;
+	private GUIFrame startFrame;
+	private GUITextField portTextField;
+	private GUIRadioPanel sizePanel;
+	private GUIRadioPanel seasonPanel;
 
 	public ServerConsole() {
 
@@ -34,84 +45,114 @@ public class ServerConsole implements MainProgram {
 	public void init() {
 		scroll = 0;
 		maxScroll = 0;
+		prevOutput = 0;
 
-		text = "";
+		starting = false;
 
-		history = new ArrayList<>();
-		index = 0;
+		infoFrame = new GUIFrame(Game.GUI_COLOR, false, false);
+		serverButton = new GUIButton(infoFrame, -1, "Start", f -> {
+			if (server == null || server.isClosed())
+				starting = true;
+			else {
+				server.close();
+				serverButton.setText("Start");
+				portText.setText("");
+				clientText.setText("");
+			}
+		});
+		new GUISeparator(infoFrame, -1, false);
+		portText = new GUIText(infoFrame, -1, "");
+		clientText = new GUIText(infoFrame, -1, "");
 
-		Console.init(this);
-		Console.processCommand("");
-		output = "Ascii Warfare Server" + Console.getOutput();
+		startFrame = new GUIFrame(Game.GUI_COLOR, false, false).setTitle("Properties");
+		new GUIText(startFrame, -1, "Port");
+		portTextField = new GUITextField(startFrame, -1, "");
 
-		Display.setDrawCursor(false);
+		sizePanel = new GUIRadioPanel(startFrame, -1, "Map Size:");
+		new GUIRadioButton(sizePanel, -1, "Small");
+		new GUIRadioButton(sizePanel, -1, "Medium");
+		new GUIRadioButton(sizePanel, -1, "Large");
+
+		seasonPanel = new GUIRadioPanel(startFrame, -1, "Season:");
+		new GUIRadioButton(seasonPanel, -1, "Winter");
+		new GUIRadioButton(seasonPanel, -1, "Autumn");
+		new GUIRadioButton(seasonPanel, -1, "Spring");
+		new GUIRadioButton(seasonPanel, -1, "Summer");
+
+		new GUIButton(startFrame, -1, "Start", f -> {
+			try {
+				int port = Integer.parseInt(portTextField.getText());
+				int size = sizePanel.getIndex();
+				int season = seasonPanel.getIndex();
+				server = new Server(port, size, season);
+				serverButton.setText("Close");
+				portText.setText("Port: " + port);
+				starting = false;
+			} catch (Exception e) {
+			}
+		});
+		new GUIButton(startFrame, -1, "Cancel", f -> {
+			starting = false;
+		});
 	}
 
 	@Override
 	public void update(float dt) {
+		if (Keyboard.isKeyDown(Keyboard.KEY_ESCAPE))
+			if (server != null && !server.isClosed()) {
+				server.close();
+				serverButton.setText("Start");
+				portText.setText("");
+				clientText.setText("");
+			} else
+				Engine.requestClose();
+
+		infoFrame.update();
+		startFrame.update();
+
 		scroll -= 2 * Mouse.getScroll();
 		if (scroll < 0)
 			scroll = 0;
 		if (scroll > maxScroll)
 			scroll = maxScroll;
 
-		if (Keyboard.isKeyDown(Keyboard.KEY_ENTER)) {
-			if (Console.processCommand(text))
-				Engine.requestClose();
-			String cmd = Console.getOutput();
-			output += text + "\n" + cmd;
-			if (history.isEmpty() || !history.get(history.size() - 1).equalsIgnoreCase(text))
-				history.add(text);
-			text = "";
-			index = history.size();
-			render();
-			scroll = maxScroll;
-		} else if (!history.isEmpty() && Keyboard.isKeyDown(Keyboard.KEY_UP)) {
-			index--;
-			if (index < 0)
-				index = history.size() - 1;
-			text = history.get(index);
-		} else if (!history.isEmpty() && Keyboard.isKeyDown(Keyboard.KEY_DOWN)) {
-			index++;
-			if (index >= history.size())
-				index = 0;
-			text = history.get(index);
-		} else
-			text = Input.typeString(text);
-
-		if (server != null)
+		if (server != null && !server.isClosed()) {
 			server.update(dt);
+			clientText.setText("Clients: " + server.getClients().size());
+		}
 	}
 
 	@Override
 	public void render() {
-		int consoleColor = Console.getColor();
-		Display.setBackground(' ', Console.getColor());
+		drawServerLog();
 
-		int x = 0;
+		infoFrame.render(0, 0, Display.getWidth() / 4, Display.getHeight(), false);
+		if (starting)
+			startFrame.render(Display.getWidth() / 4, 0, Display.getWidth() - Display.getWidth() / 4,
+					Display.getHeight(), false);
+	}
+
+	private void drawServerLog() {
+		if (server == null)
+			return;
+
+		final int startX = Display.getWidth() / 4;
+
+		String output = server.getOutput();
+		int x = startX;
 		int y = -scroll;
 		for (int i = 0; i < output.length(); i++) {
 			char c = output.charAt(i);
 			if (c == '\n') {
-				x = 0;
+				x = startX;
 				y++;
 			} else if (c == '\t')
 				x += 4;
 			else
-				Drawer.draw(x++, y, c, consoleColor);
+				Drawer.draw(x++, y, c, Game.GUI_COLOR);
 
 			if (x >= Display.getWidth()) {
-				x = 0;
-				y++;
-			}
-		}
-
-		for (int i = 0; i < text.length(); i++) {
-			char c = text.charAt(i);
-			Drawer.draw(x++, y, c, consoleColor);
-
-			if (x >= Display.getWidth()) {
-				x = 0;
+				x = startX;
 				y++;
 			}
 		}
@@ -120,7 +161,11 @@ public class ServerConsole implements MainProgram {
 		if (y < Display.getHeight())
 			maxScroll = 0;
 		else
-			maxScroll = y + 5 - Display.getHeight();
+			maxScroll = y + 2 - Display.getHeight();
+
+		if (output.length() != prevOutput)
+			scroll = maxScroll;
+		prevOutput = output.length();
 	}
 
 	public Server getServer() {
@@ -146,7 +191,7 @@ public class ServerConsole implements MainProgram {
 	public static void main(String[] args) {
 		Game.loadData();
 		Engine.init("Ascii Warfare Server", 60);
-		Display.createWindowed(60, 40);
+		Display.createWindowed(70, 30);
 		Engine.start(new ServerConsole());
 	}
 

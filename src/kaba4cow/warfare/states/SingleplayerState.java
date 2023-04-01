@@ -55,7 +55,7 @@ public class SingleplayerState extends State {
 		State.thread("Loading", f -> {
 			World newWorld;
 			try {
-				newWorld = new World();
+				newWorld = new World(-1);
 			} catch (Exception e) {
 				newWorld = null;
 			}

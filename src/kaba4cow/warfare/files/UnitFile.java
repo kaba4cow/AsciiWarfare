@@ -17,7 +17,7 @@ public class UnitFile {
 	private final String name;
 	private final String type;
 	private final int price;
-	private final float health;
+	private final int health;
 	private final float armor;
 	private final float moves;
 	private final int visibility;
@@ -33,7 +33,7 @@ public class UnitFile {
 		this.type = table.getCell("Type", row);
 		this.price = Integer.parseInt(table.getCell("Price", row));
 
-		this.health = Float.parseFloat(table.getCell("Health", row));
+		this.health = Integer.parseInt(table.getCell("Health", row));
 		this.armor = Float.parseFloat(table.getCell("Armor", row));
 		this.moves = Float.parseFloat(table.getCell("Moves", row));
 		this.visibility = Integer.parseInt(table.getCell("Visibility", row));
@@ -88,16 +88,7 @@ public class UnitFile {
 		return price;
 	}
 
-	public WeaponFile[] getWeapons() {
-		if (weaponFiles == null) {
-			weaponFiles = new WeaponFile[weapons.length];
-			for (int i = 0; i < weapons.length; i++)
-				weaponFiles[i] = WeaponFile.get(weapons[i]);
-		}
-		return weaponFiles;
-	}
-
-	public float getHealth() {
+	public int getHealth() {
 		return health;
 	}
 
@@ -115,6 +106,15 @@ public class UnitFile {
 
 	public int getMaxUnits() {
 		return maxUnits;
+	}
+
+	public WeaponFile[] getWeapons() {
+		if (weaponFiles == null) {
+			weaponFiles = new WeaponFile[weapons.length];
+			for (int i = 0; i < weapons.length; i++)
+				weaponFiles[i] = WeaponFile.get(weapons[i]);
+		}
+		return weaponFiles;
 	}
 
 	private static class Sorter implements Comparator<UnitFile> {

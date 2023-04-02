@@ -243,7 +243,7 @@ public class Player {
 		}
 	}
 
-	public void addUnit(String id, int x, int y) {
+	public Unit addUnit(String id, int x, int y) {
 		Unit unit = new Unit(world, world.getVillage(village), this, UnitFile.get(id));
 		units.add(unit);
 		unitsHired++;
@@ -251,6 +251,7 @@ public class Player {
 			unit.setPos(x, y);
 		else
 			world.addUnit(getIndex(), id, unit.getX(), unit.getY(), true);
+		return unit;
 	}
 
 	public void setStats(int cashEarned, int cashSpent, int unitsHired, int unitsLost, int unitsKilled) {
@@ -271,23 +272,23 @@ public class Player {
 	}
 
 	public void addIncome(int amount) {
-		this.income += amount;
+		income += amount;
 	}
 
 	public void addIncomeCash() {
-		this.cash += income;
+		cash += income;
 		cashEarned += income;
 		world.setCash(getIndex(), cash, true);
 	}
 
 	public void removeCash(int amount) {
-		this.cash -= amount;
+		cash -= amount;
 		cashSpent += amount;
 		world.setCash(getIndex(), cash, true);
 	}
 
 	public void setCash(int amount) {
-		this.cash = amount;
+		cash = amount;
 	}
 
 	public int getCash() {

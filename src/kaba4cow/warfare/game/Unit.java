@@ -118,18 +118,6 @@ public class Unit {
 		if (path == null || moves <= 0)
 			moving = false;
 
-		moveDelayTime += dt;
-		if (moving && moveDelayTime >= (world.getPenalty(x, y) + 1f) / file.getMoves()) {
-			moveDelayTime = 0f;
-			Node nextNode = path.move();
-			if (nextNode == null)
-				path = null;
-			else {
-				move(nextNode.x, nextNode.y);
-				world.moveUnit(player.getIndex(), getIndex(), x, y, true);
-			}
-		}
-
 		if (isShooting()) {
 			attackDelayTime += dt;
 			if (attackDelayTime >= 1f / getCurrentWeapon().getRange()) {
@@ -141,6 +129,18 @@ public class Unit {
 				world.damageUnits(pos.x, pos.y, this, attackSeed, getCurrentWeapon());
 				attackPos = -1;
 				attackPath = null;
+			}
+		} else {
+			moveDelayTime += dt;
+			if (moving && moveDelayTime >= (world.getPenalty(x, y) + 1f) / file.getMoves()) {
+				moveDelayTime = 0f;
+				Node nextNode = path.move();
+				if (nextNode == null)
+					path = null;
+				else {
+					move(nextNode.x, nextNode.y);
+					world.moveUnit(player.getIndex(), getIndex(), x, y, true);
+				}
 			}
 		}
 

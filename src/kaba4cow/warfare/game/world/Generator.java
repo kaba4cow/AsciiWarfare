@@ -12,7 +12,6 @@ import kaba4cow.ascii.toolbox.noise.Noise;
 import kaba4cow.ascii.toolbox.rng.RNG;
 import kaba4cow.ascii.toolbox.rng.RandomLehmer;
 import kaba4cow.warfare.files.BiomeFile;
-import kaba4cow.warfare.files.BuildingFile;
 import kaba4cow.warfare.files.TerrainFile;
 import kaba4cow.warfare.files.VegetationFile;
 import kaba4cow.warfare.game.Village;
@@ -24,7 +23,7 @@ public class Generator {
 	private static final int MIN_PATH_AREA = 32;
 
 	private static final int PATH_RADIUS = 3;
-	private static final int VILLAGE_PATH_RADIUS = 4;
+	private static final int VILLAGE_PATH_RADIUS = 2;
 
 	private static final float PATH_FREQ = 0.058f;
 	private static final float RIVER_FREQ = 0.015f;
@@ -254,12 +253,9 @@ public class Generator {
 	}
 
 	private void processVillage(Village village, final int[][] houses) {
-		int numHouses = rng.nextInt(20, 30);
-		BuildingFile[] array = new BuildingFile[numHouses];
-		for (int i = 0; i < numHouses; i++)
-			array[i] = BuildingFile.get(rng);
+		int numHouses = rng.nextInt(10, 20);
 
-		float pathDensity = rng.nextFloat(0.4f, 0.9f);
+		float pathDensity = rng.nextFloat(0.6f, 1f);
 
 		int minX = village.x - village.radius;
 		int maxX = village.x + village.radius;
@@ -268,20 +264,13 @@ public class Generator {
 
 		float villageRadiusSq = village.radius * village.radius;
 
-		int maxIterations = 32;
+		int maxIterations = 16;
 		int iterations;
 
 		int totalHouses = 0;
 
-		int x, y, ix, iy, w, h;
+		int x, y, ix, iy;
 		for (int i = 0; i < numHouses; i++) {
-			if (rng.nextBoolean()) {
-				w = array[i].getWidth();
-				h = array[i].getHeight();
-			} else {
-				w = array[i].getHeight();
-				h = array[i].getWidth();
-			}
 			iterations = 0;
 			while (true) {
 				x = rng.nextInt(minX, maxX);
@@ -291,8 +280,8 @@ public class Generator {
 					continue;
 
 				boolean blocked = false;
-				for (ix = x - 2; ix < x + w + 2; ix++)
-					for (iy = y - 2; iy < y + h + 2; iy++) {
+				for (ix = x - 1; ix <= x + 1; ix++)
+					for (iy = y - 1; iy <= y + 1; iy++) {
 						if (ix < 0 || ix >= size || iy < 0 || iy >= size || terrainTypeMap[ix][iy] == RIVER
 								|| houses[ix][iy] == 1) {
 							blocked = true;
@@ -306,10 +295,8 @@ public class Generator {
 			}
 
 			if (iterations <= maxIterations) {
-				totalHouses += w * h;
-				for (ix = x; ix < x + w; ix++)
-					for (iy = y; iy < y + h; iy++)
-						houses[ix][iy] = 1;
+				totalHouses++;
+				houses[x][y] = 1;
 			}
 		}
 
@@ -321,7 +308,7 @@ public class Generator {
 				for (ix = x - VILLAGE_PATH_RADIUS; ix <= x + VILLAGE_PATH_RADIUS; ix++)
 					for (iy = y - VILLAGE_PATH_RADIUS; iy <= y + VILLAGE_PATH_RADIUS; iy++) {
 						if (ix < 0 || ix >= size || iy < 0 || iy >= size || houses[ix][iy] != 0
-								|| terrainTypeMap[ix][iy] == RIVER || rng.nextFloat(0f, 1f) < pathDensity)
+								|| terrainTypeMap[ix][iy] == RIVER || rng.nextFloat(0f, 1f) > pathDensity)
 							continue;
 						float distSq = Maths.distSq(x, y, ix, iy);
 						if (distSq < pathRadiusSq)
@@ -343,12 +330,12 @@ public class Generator {
 		int maxIterations = 32;
 		int iterations;
 
-		int numVillages = rng.nextInt(8, 11) + inputSize;
+		int numVillages = rng.nextInt(9, 12) + inputSize;
 		if (numVillages <= 0)
 			numVillages = 1;
 		Village village;
 		for (int i = 0; i < numVillages; i++) {
-			radius = rng.nextInt(6, 12);
+			radius = rng.nextInt(3, 7);
 			iterations = 0;
 			while (true) {
 				x = rng.nextInt(radius, size - radius);
@@ -357,7 +344,7 @@ public class Generator {
 				boolean blocked = false;
 				for (int j = 0; j < villages.size(); j++) {
 					village = villages.get(j);
-					if (Maths.distSq(x, y, village.x, village.y) < 9f * Maths.sqr(radius + village.radius)) {
+					if (Maths.distSq(x, y, village.x, village.y) < 16f * Maths.sqr(radius + village.radius)) {
 						blocked = true;
 						break;
 					}

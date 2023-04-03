@@ -19,7 +19,6 @@ public class GameFiles {
 		WeaponFile.loadFiles(data.getTable("Weapons"));
 		UnitTypeFile.loadFiles(data.getTable("Unit Types"));
 		UnitFile.loadFiles(data.getTable("Units"));
-		BuildingFile.loadFiles(data.getTable("Buildings"));
 	}
 
 }

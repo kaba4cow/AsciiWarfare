@@ -5,11 +5,6 @@ import java.util.prefs.Preferences;
 public class Settings {
 
 	private static Preferences preferences;
-	private static String serverAddress;
-	private static String serverPort;
-	private static boolean fullscreen;
-	private static int worldSize;
-	private static int worldSeason;
 
 	private Settings() {
 
@@ -17,53 +12,40 @@ public class Settings {
 
 	public static void init() {
 		preferences = Preferences.userNodeForPackage(Settings.class);
-		fullscreen = preferences.getBoolean("fullscreen", true);
-		serverAddress = preferences.get("ip", "");
-		serverPort = preferences.get("port", "");
-		worldSize = preferences.getInt("size", 0);
-		worldSeason = preferences.getInt("season", 2);
-	}
-
-	public static void save() {
-		preferences.putBoolean("fullscreen", fullscreen);
-		preferences.put("ip", serverAddress);
-		preferences.put("port", serverPort);
-		preferences.putInt("size", worldSize);
-		preferences.putInt("season", worldSeason);
 	}
 
 	public static boolean isFullscreen() {
-		return fullscreen;
+		return preferences.getBoolean("fullscreen", true);
 	}
 
 	public static void setFullscreen(boolean fullscreen) {
-		Settings.fullscreen = fullscreen;
+		preferences.putBoolean("fullscreen", fullscreen);
 	}
 
 	public static String getServerAddress() {
-		return serverAddress;
+		return preferences.get("ip", "");
 	}
 
 	public static String getServerPort() {
-		return serverPort;
+		return preferences.get("port", "");
 	}
 
 	public static void setServerInfo(String serverAddress, String serverPort) {
-		Settings.serverAddress = serverAddress;
-		Settings.serverPort = serverPort;
+		preferences.put("ip", serverAddress);
+		preferences.put("port", serverPort);
 	}
 
 	public static int getWorldSize() {
-		return worldSize;
+		return preferences.getInt("size", 0);
 	}
 
 	public static int getWorldSeason() {
-		return worldSeason;
+		return preferences.getInt("season", 2);
 	}
 
 	public static void setWorldInfo(int worldSize, int worldSeason) {
-		Settings.worldSize = worldSize;
-		Settings.worldSeason = worldSeason;
+		preferences.putInt("size", worldSize);
+		preferences.putInt("season", worldSeason);
 	}
 
 }

@@ -13,6 +13,7 @@ import kaba4cow.ascii.toolbox.maths.vectors.Vector2i;
 import kaba4cow.ascii.toolbox.rng.RNG;
 import kaba4cow.warfare.files.UnitFile;
 import kaba4cow.warfare.game.controllers.Controller;
+import kaba4cow.warfare.game.controllers.PlayerController;
 
 public class Player {
 
@@ -53,7 +54,7 @@ public class Player {
 		this.visibilityMap = new boolean[world.getSize()][world.getSize()];
 		this.currentUnit = 0;
 		this.aiming = false;
-		this.cash = 100;
+		this.cash = 0;
 		this.color = 0xAAA;
 		this.ignoreVisibility = false;
 	}
@@ -306,8 +307,8 @@ public class Player {
 	public boolean isVisible(int x, int y) {
 		if (ignoreVisibility)
 			return true;
-//		if (controller instanceof PlayerController)
-//			return true;
+		if (controller instanceof PlayerController)
+			return true;
 		return visibilityMap[x][y]; // TODO
 	}
 

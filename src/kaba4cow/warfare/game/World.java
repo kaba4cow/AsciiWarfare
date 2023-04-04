@@ -82,8 +82,8 @@ public class World {
 
 	public World(int size, int season, long seed) {
 		this.inputSeed = seed;
-		this.inputSize = Maths.limit(size, 0, Game.WORLD_SIZES - 1);
-		this.inputSeason = Maths.limit(season, 0, 3);
+		this.inputSize = size;
+		this.inputSeason = season;
 
 		this.size = calculateSize(size);
 		this.terrainMap = new TerrainTile[this.size][this.size];
@@ -194,9 +194,9 @@ public class World {
 	public static int calculateSize(int size) {
 		if (size < 0)
 			size = 0;
-		else if (size >= Game.WORLD_SIZES)
-			size = Game.WORLD_SIZES - 1;
-		return 10 * (int) Maths.mapLimit(size, 0, Game.WORLD_SIZES - 1, Game.MIN_WORLD_SIZE, Game.MAX_WORLD_SIZE);
+		else if (size > 2)
+			size = 2;
+		return 10 * (int) Maths.mapLimit(size, 0, 2, Game.MIN_WORLD_SIZE, Game.MAX_WORLD_SIZE);
 	}
 
 	public void setCurrentPlayer(int currentPlayer, boolean ai) {

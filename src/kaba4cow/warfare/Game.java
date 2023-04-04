@@ -15,7 +15,7 @@ public class Game implements MainProgram {
 	private static final int DEFAULT_HEIGHT = 40;
 
 	public static final int GUI_COLOR = 0x0009FC;
-	public static final int WORLD_SIZES = 3;
+
 	public static final int MIN_WORLD_SIZE = 20;
 	public static final int MAX_WORLD_SIZE = 32;
 
@@ -61,11 +61,6 @@ public class Game implements MainProgram {
 
 		if (showFPS)
 			Drawer.drawString(0, 0, false, "FPS: " + Engine.getCurrentFramerate(), GUI_COLOR);
-	}
-
-	@Override
-	public void onClose() {
-		Settings.save();
 	}
 
 	public static void switchState(State state) {

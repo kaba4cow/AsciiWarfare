@@ -24,7 +24,7 @@ public class UnitFile {
 	private final float armor;
 	private final float moves;
 	private final int visibility;
-	private final int maxUnits;
+	private final int units;
 	private final String[] weapons;
 
 	private WeaponFile[] weaponFiles;
@@ -34,14 +34,15 @@ public class UnitFile {
 
 		this.name = table.getCell("Name", row);
 		this.type = table.getCell("Type", row);
-		this.price = Integer.parseInt(table.getCell("Price", row));
 
 		this.health = Integer.parseInt(table.getCell("Health", row));
 		this.armor = Float.parseFloat(table.getCell("Armor", row));
 		this.moves = Float.parseFloat(table.getCell("Moves", row));
 		this.visibility = Integer.parseInt(table.getCell("Visibility", row));
-		this.maxUnits = Integer.parseInt(table.getCell("Units", row));
+		this.units = Integer.parseInt(table.getCell("Units", row));
 		this.weapons = table.getCell("Weapons", row).split(",");
+
+		this.price = calculatePrice(this, weapons);
 
 		map.put(id, this);
 
@@ -56,6 +57,18 @@ public class UnitFile {
 			minPrice = price;
 		else if (price > maxPrice)
 			maxPrice = price;
+	}
+
+	private static int calculatePrice(UnitFile unit, String[] weapons) {
+		float price = 0f;
+		price += 13.8f * unit.getHealth();
+		price += 4.2f * unit.getArmor();
+		price += 4.3f * unit.getMoves();
+		price += 1.4f * unit.getVisibility();
+		for (int i = 0; i < weapons.length; i++)
+			price += WeaponFile.get(weapons[i]).getPrice();
+		price *= unit.getUnits() * 0.04f;
+		return (int) price;
 	}
 
 	public static UnitFile get(String id) {
@@ -124,8 +137,8 @@ public class UnitFile {
 		return moves;
 	}
 
-	public int getMaxUnits() {
-		return maxUnits;
+	public int getUnits() {
+		return units;
 	}
 
 	public WeaponFile[] getWeapons() {

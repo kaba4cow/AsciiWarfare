@@ -10,6 +10,7 @@ public class WeaponFile {
 
 	private final String name;
 	private final String type;
+	private final int price;
 	private final float range;
 	private final float damage;
 	private final float piercing;
@@ -37,7 +38,21 @@ public class WeaponFile {
 		this.artillery = Integer.parseInt(table.getCell("Artillery", row)) != 0;
 		this.createCrater = Integer.parseInt(table.getCell("Craters", row)) != 0;
 
+		this.price = calculatePrice(this);
+
 		map.put(id, this);
+	}
+
+	private static int calculatePrice(WeaponFile weapon) {
+		float price = 0f;
+		price += 1.8f * weapon.getDamage() * weapon.getAttacks();
+		price += 1.7f * weapon.getPiercing();
+		price += 14.8f * weapon.getAccuracy();
+		price += 3.3f * weapon.getRange();
+		price += 2.6f * weapon.getRadius();
+		price += -1.2f * weapon.getPenalty();
+		price *= 0.7f;
+		return (int) price;
 	}
 
 	public static WeaponFile get(String id) {
@@ -64,6 +79,10 @@ public class WeaponFile {
 
 	public char getGlyph() {
 		return WeaponTypeFile.get(type).getGlyph();
+	}
+
+	public int getPrice() {
+		return price;
 	}
 
 	public float getRange() {

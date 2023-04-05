@@ -367,7 +367,7 @@ public class Unit {
 	}
 
 	public int getMaxUnits() {
-		return file.getMaxUnits();
+		return file.getUnits();
 	}
 
 	public WeaponFile getCurrentWeapon() {

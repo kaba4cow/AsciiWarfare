@@ -1,9 +1,7 @@
 package kaba4cow.warfare.game.controllers;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 
 import kaba4cow.ascii.toolbox.maths.Maths;
 import kaba4cow.ascii.toolbox.maths.vectors.Vector2i;
@@ -17,108 +15,52 @@ import kaba4cow.warfare.states.State;
 
 public class AIController extends Controller {
 
-	private ArrayList<Village> villages;
-	private ArrayList<Unit> units;
-	private ArrayList<Unit> defenseUnits;
-	private ArrayList<Unit> attackUnits;
-
-	private HashMap<Unit, Village> unitVillages;
+	private ArrayList<UnitAI> ais;
 
 	private int currentUnit;
 
-	private int prevUnits;
 	private int targetPrice;
 
 	public AIController() {
 		super(0xF54);
-		this.villages = null;
-		this.units = null;
-		this.defenseUnits = null;
-		this.attackUnits = null;
-		this.unitVillages = new HashMap<>();
+		this.ais = null;
 		this.currentUnit = -1;
-		this.prevUnits = 0;
 		resetTargetPrice();
 	}
 
 	@Override
 	public void update(float dt) {
-		if (villages == null)
-			sortVillages();
-
-		if (currentUnit == -1) {
-			units = player.getUnits();
-
-			if (defenseUnits == null) {
-				defenseUnits = new ArrayList<>();
-				attackUnits = new ArrayList<>();
-				for (Unit unit : units) {
-					if (RNG.randomBoolean())
-						defenseUnits.add(unit);
-					else
-						attackUnits.add(unit);
-				}
-			}
-			for (int i = defenseUnits.size() - 1; i >= 0; i--) {
-				Unit unit = defenseUnits.get(i);
-				if (unit.isDestroyed())
-					defenseUnits.remove(i);
-			}
-			for (int i = attackUnits.size() - 1; i >= 0; i--) {
-				Unit unit = attackUnits.get(i);
-				if (unit.isDestroyed())
-					attackUnits.remove(i);
-			}
-
-			LinkedList<Village> freeVillages = new LinkedList<>();
-			for (int i = 0; i < villages.size(); i++)
-				if (villages.get(i).getOccupier(world) == null)
-					freeVillages.add(villages.get(i));
-			currentUnit = 0;
-			if (prevUnits != defenseUnits.size()) {
-				int ratio = defenseUnits.size() / villages.size();
-				int unitIndex = 0;
-				LinkedList<Unit> freeUnits = new LinkedList<>(defenseUnits);
-				while (!freeUnits.isEmpty()) {
-					Unit unit = freeUnits.removeFirst();
-					Village village;
-					if (unitIndex % 3 != 0 && !freeVillages.isEmpty())
-						village = freeVillages.removeFirst();
-					else {
-						int index = RNG.randomInt(0, ratio + 3);
-						if (index >= villages.size())
-							index = villages.size() - 1;
-						village = villages.get(index);
-					}
-					unitVillages.put(unit, village);
-					unitIndex++;
-				}
-			}
-			prevUnits = defenseUnits.size();
-		} else if (player.getCurrentUnit().isMoving() || player.getCurrentUnit().isShooting())
+		if (currentUnit == -1)
+			onNewTurn();
+		else if (player.getCurrentUnit().isMoving() || player.getCurrentUnit().isShooting())
 			return;
+
 		player.setCurrentUnit(currentUnit);
+		State.PROGRESS = (float) currentUnit / (float) ais.size();
 
-		Unit unit = player.getCurrentUnit();
-		if (defenseUnits.contains(unit)) {
-			Village village = unitVillages.get(unit);
-			Vector2i pos = getVillagePoint(unit, village);
-			processUnitAttack(unit);
-			processUnitMove(unit, pos);
-		} else if (attackUnits.contains(unit)) {
-			Unit target = getClosestUnit(unit);
-			Vector2i unitPos = getUnitPoint(unit, target);
-			processUnitAttack(unit);
-			processUnitMove(unit, unitPos);
+		UnitAI ai = ais.get(currentUnit);
+		if (ai.unit.isDestroyed())
+			ais.remove(ai);
+		else if (ai.update(world.getVillages(), world.getPlayer().getUnits())) {
+			currentUnit++;
+			if (currentUnit >= player.getUnits().size()) {
+				currentUnit = -1;
+				world.newTurn(player.getIndex(), false);
+			}
 		}
+	}
 
-		currentUnit++;
-		if (currentUnit >= player.getUnits().size()) {
-			processHire();
-			currentUnit = -1;
-			world.newTurn(player.getIndex(), false);
+	private void onNewTurn() {
+		if (ais == null) {
+			ais = new ArrayList<>();
+			ArrayList<Unit> list = player.getUnits();
+			for (int i = 0; i < list.size(); i++)
+				ais.add(new UnitAI(list.get(i), i));
 		}
-		State.PROGRESS = (float) currentUnit / (float) units.size();
+		player.setCurrentUnit(0);
+		currentUnit = 0;
+
+		processHire();
 	}
 
 	private void resetTargetPrice() {
@@ -126,13 +68,15 @@ public class AIController extends Controller {
 	}
 
 	private void processHire() {
-		if (player.getCash() < targetPrice || world.getVillage(player.getVillage()).getOccupier(world) != player)
+		if (player.getCash() < targetPrice || player.getClosestVillage() == null)
 			return;
 
 		float minPriceDist = Float.POSITIVE_INFINITY;
 		UnitFile unit = null;
 		HashMap<String, UnitFile> units = UnitFile.getFiles();
 		for (String id : units.keySet()) {
+			if (!player.isUnitAvailable(units.get(id)))
+				continue;
 			int price = units.get(id).getPrice();
 			float priceDist = Maths.dist(targetPrice, price);
 			if (priceDist < minPriceDist) {
@@ -145,35 +89,20 @@ public class AIController extends Controller {
 			return;
 
 		Unit newUnit = player.addUnit(unit.getID(), -1, -1);
-		if (RNG.chance(0.8f))
-			attackUnits.add(newUnit);
-		else
-			defenseUnits.add(newUnit);
+		ais.add(new UnitAI(newUnit, player.getUnits().size()));
 		player.removeCash(unit.getPrice());
 		resetTargetPrice();
 	}
 
-	private void processUnitAttack(Unit unit) {
-		WeaponFile[] weapons = unit.getUnitFile().getWeapons();
-		for (int i = 0; i < weapons.length; i++) {
-			for (int j = 0; j < weapons[i].getAttacks(); j++) {
-				Unit target = getUnitTarget(unit, weapons[i]);
-				if (target == null)
-					continue;
-				Vector2i unitPos = getUnitAttackPoint(unit, weapons[i], target);
-				if (unitPos != null) {
-					unit.createPath(unitPos.x, unitPos.y);
-					if (!unit.isMoving())
-						unit.createPath(unitPos.x, unitPos.y);
-				} else {
-					unit.createAttackPath(target.getX(), target.getY());
-					if (!unit.isShooting())
-						unit.createAttackPath(target.getX(), target.getY());
-					if (!unit.isShooting())
-						unit.createAttackPath(target.getX(), target.getY());
-				}
-			}
-		}
+	private void processUnitAttack(Unit unit, Unit target, int weapon) {
+		if (target == null)
+			return;
+		unit.setCurrentWeapon(weapon);
+		unit.createAttackPath(target.getX(), target.getY());
+		if (!unit.isShooting())
+			unit.createAttackPath(target.getX(), target.getY());
+		if (!unit.isShooting())
+			unit.createAttackPath(target.getX(), target.getY());
 	}
 
 	private void processUnitMove(Unit unit, Vector2i pos) {
@@ -186,26 +115,6 @@ public class AIController extends Controller {
 		if (!unit.isMoving())
 			unit.createPath(pos.x, pos.y);
 		player.setIgnoreVisibility(false);
-	}
-
-	private void sortVillages() {
-		villages = new ArrayList<>(world.getVillages());
-		Village village = villages.get(player.getVillage());
-
-		Village village1, village2;
-		int i, j;
-		float dist1, dist2;
-		int n = villages.size() - 1;
-		for (i = 0; i < n; i++) {
-			for (j = 0; j < n; j++) {
-				village1 = villages.get(j);
-				village2 = villages.get(j + 1);
-				dist1 = Maths.dist(village.x, village.y, village1.x, village1.y) / (float) village1.getIncome();
-				dist2 = Maths.dist(village.x, village.y, village2.x, village2.y) / (float) village2.getIncome();
-				if (dist1 > dist2)
-					Collections.swap(villages, j, j + 1);
-			}
-		}
 	}
 
 	private Unit getClosestUnit(Unit source) {
@@ -226,7 +135,6 @@ public class AIController extends Controller {
 	private Unit getUnitTarget(Unit source, WeaponFile weapon) {
 		Unit target = null;
 
-		float maxArmor = weapon.getPiercing();
 		float maxDist = weapon.getRange();
 
 		float minValue = Float.POSITIVE_INFINITY;
@@ -234,8 +142,6 @@ public class AIController extends Controller {
 		ArrayList<Unit> units = world.getPlayer().getUnits();
 		for (int i = 0; i < units.size(); i++) {
 			Unit unit = units.get(i);
-			if (unit.getArmor() > maxArmor)
-				continue;
 			dist = Maths.dist(source.getX(), source.getY(), unit.getX(), unit.getY());
 			if (dist > maxDist)
 				continue;
@@ -264,45 +170,12 @@ public class AIController extends Controller {
 		if (distSq < maxDistSq)
 			return new Vector2i(unit.getX(), unit.getY());
 
-		int attempts = 0;
-		final int maxAttempts = 16;
-		while (true) {
+		for (int attempt = 0; attempt < 32; attempt++) {
 			x = village.x + RNG.randomInt(-range, range);
 			y = village.y + RNG.randomInt(-range, range);
 
 			if (!world.isObstacle(x, y)) {
 				distSq = Maths.distSq(x, y, village.x, village.y);
-				if (distSq < maxDistSq)
-					return new Vector2i(x, y);
-			}
-
-			attempts++;
-			if (attempts >= maxAttempts)
-				return null;
-		}
-	}
-
-	private Vector2i getUnitPoint(Unit unit, Unit target) {
-		if (target == null)
-			return null;
-		int x, y;
-		int range = 0;
-		WeaponFile[] weapons = unit.getUnitFile().getWeapons();
-		for (int i = 0; i < weapons.length; i++)
-			range = Maths.max(range, (int) weapons[i].getRange());
-		float maxDistSq = range * range;
-		float distSq;
-
-		distSq = Maths.distSq(unit.getX(), unit.getY(), target.getX(), target.getY());
-		if (distSq < maxDistSq)
-			return null;
-
-		for (int i = 0; i < 16; i++) {
-			x = target.getX() + RNG.randomInt(-range, range);
-			y = target.getY() + RNG.randomInt(-range, range);
-
-			if (!world.isObstacle(x, y)) {
-				distSq = Maths.distSq(x, y, target.getX(), target.getY());
 				if (distSq < maxDistSq)
 					return new Vector2i(x, y);
 			}
@@ -312,20 +185,13 @@ public class AIController extends Controller {
 	}
 
 	private Vector2i getUnitAttackPoint(Unit unit, WeaponFile weapon, Unit target) {
-		int x, y;
+		int x = unit.getX();
+		int y = unit.getY();
 		int range = (int) weapon.getRange();
-		float maxDistSq = range * range;
+		float maxDistSq = weapon.getRange() * weapon.getRange();
 		float distSq;
 
-		distSq = Maths.distSq(unit.getX(), unit.getY(), target.getX(), target.getY());
-		if (distSq < maxDistSq)
-			return null;
-
-		if (Pathfinder.getAttackPath(world, player, weapon, unit.getX(), unit.getY(), target.getX(),
-				target.getY()) != null)
-			return null;
-
-		for (int i = 0; i < 16; i++) {
+		for (int i = 0; i < 32; i++) {
 			x = target.getX() + RNG.randomInt(-range, range);
 			y = target.getY() + RNG.randomInt(-range, range);
 
@@ -342,6 +208,104 @@ public class AIController extends Controller {
 
 	@Override
 	public void render(int offX, int offY) {
+
+	}
+
+	private class UnitAI {
+
+		private final Unit unit;
+		private final boolean defender;
+
+		private Village targetVillage;
+		private Unit targetUnit;
+
+		private int step;
+		private int weaponStep;
+
+		public UnitAI(Unit unit, int index) {
+			this.unit = unit;
+			this.defender = index % 3 != 0;
+			this.targetVillage = null;
+			this.targetUnit = null;
+			this.step = 0;
+			this.weaponStep = 0;
+		}
+
+		public boolean update(ArrayList<Village> villages, ArrayList<Unit> units) {
+			WeaponFile[] weapons = unit.getUnitFile().getWeapons();
+			int maxWeaponStep = weapons.length;
+
+			if (defender && !villages.isEmpty()) {
+				if (step == 0) {
+					if (weaponStep < maxWeaponStep && unit.getAttacks(weaponStep) > 0) {
+						processUnitAttack(unit, getUnitTarget(unit, weapons[weaponStep]), weaponStep);
+						weaponStep++;
+					}
+				} else if (step == 1) {
+					if (targetVillage == null || targetVillage.getHouses() == 0
+							|| targetVillage.getTotalUnits(world, player) > 2) {
+						float minDistSq = Float.POSITIVE_INFINITY;
+						for (int i = 0; i < villages.size(); i++) {
+							Village current = villages.get(i);
+							int total = current.getTotalUnits(world, player);
+							if (total > 2)
+								continue;
+							float distSq = Maths.distSq(unit.getX(), unit.getY(), current.x, current.y);
+							if (distSq < minDistSq) {
+								minDistSq = distSq;
+								targetVillage = current;
+							}
+						}
+					}
+					if (targetVillage != null) {
+						Vector2i point = getVillagePoint(unit, targetVillage);
+						processUnitMove(unit, point);
+					}
+					weaponStep = maxWeaponStep;
+				} else if (step == 2) {
+					if (weaponStep < maxWeaponStep && unit.getAttacks(weaponStep) > 0)
+						processUnitAttack(unit, getUnitTarget(unit, weapons[weaponStep]), weaponStep);
+					weaponStep++;
+				}
+			} else if (!units.isEmpty()) {
+				if (step == 0) {
+					targetUnit = getClosestUnit(unit);
+					if (targetUnit != null && weaponStep < maxWeaponStep && unit.getAttacks(weaponStep) > 0) {
+						processUnitAttack(unit, targetUnit, weaponStep);
+						weaponStep++;
+					}
+				} else if (step == 1) {
+					if (targetUnit != null) {
+						player.setIgnoreVisibility(true);
+						Vector2i pos = null;
+						for (int i = 0; i < weapons.length; i++) {
+							Vector2i current = getUnitAttackPoint(unit, weapons[i], targetUnit);
+							if (current != null)
+								pos = current;
+						}
+						processUnitMove(unit, pos);
+						player.setIgnoreVisibility(false);
+					}
+					weaponStep = maxWeaponStep;
+				} else if (step == 2) {
+					if (targetUnit != null && weaponStep < maxWeaponStep && unit.getAttacks(weaponStep) > 0) {
+						processUnitAttack(unit, targetUnit, weaponStep);
+						weaponStep++;
+					}
+				}
+			}
+
+			if (weaponStep >= maxWeaponStep) {
+				step++;
+				weaponStep = 0;
+			}
+			if (step > 2) {
+				step = 0;
+				weaponStep = 0;
+				return true;
+			} else
+				return false;
+		}
 
 	}
 

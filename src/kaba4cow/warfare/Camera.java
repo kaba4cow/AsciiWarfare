@@ -65,12 +65,12 @@ public class Camera {
 	private void clampPosition() {
 		if (x < 0f)
 			x = 0f;
-		if (x > world.getSize() - world.getViewport().width)
-			x = world.getSize() - world.getViewport().width;
+		if (x > Game.WORLD_SIZE - world.getViewport().width)
+			x = Game.WORLD_SIZE - world.getViewport().width;
 		if (y < 0f)
 			y = 0f;
-		if (y > world.getSize() - world.getViewport().height)
-			y = world.getSize() - world.getViewport().height;
+		if (y > Game.WORLD_SIZE - world.getViewport().height)
+			y = Game.WORLD_SIZE - world.getViewport().height;
 	}
 
 	public void setPosition(int x, int y) {

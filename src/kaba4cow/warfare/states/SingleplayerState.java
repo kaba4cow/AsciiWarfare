@@ -1,6 +1,10 @@
 package kaba4cow.warfare.states;
 
+import java.io.File;
+
 import kaba4cow.ascii.input.Keyboard;
+import kaba4cow.ascii.toolbox.files.DataFile;
+import kaba4cow.ascii.toolbox.rng.RNG;
 import kaba4cow.warfare.Game;
 import kaba4cow.warfare.game.World;
 
@@ -36,9 +40,9 @@ public class SingleplayerState extends State {
 		}
 	}
 
-	public void generateWorld(int size, int season) {
+	public void generateWorld(int season) {
 		State.thread("Generating", f -> {
-			world = new World(size, season);
+			world = new World(season, RNG.randomLong());
 			world.setCurrentPlayer(0, true);
 			Game.switchState(instance);
 		});
@@ -54,7 +58,7 @@ public class SingleplayerState extends State {
 		State.thread("Loading", f -> {
 			World newWorld;
 			try {
-				newWorld = new World(-1);
+				newWorld = new World(DataFile.read(new File("SAVE")), -1);
 			} catch (Exception e) {
 				newWorld = null;
 			}

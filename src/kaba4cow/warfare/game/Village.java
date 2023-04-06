@@ -2,32 +2,30 @@ package kaba4cow.warfare.game;
 
 import java.util.ArrayList;
 
-import kaba4cow.ascii.toolbox.files.DataFile;
 import kaba4cow.ascii.toolbox.maths.Maths;
+import kaba4cow.ascii.toolbox.maths.vectors.Vector2i;
 
 public class Village {
 
 	public final int x;
 	public final int y;
 	public final int radius;
-	private int income;
+	private ArrayList<Vector2i> houses;
 
 	public Village(int x, int y, int radius) {
 		this.x = x;
 		this.y = y;
 		this.radius = radius;
-		this.income = 0;
+		this.houses = null;
 	}
 
-	public Village(DataFile data) {
-		this.x = data.getInt(0);
-		this.y = data.getInt(1);
-		this.radius = data.getInt(2);
-		this.income = data.getInt(3);
-	}
-
-	public void save(DataFile data) {
-		data.clear().setInt(x).setInt(y).setInt(radius).setInt(income);
+	public void update(World world) {
+		for (int i = houses.size() - 1; i >= 0; i--) {
+			int x = houses.get(i).x;
+			int y = houses.get(i).y;
+			if (world.getVegetation(x, y) == null)
+				houses.remove(i);
+		}
 	}
 
 	public Player getOccupier(World world) {
@@ -41,6 +39,22 @@ public class Village {
 			return player2;
 		else
 			return null;
+	}
+
+	public int getTotalUnits(World world, Player player) {
+		if (!player.hasUnits())
+			return 0;
+		ArrayList<Unit> units = player.getUnits();
+		float maxDistSq = radius * radius;
+		float distSq;
+		int total = 0;
+		for (int i = 0; i < units.size(); i++) {
+			Unit unit = units.get(i);
+			distSq = Maths.distSq(x, y, unit.getX(), unit.getY());
+			if (distSq < maxDistSq)
+				total++;
+		}
+		return total;
 	}
 
 	private boolean inVillage(Player player) {
@@ -58,12 +72,18 @@ public class Village {
 		return false;
 	}
 
-	public void calculateIncome(int totalHouses) {
-		this.income = totalHouses / 2;
+	public void setHouses(ArrayList<Vector2i> houses) {
+		this.houses = houses;
+	}
+
+	public int getHouses() {
+		return houses.size();
 	}
 
 	public int getIncome() {
-		return income;
+		if (houses.isEmpty())
+			return 0;
+		return 4 + 3 * getHouses() / 2 + (x ^ y) % 4;
 	}
 
 }

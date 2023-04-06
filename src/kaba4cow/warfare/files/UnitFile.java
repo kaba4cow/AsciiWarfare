@@ -19,6 +19,8 @@ public class UnitFile {
 	private final String id;
 	private final String name;
 	private final String type;
+	private final int side;
+	private final int level;
 	private final int price;
 	private final int health;
 	private final float armor;
@@ -34,6 +36,9 @@ public class UnitFile {
 
 		this.name = table.getCell("Name", row);
 		this.type = table.getCell("Type", row);
+
+		this.side = Integer.parseInt(table.getCell("Side", row));
+		this.level = Integer.parseInt(table.getCell("Level", row));
 
 		this.health = Integer.parseInt(table.getCell("Health", row));
 		this.armor = Float.parseFloat(table.getCell("Armor", row));
@@ -55,20 +60,21 @@ public class UnitFile {
 
 		if (price < minPrice)
 			minPrice = price;
-		else if (price > maxPrice)
+		if (price > maxPrice)
 			maxPrice = price;
 	}
 
 	private static int calculatePrice(UnitFile unit, String[] weapons) {
 		float price = 0f;
 		price += 13.8f * unit.getHealth();
-		price += 4.2f * unit.getArmor();
-		price += 4.3f * unit.getMoves();
-		price += 1.4f * unit.getVisibility();
+		price += 6.2f * unit.getArmor();
+		price += 4.6f * unit.getMoves();
+		price += 3.4f * unit.getVisibility();
+		price += 1.3f * unit.getLevel() * unit.getLevel();
 		for (int i = 0; i < weapons.length; i++)
 			price += WeaponFile.get(weapons[i]).getPrice();
-		price *= unit.getUnits() * 0.04f;
-		return (int) price;
+		price *= 0.41f;
+		return (int) price + 37;
 	}
 
 	public static UnitFile get(String id) {
@@ -115,6 +121,14 @@ public class UnitFile {
 
 	public char getTypeGlyph() {
 		return UnitTypeFile.get(type).getGlyph();
+	}
+
+	public int getSide() {
+		return side;
+	}
+
+	public int getLevel() {
+		return level;
 	}
 
 	public int getPrice() {

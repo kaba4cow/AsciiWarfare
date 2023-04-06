@@ -43,8 +43,7 @@ public class Settings {
 		return preferences.getInt("season", 2);
 	}
 
-	public static void setWorldInfo(int worldSize, int worldSeason) {
-		preferences.putInt("size", worldSize);
+	public static void setWorldInfo(int worldSeason) {
 		preferences.putInt("season", worldSeason);
 	}
 

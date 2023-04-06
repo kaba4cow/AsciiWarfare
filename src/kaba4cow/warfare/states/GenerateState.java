@@ -37,8 +37,8 @@ public class GenerateState extends State {
 		new GUISeparator(frame, -1, true);
 
 		new GUIButton(frame, -1, "Start", f -> {
-			Settings.setWorldInfo(sizePanel.getIndex(), seasonPanel.getIndex());
-			SingleplayerState.getInstance().generateWorld(sizePanel.getIndex(), seasonPanel.getIndex());
+			Settings.setWorldInfo(seasonPanel.getIndex());
+			SingleplayerState.getInstance().generateWorld(seasonPanel.getIndex());
 		});
 
 		new GUIButton(frame, -1, "Return", f -> {

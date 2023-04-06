@@ -29,8 +29,9 @@ import kaba4cow.warfare.gui.Viewport;
 import kaba4cow.warfare.gui.game.ActionFrame;
 import kaba4cow.warfare.gui.game.CurrentUnitFrame;
 import kaba4cow.warfare.gui.game.GameOverFrame;
-import kaba4cow.warfare.gui.game.InfoFrame;
 import kaba4cow.warfare.gui.game.SelectedUnitFrame;
+import kaba4cow.warfare.gui.game.WorldFrame;
+import kaba4cow.warfare.gui.info.InfoFrame;
 import kaba4cow.warfare.gui.shop.ShopFrame;
 import kaba4cow.warfare.network.Message;
 import kaba4cow.warfare.network.tcp.Client;
@@ -40,10 +41,7 @@ import kaba4cow.warfare.states.State;
 public class World {
 
 	private final long inputSeed;
-	private final int inputSize;
 	private final int inputSeason;
-
-	private final int size;
 
 	private final TerrainTile[][] terrainMap;
 	private final VegetationTile[][] vegetationMap;
@@ -59,12 +57,13 @@ public class World {
 
 	private CurrentUnitFrame currentUnitFrame;
 	private SelectedUnitFrame selectedUnitFrame;
-	private InfoFrame worldFrame;
+	private WorldFrame worldFrame;
 	private ActionFrame actionFrame;
 	private GameOverFrame gameOverFrame;
 
 	private ShopFrame shopFrame;
-	private boolean shop;
+	private InfoFrame infoFrame;
+	private boolean gui;
 
 	private Viewport viewport;
 
@@ -76,22 +75,16 @@ public class World {
 
 	private final DataFile data;
 
-	public World(int size, int season) {
-		this(size, season, RNG.randomLong());
-	}
-
-	public World(int size, int season, long seed) {
+	public World(int season, long seed) {
 		this.inputSeed = seed;
-		this.inputSize = size;
 		this.inputSeason = season;
 
-		this.size = calculateSize(size);
-		this.terrainMap = new TerrainTile[this.size][this.size];
-		this.vegetationMap = new VegetationTile[this.size][this.size];
-		this.temperatureMap = new float[this.size][this.size];
+		this.terrainMap = new TerrainTile[Game.WORLD_SIZE][Game.WORLD_SIZE];
+		this.vegetationMap = new VegetationTile[Game.WORLD_SIZE][Game.WORLD_SIZE];
+		this.temperatureMap = new float[Game.WORLD_SIZE][Game.WORLD_SIZE];
 		this.data = new DataFile();
 
-		Generator generator = new Generator(inputSize, inputSeason, this.size, seed);
+		Generator generator = new Generator(inputSeason, seed);
 		generator.generate();
 		this.villages = generator.populate(terrainMap, vegetationMap, temperatureMap);
 
@@ -118,9 +111,9 @@ public class World {
 
 		this.players = new ArrayList<>();
 		for (int i = 0; i < 2; i++)
-			players.add(new Player(this, playerVillages[i], i));
+			players.add(new Player(this, i));
 		for (int i = 0; i < players.size(); i++)
-			players.get(i).createUnits();
+			players.get(i).createUnits(villages.get(playerVillages[i]));
 		this.turn = 0;
 		this.turnPlayer = 0;
 		this.currentPlayer = 0;
@@ -140,19 +133,17 @@ public class World {
 		DataFile node;
 
 		this.inputSeed = data.node("Seed").getLong();
-		this.inputSize = data.node("Size").getInt();
 		this.inputSeason = data.node("Season").getInt();
 
-		this.size = calculateSize(inputSize);
 		this.turn = data.node("Turn").getInt(0);
 		this.turnPlayer = data.node("Turn").getInt(1);
 		this.currentPlayer = id < 0 ? data.node("Player").getInt() : id;
 
-		this.terrainMap = new TerrainTile[size][size];
-		this.vegetationMap = new VegetationTile[size][size];
-		this.temperatureMap = new float[size][size];
+		this.terrainMap = new TerrainTile[Game.WORLD_SIZE][Game.WORLD_SIZE];
+		this.vegetationMap = new VegetationTile[Game.WORLD_SIZE][Game.WORLD_SIZE];
+		this.temperatureMap = new float[Game.WORLD_SIZE][Game.WORLD_SIZE];
 
-		Generator generator = new Generator(inputSize, inputSeason, size, inputSeed);
+		Generator generator = new Generator(inputSeason, inputSeed);
 		generator.generate();
 
 		this.villages = generator.populate(terrainMap, vegetationMap, temperatureMap);
@@ -187,18 +178,6 @@ public class World {
 		setCurrentPlayer(currentPlayer, id < 0);
 	}
 
-	public World(int id) throws Exception {
-		this(DataFile.read(new File("SAVE")), id);
-	}
-
-	public static int calculateSize(int size) {
-		if (size < 0)
-			size = 0;
-		else if (size > 2)
-			size = 2;
-		return 10 * (int) Maths.mapLimit(size, 0, 2, Game.MIN_WORLD_SIZE, Game.MAX_WORLD_SIZE);
-	}
-
 	public void setCurrentPlayer(int currentPlayer, boolean ai) {
 		this.currentPlayer = currentPlayer;
 		getPlayer().setController(new PlayerController());
@@ -221,7 +200,6 @@ public class World {
 		int index;
 
 		data.node("Seed").clear().setLong(inputSeed);
-		data.node("Size").clear().setInt(inputSize);
 		data.node("Season").clear().setInt(inputSeason);
 
 		data.node("Turn").clear().setInt(turn).setInt(turnPlayer);
@@ -253,19 +231,24 @@ public class World {
 	private void createGUI() {
 		currentUnitFrame = new CurrentUnitFrame();
 		selectedUnitFrame = new SelectedUnitFrame();
-		worldFrame = new InfoFrame();
+		worldFrame = new WorldFrame();
 		actionFrame = new ActionFrame();
-		shop = false;
+		gui = false;
 		createViewport();
 	}
 
 	private void openShop() {
-		shop = true;
+		gui = true;
 		shopFrame = new ShopFrame(getPlayer());
 	}
 
+	private void openInfo() {
+		gui = true;
+		infoFrame = new InfoFrame(this, getPlayer());
+	}
+
 	public boolean canExit() {
-		return !shop && gameOverFrame == null;
+		return !gui && gameOverFrame == null;
 	}
 
 	private void createViewport() {
@@ -286,18 +269,32 @@ public class World {
 			return;
 		}
 
-		if (!shop && Keyboard.isKeyDown(Keyboard.KEY_R) && getPlayer().canAccessShop())
-			openShop();
-		else if (shop && Keyboard.isKeyDown(Keyboard.KEY_ESCAPE) && shopFrame.canExit())
-			shop = false;
+		if (!gui && isPlayerTurn()) {
+			if (Keyboard.isKeyDown(Keyboard.KEY_R) && getPlayer().canAccessShop())
+				openShop();
+			else if (Keyboard.isKeyDown(Keyboard.KEY_I))
+				openInfo();
+		} else if (gui && Keyboard.isKeyDown(Keyboard.KEY_ESCAPE) && (shopFrame == null || shopFrame.canExit())) {
+			shopFrame = null;
+			infoFrame = null;
+			gui = false;
+		}
 
-		if (shop) {
-			shopFrame.update();
+		if (gui) {
+			if (shopFrame != null)
+				shopFrame.update();
+			else if (infoFrame != null)
+				infoFrame.update();
 			return;
 		}
 
 		camera.update(dt);
 
+		for (int i = 0; i < villages.size(); i++) {
+			villages.get(i).update(this);
+			if (villages.get(i).getHouses() <= 0)
+				villages.remove(i);
+		}
 		for (int i = 0; i < players.size(); i++)
 			players.get(i).update(dt);
 		players.get(turnPlayer).updateController(dt);
@@ -309,8 +306,11 @@ public class World {
 	}
 
 	public void render() {
-		if (shop) {
-			shopFrame.render();
+		if (gui) {
+			if (shopFrame != null)
+				shopFrame.render();
+			else if (infoFrame != null)
+				infoFrame.render();
 			return;
 		}
 
@@ -327,11 +327,11 @@ public class World {
 		int x, y, ix, iy;
 		for (y = 0; y < viewport.height; y++) {
 			iy = y + offY;
-			if (iy < 0 || iy >= size)
+			if (iy < 0 || iy >= Game.WORLD_SIZE)
 				continue;
 			for (x = 0; x < viewport.width; x++) {
 				ix = x + offX;
-				if (ix < 0 || ix >= size)
+				if (ix < 0 || ix >= Game.WORLD_SIZE)
 					continue;
 				if (!player.isVisible(ix, iy))
 					Drawer.draw(x, y, Glyphs.SPACE, 0x000000);
@@ -392,7 +392,7 @@ public class World {
 			float dist;
 			for (iy = y - range; iy <= y + range; iy++)
 				for (ix = x - range; ix <= x + range; ix++) {
-					if (ix == x && iy == y || ix < 0 || ix >= size || iy < 0 || iy >= size
+					if (ix == x && iy == y || ix < 0 || ix >= Game.WORLD_SIZE || iy < 0 || iy >= Game.WORLD_SIZE
 							|| vegetationMap[ix][iy] == null)
 						continue;
 					dist = Maths.dist(x, y, ix, iy);
@@ -442,13 +442,13 @@ public class World {
 			getPlayer(player).addUnit(unit, x, y);
 	}
 
-	public void setStats(int player, int cashEarned, int cashSpent, int unitsHired, int unitsLost, int unitsKilled,
-			boolean send) {
+	public void setStats(int player, float level, int cashEarned, int cashSpent, int unitsHired, int unitsLost,
+			int unitsKilled, boolean send) {
 		if (send) {
 			if (client != null)
-				client.send(Message.STATS, player, cashEarned, cashSpent, unitsHired, unitsLost, unitsKilled);
+				client.send(Message.STATS, player, level, cashEarned, cashSpent, unitsHired, unitsLost, unitsKilled);
 		} else
-			getPlayer(player).setStats(cashEarned, cashSpent, unitsHired, unitsLost, unitsKilled);
+			getPlayer(player).setStats(level, cashEarned, cashSpent, unitsHired, unitsLost, unitsKilled);
 	}
 
 	public void damageUnits(int x, int y, Unit source, long seed, WeaponFile weapon) {
@@ -466,7 +466,7 @@ public class World {
 			float dist;
 			for (iy = y - range; iy <= y + range; iy++)
 				for (ix = x - range; ix <= x + range; ix++) {
-					if (ix == x && iy == y || ix < 0 || ix >= size || iy < 0 || iy >= size)
+					if (ix == x && iy == y || ix < 0 || ix >= Game.WORLD_SIZE || iy < 0 || iy >= Game.WORLD_SIZE)
 						continue;
 					dist = Maths.dist(x, y, ix, iy);
 					if (dist <= radius)
@@ -493,14 +493,6 @@ public class World {
 		if (turnPlayer >= players.size()) {
 			turnPlayer = 0;
 			turn++;
-
-			for (int i = 0; i < 2; i++)
-				players.get(i).resetIncome();
-			for (Village village : villages) {
-				Player occupier = village.getOccupier(this);
-				if (occupier != null)
-					occupier.addIncome(village.getIncome());
-			}
 			for (int i = 0; i < 2; i++)
 				players.get(i).addIncomeCash();
 		}
@@ -518,42 +510,38 @@ public class World {
 		return actionFrame.addAction(this);
 	}
 
-	public int getSize() {
-		return size;
-	}
-
 	public boolean isObstacle(int x, int y) {
-		if (x < 0 || x >= size || y < 0 || y >= size)
+		if (x < 0 || x >= Game.WORLD_SIZE || y < 0 || y >= Game.WORLD_SIZE)
 			return true;
 		return vegetationMap[x][y] != null || getUnit(x, y) != null;
 	}
 
 	public boolean isVisible(Player player, int x, int y) {
-		if (x < 0 || x >= size || y < 0 || y >= size)
+		if (x < 0 || x >= Game.WORLD_SIZE || y < 0 || y >= Game.WORLD_SIZE)
 			return false;
 		return player.isVisible(x, y);
 	}
 
 	public float getPenalty(int x, int y) {
-		if (x < 0 || x >= size || y < 0 || y >= size)
+		if (x < 0 || x >= Game.WORLD_SIZE || y < 0 || y >= Game.WORLD_SIZE)
 			return 0f;
 		return terrainMap[x][y].getPenalty();
 	}
 
 	public TerrainTile getTerrain(int x, int y) {
-		if (x < 0 || x >= size || y < 0 || y >= size)
+		if (x < 0 || x >= Game.WORLD_SIZE || y < 0 || y >= Game.WORLD_SIZE)
 			return null;
 		return terrainMap[x][y];
 	}
 
 	public VegetationTile getVegetation(int x, int y) {
-		if (x < 0 || x >= size || y < 0 || y >= size)
+		if (x < 0 || x >= Game.WORLD_SIZE || y < 0 || y >= Game.WORLD_SIZE)
 			return null;
 		return vegetationMap[x][y];
 	}
 
 	public float getTemperature(int x, int y) {
-		if (x < 0 || x >= size || y < 0 || y >= size)
+		if (x < 0 || x >= Game.WORLD_SIZE || y < 0 || y >= Game.WORLD_SIZE)
 			return 0.5f;
 		return temperatureMap[x][y];
 	}
@@ -563,9 +551,9 @@ public class World {
 	}
 
 	private Node[][] createNodeMap() {
-		Node[][] map = new Node[size][size];
-		for (int y = 0; y < size; y++)
-			for (int x = 0; x < size; x++)
+		Node[][] map = new Node[Game.WORLD_SIZE][Game.WORLD_SIZE];
+		for (int y = 0; y < Game.WORLD_SIZE; y++)
+			for (int x = 0; x < Game.WORLD_SIZE; x++)
 				map[x][y] = new Node(x, y, getPenalty(x, y));
 		return map;
 	}
@@ -604,10 +592,6 @@ public class World {
 
 	public long getInputSeed() {
 		return inputSeed;
-	}
-
-	public int getInputSize() {
-		return inputSize;
 	}
 
 	public int getInputSeason() {

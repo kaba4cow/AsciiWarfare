@@ -45,14 +45,14 @@ public class WeaponFile {
 
 	private static int calculatePrice(WeaponFile weapon) {
 		float price = 0f;
-		price += 1.8f * weapon.getDamage() * weapon.getAttacks();
+		price += 2.1f * weapon.getDamage() * weapon.getAttacks();
 		price += 1.7f * weapon.getPiercing();
-		price += 14.8f * weapon.getAccuracy();
-		price += 3.3f * weapon.getRange();
-		price += 2.6f * weapon.getRadius();
+		price += 10.7f * weapon.getAccuracy();
+		price += 3.6f * weapon.getRange();
+		price += 2.3f * weapon.getRadius();
 		price += -1.2f * weapon.getPenalty();
-		price *= 0.7f;
-		return (int) price;
+		price *= 0.72f;
+		return (int) price + 12;
 	}
 
 	public static WeaponFile get(String id) {

@@ -11,13 +11,16 @@ import kaba4cow.ascii.toolbox.files.DataFile;
 import kaba4cow.ascii.toolbox.maths.Maths;
 import kaba4cow.ascii.toolbox.maths.vectors.Vector2i;
 import kaba4cow.ascii.toolbox.rng.RNG;
+import kaba4cow.warfare.Game;
 import kaba4cow.warfare.files.UnitFile;
 import kaba4cow.warfare.game.controllers.Controller;
-import kaba4cow.warfare.game.controllers.PlayerController;
 
 public class Player {
 
 	private final World world;
+	private final int side;
+
+	private float level;
 
 	private Controller controller;
 
@@ -33,7 +36,6 @@ public class Player {
 	private boolean[][] visibilityMap;
 
 	private final int index;
-	private final int village;
 
 	private int color;
 
@@ -45,13 +47,14 @@ public class Player {
 
 	private boolean ignoreVisibility;
 
-	public Player(World world, int village, int index) {
+	public Player(World world, int index) {
 		this.world = world;
 		this.index = index;
-		this.village = village;
+		this.side = index == 0 ? -1 : 1;
+		this.level = 0f;
 		this.units = new ArrayList<Unit>();
 		this.visibility = new HashMap<>();
-		this.visibilityMap = new boolean[world.getSize()][world.getSize()];
+		this.visibilityMap = new boolean[Game.WORLD_SIZE][Game.WORLD_SIZE];
 		this.currentUnit = 0;
 		this.aiming = false;
 		this.cash = 0;
@@ -60,16 +63,17 @@ public class Player {
 	}
 
 	public Player(World world, int index, DataFile data) {
-		this(world, data.node("Village").getInt(), index);
+		this(world, index);
 		DataFile node;
 
 		cash = data.node("Cash").getInt();
 
-		unitsHired = data.node("Stats").getInt(0);
-		unitsLost = data.node("Stats").getInt(1);
-		unitsKilled = data.node("Stats").getInt(2);
-		cashEarned = data.node("Stats").getInt(3);
-		cashSpent = data.node("Stats").getInt(4);
+		level = data.node("Stats").getFloat(0);
+		unitsHired = data.node("Stats").getInt(1);
+		unitsLost = data.node("Stats").getInt(2);
+		unitsKilled = data.node("Stats").getInt(3);
+		cashEarned = data.node("Stats").getInt(4);
+		cashSpent = data.node("Stats").getInt(5);
 
 		node = data.node("Units");
 		for (int i = 0; i < node.objectSize(); i++) {
@@ -91,10 +95,9 @@ public class Player {
 		DataFile node;
 		int index;
 
-		data.node("Village").clear().setInt(village);
 		data.node("Cash").clear().setInt(cash);
 
-		data.node("Stats").setInt(unitsHired).setInt(unitsLost).setInt(unitsKilled).setInt(cashEarned)
+		data.node("Stats").setFloat(level).setInt(unitsHired).setInt(unitsLost).setInt(unitsKilled).setInt(cashEarned)
 				.setInt(cashSpent);
 
 		node = data.node("Units").clear();
@@ -117,16 +120,32 @@ public class Player {
 		}
 	}
 
-	public void createUnits() {
+	public void createUnits(Village village) {
 		HashMap<String, UnitFile> files = UnitFile.getFiles();
-		for (String file : files.keySet())
-			if (RNG.chance(0.3f))
-				units.add(new Unit(world, world.getVillage(village), this, files.get(file)));
+		ArrayList<UnitFile> available = new ArrayList<>();
+		for (String id : files.keySet()) {
+			UnitFile unit = files.get(id);
+			if (isUnitAvailable(unit))
+				available.add(unit);
+		}
+
+		for (int i = 0; i < 3; i++) {
+			UnitFile unit = available.get(RNG.randomInt(available.size()));
+			units.add(new Unit(world, village, this, unit));
+		}
 	}
 
 	public void update(float dt) {
 		for (int i = 0; i < units.size(); i++)
 			units.get(i).update(dt);
+
+		income = 5 * (int) level;
+		ArrayList<Village> villages = world.getVillages();
+		for (int i = 0; i < villages.size(); i++) {
+			Player occupier = villages.get(i).getOccupier(world);
+			if (occupier == this)
+				income += villages.get(i).getIncome();
+		}
 	}
 
 	public void render(int offX, int offY) {
@@ -192,7 +211,7 @@ public class Player {
 	}
 
 	public void onNewTurn() {
-		world.setStats(getIndex(), cashEarned, cashSpent, unitsHired, unitsLost, unitsKilled, true);
+		world.setStats(getIndex(), level, cashEarned, cashSpent, unitsHired, unitsLost, unitsKilled, true);
 		for (Unit unit : units)
 			unit.onNewTurn();
 	}
@@ -245,7 +264,7 @@ public class Player {
 	}
 
 	public Unit addUnit(String id, int x, int y) {
-		Unit unit = new Unit(world, world.getVillage(village), this, UnitFile.get(id));
+		Unit unit = new Unit(world, getClosestVillage(), this, UnitFile.get(id));
 		units.add(unit);
 		unitsHired++;
 		if (x != -1 && y != -1)
@@ -255,7 +274,8 @@ public class Player {
 		return unit;
 	}
 
-	public void setStats(int cashEarned, int cashSpent, int unitsHired, int unitsLost, int unitsKilled) {
+	public void setStats(float level, int cashEarned, int cashSpent, int unitsHired, int unitsLost, int unitsKilled) {
+		this.level = level;
 		this.cashEarned = cashEarned;
 		this.cashSpent = cashSpent;
 		this.unitsHired = unitsHired;
@@ -263,17 +283,8 @@ public class Player {
 		this.unitsKilled = unitsKilled;
 	}
 
-	public Player resetIncome() {
-		this.income = 0;
-		return this;
-	}
-
 	public int getIncome() {
 		return income;
-	}
-
-	public void addIncome(int amount) {
-		income += amount;
 	}
 
 	public void addIncomeCash() {
@@ -296,24 +307,59 @@ public class Player {
 		return cash;
 	}
 
+	public int getSide() {
+		return side;
+	}
+
+	public float getLevel() {
+		return level;
+	}
+
+	public boolean isUnitAvailable(UnitFile unit) {
+		if (level < unit.getLevel())
+			return false;
+		if (unit.getSide() == 0)
+			return true;
+		return unit.getSide() == side;
+	}
+
 	public boolean hasUnits() {
 		return !units.isEmpty();
 	}
 
 	public boolean canAccessShop() {
-		return this == world.getVillage(village).getOccupier(world);
+		ArrayList<Village> villages = world.getVillages();
+		for (int i = 0; i < villages.size(); i++)
+			if (villages.get(i).getOccupier(world) == this)
+				return true;
+		return false;
+	}
+
+	public Village getClosestVillage() {
+		if (!hasUnits())
+			return null;
+		int x = getCurrentUnit().getX();
+		int y = getCurrentUnit().getY();
+		Village village = null;
+		float minDistSq = Float.POSITIVE_INFINITY;
+		ArrayList<Village> villages = world.getVillages();
+		for (int i = 0; i < villages.size(); i++) {
+			Village current = villages.get(i);
+			if (current.getOccupier(world) != this)
+				continue;
+			float distSq = Maths.distSq(x, y, current.x, current.y);
+			if (distSq < minDistSq) {
+				minDistSq = distSq;
+				village = current;
+			}
+		}
+		return village;
 	}
 
 	public boolean isVisible(int x, int y) {
 		if (ignoreVisibility)
 			return true;
-		if (controller instanceof PlayerController)
-			return true;
 		return visibilityMap[x][y]; // TODO
-	}
-
-	public int getVillage() {
-		return village;
 	}
 
 	public Unit getUnit(int x, int y) {
@@ -351,7 +397,9 @@ public class Player {
 		this.currentUnit = currentUnit;
 	}
 
-	public void onUnitKilled() {
+	public void onUnitKilled(Unit unit, int amount) {
+		if (unit.getPlayer() != this)
+			level += 0.0001f * amount * unit.getUnitFile().getPrice();
 		unitsKilled++;
 	}
 

@@ -9,7 +9,7 @@ import kaba4cow.warfare.game.World;
 import kaba4cow.warfare.game.world.TerrainTile;
 import kaba4cow.warfare.game.world.VegetationTile;
 
-public class InfoFrame extends GUIFrame {
+public class WorldFrame extends GUIFrame {
 
 	private final GUIText weeks;
 	private final GUIText days;
@@ -23,7 +23,7 @@ public class InfoFrame extends GUIFrame {
 	private final GUIText tile;
 	private final GUIText temperature;
 
-	public InfoFrame() {
+	public WorldFrame() {
 		super(Game.GUI_COLOR, false, false);
 		setTitle("Info");
 

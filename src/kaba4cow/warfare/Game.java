@@ -16,8 +16,7 @@ public class Game implements MainProgram {
 
 	public static final int GUI_COLOR = 0x0009FC;
 
-	public static final int MIN_WORLD_SIZE = 20;
-	public static final int MAX_WORLD_SIZE = 32;
+	public static final int WORLD_SIZE = 240;
 
 	private boolean showFPS;
 

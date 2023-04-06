@@ -35,7 +35,6 @@ public class ServerConsole implements MainProgram {
 	private boolean starting;
 	private GUIFrame startFrame;
 	private GUITextField portTextField;
-	private GUIRadioPanel sizePanel;
 	private GUIRadioPanel seasonPanel;
 
 	public ServerConsole() {
@@ -69,11 +68,6 @@ public class ServerConsole implements MainProgram {
 		new GUIText(startFrame, -1, "Port");
 		portTextField = new GUITextField(startFrame, -1, "");
 
-		sizePanel = new GUIRadioPanel(startFrame, -1, "Map Size:");
-		new GUIRadioButton(sizePanel, -1, "Small");
-		new GUIRadioButton(sizePanel, -1, "Medium");
-		new GUIRadioButton(sizePanel, -1, "Large");
-
 		seasonPanel = new GUIRadioPanel(startFrame, -1, "Season:");
 		new GUIRadioButton(seasonPanel, -1, "Winter");
 		new GUIRadioButton(seasonPanel, -1, "Autumn");
@@ -83,9 +77,8 @@ public class ServerConsole implements MainProgram {
 		new GUIButton(startFrame, -1, "Start", f -> {
 			try {
 				int port = Integer.parseInt(portTextField.getText());
-				int size = sizePanel.getIndex();
 				int season = seasonPanel.getIndex();
-				server = new Server(port, size, season);
+				server = new Server(port, season);
 				serverButton.setText("Close");
 				portText.setText("Port: " + port);
 				starting = false;
@@ -173,9 +166,9 @@ public class ServerConsole implements MainProgram {
 		return server;
 	}
 
-	public boolean startServer(int port, int size, int season) {
+	public boolean startServer(int port, int season) {
 		try {
-			server = new Server(port, size, season);
+			server = new Server(port, season);
 			return true;
 		} catch (IOException e) {
 			return false;

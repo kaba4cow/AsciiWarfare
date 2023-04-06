@@ -26,8 +26,15 @@ public class ShopFrame extends GUIFrame {
 		LinkedHashMap<String, ArrayList<UnitFile>> map = UnitFile.getSorted();
 		for (String type : map.keySet()) {
 			ArrayList<UnitFile> units = map.get(type);
+			ArrayList<UnitFile> available = new ArrayList<>();
+			for (int i = 0; i < units.size(); i++)
+				if (player.isUnitAvailable(units.get(i)))
+					available.add(units.get(i));
+			if (available.isEmpty())
+				continue;
+
 			new GUIButton(this, -1, UnitTypeFile.get(type).getName(), f -> {
-				typeFrame = new ShopTypeFrame(player, UnitTypeFile.get(type).getName(), units);
+				typeFrame = new ShopTypeFrame(player, UnitTypeFile.get(type).getName(), available);
 			});
 		}
 

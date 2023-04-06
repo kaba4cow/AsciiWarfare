@@ -196,7 +196,8 @@ public class Unit {
 
 	public void renderAttackRange(int offX, int offY) {
 		int range = (int) getCurrentWeapon().getRange();
-		Drawer.drawCircle(x - offX, y - offY, range, Glyphs.SPACE, 0x01630000);
+		Drawer.drawCircle(x - offX, y - offY, range, Glyphs.SPACE,
+				Drawer.IGNORE_FOREGROUND | Drawer.IGNORE_GLYPH | 0x630000);
 	}
 
 	public void renderWeaponFrame() {
@@ -245,19 +246,19 @@ public class Unit {
 			remainingHealth = 0;
 		}
 
-		if (killed > 0)
+		if (killed > 0) {
 			world.addAction()//
 					.addText("<" + source.getUnitFile().getName() + ">", source.getPlayer().getColor())//
 					.addText(" destroys " + killed + " ", -1)//
 					.addText("<" + file.getName() + ">", player.getColor());
+			source.getPlayer().onUnitKilled(this, killed);
+		}
 
 		units = maxUnits;
 		health = remainingHealth;
 
-		if (isDestroyed()) {
+		if (isDestroyed())
 			player.removeDestroyedUnits();
-			source.getPlayer().onUnitKilled();
-		}
 	}
 
 	public void createPath(int x, int y) {

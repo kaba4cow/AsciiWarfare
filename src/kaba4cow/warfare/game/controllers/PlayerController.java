@@ -19,7 +19,10 @@ public class PlayerController extends Controller {
 
 		if (camera.isMouseInViewport()) {
 			if (Mouse.isKeyDown(Mouse.LEFT)) {
-				if (player.isAiming())
+				Unit target = player.getUnit(mX, mY);
+				if (target != null && target.getPlayer() == player)
+					player.joinUnits(target, player.getCurrentUnit(), true);
+				else if (player.isAiming())
 					player.getCurrentUnit().createAttackPath(mX, mY);
 				else
 					player.getCurrentUnit().createPath(mX, mY);

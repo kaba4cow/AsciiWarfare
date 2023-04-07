@@ -12,13 +12,13 @@ public class GameFiles {
 
 	public static void init() {
 		TableFile data = TableFile.read(new File("DATA"));
-		TerrainFile.loadFiles(data.getTable("Terrain"));
-		VegetationFile.loadFiles(data.getTable("Vegetation"));
-		BiomeFile.loadFiles(data.getTable("Biomes"));
-		WeaponTypeFile.loadFiles(data.getTable("Weapon Types"));
-		WeaponFile.loadFiles(data.getTable("Weapons"));
-		UnitTypeFile.loadFiles(data.getTable("Unit Types"));
-		UnitFile.loadFiles(data.getTable("Units"));
+		TerrainFile.loadFiles(data.getTable("TERRAIN"));
+		VegetationFile.loadFiles(data.getTable("VEGETATION"));
+		BiomeFile.loadFiles(data.getTable("BIOMES"));
+		WeaponTypeFile.loadFiles(data.getTable("WEAPON TYPES"));
+		WeaponFile.loadFiles(data.getTable("WEAPONS"));
+		UnitTypeFile.loadFiles(data.getTable("UNIT TYPES"));
+		UnitFile.loadFiles(data.getTable("UNITS"));
 	}
 
 }

@@ -114,6 +114,11 @@ public class Server implements Runnable {
 			int unitsLost = Integer.parseInt(parameters[5]);
 			int unitsKilled = Integer.parseInt(parameters[6]);
 			world.setStats(player, level, cashEarned, cashSpent, unitsHired, unitsLost, unitsKilled, false);
+		} else if (message.equals(Message.JOIN)) {
+			int player = Integer.parseInt(parameters[0]);
+			int index1 = Integer.parseInt(parameters[1]);
+			int index2 = Integer.parseInt(parameters[2]);
+			world.joinUnits(player, index1, index2, false);
 		}
 	}
 

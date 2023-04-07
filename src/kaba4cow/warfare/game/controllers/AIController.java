@@ -39,7 +39,7 @@ public class AIController extends Controller {
 		State.PROGRESS = (float) currentUnit / (float) ais.size();
 
 		UnitAI ai = ais.get(currentUnit);
-		if (ai.unit.isDestroyed())
+		if (ai.unit.isDestroyed() || !player.getUnits().contains(ai.unit))
 			ais.remove(ai);
 		else if (ai.update(world.getVillages(), world.getPlayer().getUnits())) {
 			currentUnit++;
@@ -57,10 +57,9 @@ public class AIController extends Controller {
 			for (int i = 0; i < list.size(); i++)
 				ais.add(new UnitAI(list.get(i), i));
 		}
+		processHire();
 		player.setCurrentUnit(0);
 		currentUnit = 0;
-
-		processHire();
 	}
 
 	private void resetTargetPrice() {
@@ -71,7 +70,10 @@ public class AIController extends Controller {
 	}
 
 	private void processHire() {
-		if (player.getCash() < targetPrice || player.getClosestVillage() == null)
+		if (player.getCash() < targetPrice || !player.hasUnits())
+			return;
+		player.setCurrentUnit(RNG.randomInt(player.getUnits().size()));
+		if (player.getClosestVillage() == null)
 			return;
 
 		float minPriceDist = Float.POSITIVE_INFINITY;
@@ -229,7 +231,7 @@ public class AIController extends Controller {
 
 		public UnitAI(Unit unit, int index) {
 			this.unit = unit;
-			this.defender = index < 10 || index % 3 != 0;
+			this.defender = index < 10 || index % 3 == 0;
 			this.targetVillage = null;
 			this.targetUnit = null;
 			this.step = 0;
@@ -239,6 +241,44 @@ public class AIController extends Controller {
 		public boolean update(ArrayList<Village> villages, ArrayList<Unit> units) {
 			WeaponFile[] weapons = unit.getUnitFile().getWeapons();
 			int maxWeaponStep = weapons.length;
+
+			boolean join = false;
+			int maxAmount = (int) Maths.map(unit.getUnitFile().getPrice(), UnitFile.getMinPrice(),
+					UnitFile.getMaxPrice(), 20, 5);
+			if (unit.getUnits() < maxAmount && player.getUnits().size() >= 6) {
+				float minDistSq = 1024f;
+				float distSq;
+				Unit target = null;
+				ArrayList<Unit> playerUnits = player.getUnits();
+				for (int i = 0; i < playerUnits.size(); i++) {
+					Unit current = playerUnits.get(i);
+					if (current == unit || current.getUnitFile() != unit.getUnitFile())
+						continue;
+					distSq = Maths.distSq(unit.getX(), unit.getY(), current.getX(), current.getY());
+					if (distSq < minDistSq) {
+						minDistSq = distSq;
+						target = current;
+					}
+				}
+				if (target != null) {
+					if (unit.canJoin(target)) {
+						player.joinUnits(unit, target, true);
+						return true;
+					}
+					int x = -1;
+					int y = -1;
+					for (int j = target.getY() - 1; j <= target.getY() + 1; j++)
+						for (int i = target.getX() - 1; i <= target.getX() + 1; i++)
+							if (i != target.getX() && j != target.getY() && !world.isObstacle(i, j)) {
+								x = i;
+								y = j;
+							}
+					if (!world.isObstacle(x, y)) {
+						processUnitMove(unit, new Vector2i(x, y));
+						join = true;
+					}
+				}
+			}
 
 			if (defender && !villages.isEmpty()) {
 				if (step == 0) {
@@ -262,7 +302,7 @@ public class AIController extends Controller {
 							}
 						}
 					}
-					if (targetVillage != null) {
+					if (!join && targetVillage != null) {
 						Vector2i point = getVillagePoint(unit, targetVillage);
 						processUnitMove(unit, point);
 					}
@@ -280,7 +320,7 @@ public class AIController extends Controller {
 						weaponStep++;
 					}
 				} else if (step == 1) {
-					if (targetUnit != null) {
+					if (!join && targetUnit != null) {
 						player.setIgnoreVisibility(true);
 						Vector2i pos = null;
 						for (int i = 0; i < weapons.length; i++) {

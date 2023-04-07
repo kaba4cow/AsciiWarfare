@@ -330,6 +330,14 @@ public class Unit {
 		resetAttackPath();
 	}
 
+	public void addUnits(int units) {
+		this.units += units;
+	}
+
+	public boolean canJoin(Unit unit) {
+		return this != unit && file == unit.file && Maths.dist(x, y, unit.x, unit.y) < 1.5f;
+	}
+
 	public boolean canShoot() {
 		return attacks[currentWeapon] > 0;
 	}

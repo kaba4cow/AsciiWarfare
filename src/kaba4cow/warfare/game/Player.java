@@ -131,7 +131,7 @@ public class Player {
 		}
 
 		for (int i = 0; i < 3; i++) {
-			UnitFile unit = available.get(RNG.randomInt(available.size()));
+			UnitFile unit = available.get(0 * RNG.randomInt(available.size()));
 			units.add(new Unit(world, village, this, unit));
 		}
 	}
@@ -273,6 +273,18 @@ public class Player {
 		else
 			world.addUnit(getIndex(), id, unit.getX(), unit.getY(), true);
 		return unit;
+	}
+
+	public void joinUnits(Unit unit1, Unit unit2, boolean send) {
+		if (!unit1.canJoin(unit2))
+			return;
+		int index1 = unit1.getIndex();
+		int index2 = unit2.getIndex();
+		unit1.addUnits(unit2.getUnits());
+		units.remove(unit2);
+		currentUnit = unit1.getIndex();
+		if (send)
+			world.joinUnits(getIndex(), index1, index2, true);
 	}
 
 	public void setStats(float level, int cashEarned, int cashSpent, int unitsHired, int unitsLost, int unitsKilled) {

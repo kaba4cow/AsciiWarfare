@@ -46,17 +46,16 @@ public class World {
 	private final long inputSeed;
 	private final int inputSeason;
 
+	private final Node[][] nodeMap;
 	private final TerrainTile[][] terrainMap;
 	private final VegetationTile[][] vegetationMap;
 	private final float[][] elevationMap;
 	private final float[][] temperatureMap;
 	private final ArrayList<Vector2f[]> conrecLines;
-
-	private final Node[][] nodeMap;
+	private final HashMap<Vector2i, String> terrain;
 
 	private final ArrayList<Player> players;
 	private final ArrayList<Village> villages;
-	private final HashMap<Vector2i, String> terrain;
 
 	private Camera camera;
 
@@ -65,21 +64,18 @@ public class World {
 	private WorldFrame worldFrame;
 	private ActionFrame actionFrame;
 	private GameOverFrame gameOverFrame;
+	private Viewport viewport;
 
 	private ShopFrame shopFrame;
 	private InfoFrame infoFrame;
 	private boolean gui;
 	private boolean topographic;
 
-	private Viewport viewport;
-
 	private int turn;
 	private int turnPlayer;
 	private int currentPlayer;
 
 	private Client client;
-
-	private final DataFile data;
 
 	public World(int season, long seed) {
 		this.inputSeed = seed;
@@ -89,7 +85,6 @@ public class World {
 		this.vegetationMap = new VegetationTile[Game.WORLD_SIZE][Game.WORLD_SIZE];
 		this.elevationMap = new float[Game.WORLD_SIZE][Game.WORLD_SIZE];
 		this.temperatureMap = new float[Game.WORLD_SIZE][Game.WORLD_SIZE];
-		this.data = new DataFile();
 
 		Generator generator = new Generator(inputSeason, seed);
 		generator.generate();
@@ -138,8 +133,6 @@ public class World {
 	}
 
 	public World(DataFile data, int id) {
-		this.data = data;
-
 		DataFile node;
 
 		this.inputSeed = data.node("Seed").getLong();
@@ -208,6 +201,7 @@ public class World {
 	}
 
 	public DataFile getDataFile() {
+		DataFile data = new DataFile();
 		DataFile node;
 		State.PROGRESS = 0f;
 
@@ -237,7 +231,7 @@ public class World {
 	}
 
 	public void save() {
-		getDataFile();
+		DataFile data = getDataFile();
 		DataFile.write(data, new File("SAVE"));
 		State.PROGRESS = 1f;
 	}
@@ -466,6 +460,17 @@ public class World {
 				client.send(Message.MOVE, player, index, x, y);
 		} else
 			getPlayer(player).getUnit(index).move(x, y);
+	}
+
+	public void joinUnits(int player, int index1, int index2, boolean send) {
+		if (send) {
+			if (client != null)
+				client.send(Message.JOIN, player, index1, index2);
+		} else {
+			Unit unit1 = getPlayer(player).getUnit(index1);
+			Unit unit2 = getPlayer(player).getUnit(index2);
+			getPlayer(player).joinUnits(unit1, unit2, send);
+		}
 	}
 
 	public void setCash(int player, int cash, boolean send) {

@@ -44,7 +44,7 @@ public class CurrentUnitFrame extends GUIFrame {
 			name.setText("Name: " + unit.getUnitFile().getName());
 			type.setText("Type: " + unit.getUnitFile().getTypeName());
 
-			amount.setText("Amount: " + unit.getUnits() + " / " + unit.getMaxUnits());
+			amount.setText("Amount: " + unit.getUnits());
 			moves.setText("Moves: " + (int) unit.getMoves() + " / " + (int) unit.getMaxMoves());
 
 			health.setText("Health: " + (int) unit.getHealth() + " / " + (int) unit.getMaxHealth());

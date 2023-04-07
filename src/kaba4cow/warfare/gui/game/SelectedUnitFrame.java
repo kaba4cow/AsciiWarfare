@@ -50,7 +50,7 @@ public class SelectedUnitFrame extends GUIFrame {
 		distance.setText("Distance: "
 				+ (int) Maths.dist(currentUnit.getX(), currentUnit.getY(), selectedUnit.getX(), selectedUnit.getY()));
 
-		amount.setText("Amount: " + selectedUnit.getUnits() + " / " + selectedUnit.getMaxUnits());
+		amount.setText("Amount: " + selectedUnit.getUnits());
 
 		health.setText("Health: " + (int) selectedUnit.getHealth() + " / " + (int) selectedUnit.getMaxHealth());
 		armor.setText("Armor: " + (int) selectedUnit.getArmor());

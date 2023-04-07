@@ -11,7 +11,9 @@ import kaba4cow.ascii.drawing.gui.GUIColorText;
 import kaba4cow.ascii.input.Keyboard;
 import kaba4cow.ascii.toolbox.Colors;
 import kaba4cow.ascii.toolbox.files.DataFile;
+import kaba4cow.ascii.toolbox.maths.Conrec;
 import kaba4cow.ascii.toolbox.maths.Maths;
+import kaba4cow.ascii.toolbox.maths.vectors.Vector2f;
 import kaba4cow.ascii.toolbox.maths.vectors.Vector2i;
 import kaba4cow.ascii.toolbox.rng.RNG;
 import kaba4cow.ascii.toolbox.rng.RandomLehmer;
@@ -48,6 +50,7 @@ public class World {
 	private final VegetationTile[][] vegetationMap;
 	private final float[][] elevationMap;
 	private final float[][] temperatureMap;
+	private final ArrayList<Vector2f[]> conrecLines;
 
 	private final Node[][] nodeMap;
 
@@ -66,6 +69,7 @@ public class World {
 	private ShopFrame shopFrame;
 	private InfoFrame infoFrame;
 	private boolean gui;
+	private boolean topographic;
 
 	private Viewport viewport;
 
@@ -90,6 +94,9 @@ public class World {
 		Generator generator = new Generator(inputSeason, seed);
 		generator.generate();
 		this.villages = generator.populate(terrainMap, vegetationMap, elevationMap, temperatureMap);
+
+		Conrec conrec = new Conrec(Game.ELEVATION_GLYPHS.length);
+		this.conrecLines = conrec.contour(elevationMap, Game.WORLD_SIZE, Game.WORLD_SIZE);
 
 		this.nodeMap = createNodeMap();
 
@@ -152,6 +159,9 @@ public class World {
 
 		this.villages = generator.populate(terrainMap, vegetationMap, elevationMap, temperatureMap);
 		this.terrain = new HashMap<>();
+
+		Conrec conrec = new Conrec(Game.ELEVATION_GLYPHS.length);
+		this.conrecLines = conrec.contour(elevationMap, Game.WORLD_SIZE, Game.WORLD_SIZE);
 
 		node = data.node("Map");
 		for (int i = 0; i < node.objectSize(); i++) {
@@ -292,6 +302,9 @@ public class World {
 			return;
 		}
 
+		if (Keyboard.isKeyDown(Keyboard.KEY_L))
+			topographic = !topographic;
+
 		camera.update(dt);
 
 		for (int i = 0; i < villages.size(); i++) {
@@ -338,25 +351,39 @@ public class World {
 				ix = x + offX;
 				if (ix < 0 || ix >= Game.WORLD_SIZE)
 					continue;
-				if (!player.isVisible(ix, iy)) {
+				if (!player.isVisible(ix, iy))
 					Drawer.draw(x, y, Glyphs.SPACE, 0x000000);
-					continue;
-				}
-
-				if (vegetationMap[ix][iy] == null)
-					terrainMap[ix][iy].render(x, y);
-				else
+				else if (vegetationMap[ix][iy] == null) {
+					if (topographic) {
+						float elevation = elevationMap[ix][iy];
+						int index = (int) (Game.ELEVATION_GLYPHS.length * elevation);
+						if (index >= Game.ELEVATION_GLYPHS.length)
+							index--;
+						int color = Colors.blend(0x000231, 0x000786, elevation);
+						color = Colors.blend(color, terrainMap[ix][iy].getColor(), 0.7f);
+						Drawer.draw(x, y, Game.ELEVATION_GLYPHS[index], color);
+					} else
+						terrainMap[ix][iy].render(x, y);
+				} else
 					vegetationMap[ix][iy].render(x, y);
-
-				if (Keyboard.isKey(Keyboard.KEY_L)) {
-					int index = (int) (Game.ELEVATION_GLYPHS.length * elevationMap[ix][iy]);
-					if (index >= Game.ELEVATION_GLYPHS.length)
-						index--;
-					int color = Colors.blend(0x000342, 0x000897, elevationMap[ix][iy]);
-					Drawer.draw(x, y, Game.ELEVATION_GLYPHS[index], color);
-				}
 			}
 		}
+
+		if (topographic) {
+			for (int i = 0; i < conrecLines.size(); i++) {
+				Vector2f start = conrecLines.get(i)[0];
+				Vector2f end = conrecLines.get(i)[1];
+
+				int x1 = (int) start.x;
+				int y1 = (int) start.y;
+				int x2 = (int) end.x;
+				int y2 = (int) end.y;
+
+				Drawer.drawLine(x1 - offX, y1 - offY, x2 - offX, y2 - offY, Glyphs.SPACE,
+						Drawer.IGNORE_FOREGROUND | Drawer.IGNORE_GLYPH | 0x111000);
+			}
+		}
+
 		for (int i = 0; i < players.size(); i++)
 			players.get(i).render(offX, offY);
 		player.renderController(offX, offY);

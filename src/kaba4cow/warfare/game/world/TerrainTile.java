@@ -49,6 +49,10 @@ public class TerrainTile {
 		return allowCrater;
 	}
 
+	public int getColor() {
+		return color;
+	}
+
 	public TerrainFile getFile() {
 		return file;
 	}

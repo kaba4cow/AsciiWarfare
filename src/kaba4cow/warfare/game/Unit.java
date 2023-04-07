@@ -59,7 +59,7 @@ public class Unit {
 		this.attackDelayTime = 0f;
 
 		this.health = getMaxHealth();
-		this.units = getMaxUnits();
+		this.units = 1;
 		onNewTurn();
 
 		this.weaponFrame = new WeaponFrame(this);
@@ -164,7 +164,7 @@ public class Unit {
 			for (int i = 0; i < path.getLength(); i++) {
 				Node pos = path.getNode(i);
 				Drawer.draw(pos.x - offX, pos.y - offY, Glyphs.SPACE,
-						Drawer.IGNORE_FOREGROUND | Drawer.IGNORE_GLYPH | 0x222000);
+						Drawer.IGNORE_FOREGROUND | Drawer.IGNORE_GLYPH | 0x422000);
 			}
 
 		if (attackPath != null && !isShooting()) {
@@ -372,10 +372,6 @@ public class Unit {
 
 	public int getVisibilityRadius() {
 		return file.getVisibility();
-	}
-
-	public int getMaxUnits() {
-		return file.getUnits();
 	}
 
 	public WeaponFile getCurrentWeapon() {

@@ -18,7 +18,7 @@ public class Game implements MainProgram {
 
 	public static final int WORLD_SIZE = 240;
 
-	public static final char[] ELEVATION_GLYPHS = { ' ', '.', ',', '-', '~', '^', '=', '/', '|', 'x' };
+	public static final char[] ELEVATION_GLYPHS = { ',', '=', '/', 'x' };
 
 	private boolean showFPS;
 
@@ -30,6 +30,7 @@ public class Game implements MainProgram {
 
 	@Override
 	public void init() {
+		Display.setScreenshotLocation("USER/");
 		switchState(MenuState.getInstance());
 		showFPS = false;
 	}
@@ -46,6 +47,9 @@ public class Game implements MainProgram {
 
 		if (Keyboard.isKeyDown(Keyboard.KEY_F3))
 			showFPS = !showFPS;
+
+		if (Keyboard.isKeyDown(Keyboard.KEY_F12))
+			Display.takeScreenshot();
 
 		if (!State.isWaiting())
 			state.update(dt);

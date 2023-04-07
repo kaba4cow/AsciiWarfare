@@ -26,7 +26,6 @@ public class UnitFile {
 	private final float armor;
 	private final float moves;
 	private final int visibility;
-	private final int units;
 	private final String[] weapons;
 
 	private WeaponFile[] weaponFiles;
@@ -44,7 +43,6 @@ public class UnitFile {
 		this.armor = Float.parseFloat(table.getCell("Armor", row));
 		this.moves = Float.parseFloat(table.getCell("Moves", row));
 		this.visibility = Integer.parseInt(table.getCell("Visibility", row));
-		this.units = Integer.parseInt(table.getCell("Units", row));
 		this.weapons = table.getCell("Weapons", row).split(",");
 
 		this.price = calculatePrice(this, weapons);
@@ -70,11 +68,11 @@ public class UnitFile {
 		price += 6.2f * unit.getArmor();
 		price += 4.6f * unit.getMoves();
 		price += 3.4f * unit.getVisibility();
-		price += 1.3f * unit.getLevel() * unit.getLevel();
 		for (int i = 0; i < weapons.length; i++)
 			price += WeaponFile.get(weapons[i]).getPrice();
 		price *= 0.47f;
-		return (int) price + 43;
+		int result = (int) price + 73 * unit.getLevel();
+		return result - result % 5;
 	}
 
 	public static UnitFile get(String id) {
@@ -149,10 +147,6 @@ public class UnitFile {
 
 	public float getMoves() {
 		return moves;
-	}
-
-	public int getUnits() {
-		return units;
 	}
 
 	public WeaponFile[] getWeapons() {

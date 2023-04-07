@@ -27,7 +27,7 @@ public class Generator {
 
 	private static final float TERRAIN_FREQ = 0.058f;
 	private static final float RIVER_FREQ = 0.015f;
-	private static final float ELEVATION_FREQ = 0.026f;
+	private static final float ELEVATION_FREQ = 0.019f;
 	private static final float TEMPERATURE_FREQ = 0.012f;
 
 	private static final float RIVER_THRESHOLD = 0.03f;
@@ -138,7 +138,7 @@ public class Generator {
 
 				float elevation_x = ELEVATION_FREQ * x + riverOffset;
 				float elevation_y = ELEVATION_FREQ * y + riverOffset;
-				float elevation = noise.getCombinedValue(elevation_x, elevation_y, 4);
+				float elevation = noise.getCombinedValue(elevation_x, elevation_y, 3);
 				elevationValueMap[x][y] = elevation * elevation;
 
 				float river1_x = RIVER_FREQ * x + riverOffset;
@@ -226,9 +226,9 @@ public class Generator {
 			for (x = 0; x < Game.WORLD_SIZE; x++) {
 				float value = elevationValueMap[x][y];
 				value = Easing.EASE_IN_OUT_SINE.getValue(value);
-				if (value < 0f)
+				if (value <= 0f)
 					value = 0f;
-				else if (value > 1f)
+				else if (value >= 1f)
 					value = 1f;
 				elevationValueMap[x][y] = value;
 			}
@@ -253,9 +253,9 @@ public class Generator {
 							sum += map[i][j];
 					}
 				temp[x][y] = sum * div;
-				if (temp[x][y] < 0f)
+				if (temp[x][y] <= 0f)
 					temp[x][y] = 0f;
-				else if (temp[x][y] > 1f)
+				else if (temp[x][y] >= 1f)
 					temp[x][y] = 1f;
 			}
 

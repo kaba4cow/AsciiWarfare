@@ -139,7 +139,7 @@ public class Player {
 		for (int i = 0; i < units.size(); i++)
 			units.get(i).update(dt);
 
-		income = 5 * (int) level;
+		income = 5 * (int) Maths.sqrt(level);
 		ArrayList<Village> villages = world.getVillages();
 		for (int i = 0; i < villages.size(); i++) {
 			Player occupier = villages.get(i).getOccupier(world);
@@ -359,6 +359,8 @@ public class Player {
 	public boolean isVisible(int x, int y) {
 		if (ignoreVisibility)
 			return true;
+//		if (controller instanceof PlayerController)
+//			return true;
 		return visibilityMap[x][y]; // TODO
 	}
 

@@ -46,7 +46,7 @@ public class PlayerController extends Controller {
 				player.getCurrentUnit().resetPath();
 				player.getCurrentUnit().resetAttackPath();
 				player.setAiming(!player.isAiming());
-			} else if (Keyboard.isKeyDown(Keyboard.KEY_T))
+			} else if (Keyboard.isKeyDown(Keyboard.KEY_ENTER))
 				world.newTurn(player.getIndex(), true);
 			else if (Keyboard.isKeyDown(Keyboard.KEY_SPACE))
 				player.getCurrentUnit().switchMoving();

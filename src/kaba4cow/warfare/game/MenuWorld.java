@@ -11,16 +11,18 @@ public class MenuWorld {
 
 	private final TerrainTile[][] terrainMap;
 	private final VegetationTile[][] vegetationMap;
+	private final float[][] elevationMap;
 	private final float[][] temperatureMap;
 
 	public MenuWorld() {
 		this.terrainMap = new TerrainTile[Game.WORLD_SIZE][Game.WORLD_SIZE];
 		this.vegetationMap = new VegetationTile[Game.WORLD_SIZE][Game.WORLD_SIZE];
+		this.elevationMap = new float[Game.WORLD_SIZE][Game.WORLD_SIZE];
 		this.temperatureMap = new float[Game.WORLD_SIZE][Game.WORLD_SIZE];
 
 		Generator generator = new Generator(RNG.randomInt(4), RNG.randomLong());
 		generator.generate();
-		generator.populate(terrainMap, vegetationMap, temperatureMap);
+		generator.populate(terrainMap, vegetationMap, elevationMap, temperatureMap);
 	}
 
 	public void render() {

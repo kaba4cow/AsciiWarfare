@@ -4,6 +4,7 @@ import kaba4cow.ascii.core.Display;
 import kaba4cow.ascii.drawing.gui.GUIFrame;
 import kaba4cow.ascii.drawing.gui.GUISeparator;
 import kaba4cow.ascii.drawing.gui.GUIText;
+import kaba4cow.ascii.toolbox.utils.StringUtils;
 import kaba4cow.warfare.Game;
 import kaba4cow.warfare.game.World;
 import kaba4cow.warfare.game.world.TerrainTile;
@@ -22,6 +23,7 @@ public class WorldFrame extends GUIFrame {
 	private final GUIText biome;
 	private final GUIText tile;
 	private final GUIText temperature;
+	private final GUIText elevation;
 
 	public WorldFrame() {
 		super(Game.GUI_COLOR, false, false);
@@ -42,6 +44,7 @@ public class WorldFrame extends GUIFrame {
 		biome = new GUIText(this, -1, "");
 		tile = new GUIText(this, -1, "");
 		temperature = new GUIText(this, -1, "");
+		elevation = new GUIText(this, -1, "");
 	}
 
 	public void render(World world) {
@@ -65,20 +68,24 @@ public class WorldFrame extends GUIFrame {
 			else
 				tile.setText("Terrain: " + terrain.getName());
 
-			float temp = world.getTemperature(x, y);
-			if (temp < 0.25f)
+			float value = world.getTemperature(x, y);
+			if (value < 0.25f)
 				temperature.setText("Temperature: Freezing");
-			else if (temp < 0.5f)
+			else if (value < 0.5f)
 				temperature.setText("Temperature: Cold");
-			else if (temp < 0.75f)
+			else if (value < 0.75f)
 				temperature.setText("Temperature: Warm");
 			else
 				temperature.setText("Temperature: Hot");
+
+			value = world.getElevation(x, y);
+			elevation.setText("Elevation: " + StringUtils.format2(5f * value) + " m");
 		} else {
 			position.setText("Position: ?, ?");
 			biome.setText("Biome: ?");
 			tile.setText("Terrain: ?");
 			temperature.setText("Temperature: ?");
+			elevation.setText("Elevation: ?");
 		}
 
 		super.render(0, Display.getHeight() / 2, Display.getWidth() / 4, Display.getHeight() / 2, false);

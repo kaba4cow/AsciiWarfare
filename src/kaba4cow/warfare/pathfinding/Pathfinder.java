@@ -144,7 +144,12 @@ public final class Pathfinder {
 	}
 
 	private static float heuristic(Node a, Node b) {
-		return Maths.manhattan(a.x, a.y, b.x, b.y) + b.penalty;
+		float elevation = b.elevation - a.elevation;
+		if (elevation < 0f)
+			elevation = 1f + elevation;
+		else
+			elevation = 1f + 4f * elevation;
+		return Maths.dist(a.x, a.y, b.x, b.y) + elevation * (1f + b.penalty);
 	}
 
 	private static UnitPath createPath(Node node) {

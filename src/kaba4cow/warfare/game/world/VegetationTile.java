@@ -15,7 +15,7 @@ public class VegetationTile {
 		this.file = file;
 		this.name = file.getName();
 		this.glyph = file.getGlyph(temperature);
-		this.color = Drawer.IGNORE_BACKGROUND | file.getColor(temperature);
+		this.color = file.getColor(temperature);
 	}
 
 	public void render(int x, int y) {

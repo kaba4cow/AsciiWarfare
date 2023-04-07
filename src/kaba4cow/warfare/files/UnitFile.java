@@ -73,8 +73,8 @@ public class UnitFile {
 		price += 1.3f * unit.getLevel() * unit.getLevel();
 		for (int i = 0; i < weapons.length; i++)
 			price += WeaponFile.get(weapons[i]).getPrice();
-		price *= 0.41f;
-		return (int) price + 37;
+		price *= 0.47f;
+		return (int) price + 43;
 	}
 
 	public static UnitFile get(String id) {

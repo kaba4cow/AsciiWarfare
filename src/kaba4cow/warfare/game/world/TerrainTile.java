@@ -21,7 +21,7 @@ public class TerrainTile {
 		this.biome = biome;
 		this.penalty = file.getPenalty(temperature);
 		this.glyph = file.getGlyph();
-		this.color = Drawer.IGNORE_BACKGROUND | file.getColor(temperature);
+		this.color = file.getColor(temperature);
 		this.allowCrater = file.allowsCrater();
 	}
 

@@ -9,6 +9,7 @@ import kaba4cow.ascii.drawing.drawers.Drawer;
 import kaba4cow.ascii.drawing.glyphs.Glyphs;
 import kaba4cow.ascii.drawing.gui.GUIColorText;
 import kaba4cow.ascii.input.Keyboard;
+import kaba4cow.ascii.toolbox.Colors;
 import kaba4cow.ascii.toolbox.files.DataFile;
 import kaba4cow.ascii.toolbox.maths.Maths;
 import kaba4cow.ascii.toolbox.maths.vectors.Vector2i;
@@ -45,6 +46,7 @@ public class World {
 
 	private final TerrainTile[][] terrainMap;
 	private final VegetationTile[][] vegetationMap;
+	private final float[][] elevationMap;
 	private final float[][] temperatureMap;
 
 	private final Node[][] nodeMap;
@@ -81,12 +83,13 @@ public class World {
 
 		this.terrainMap = new TerrainTile[Game.WORLD_SIZE][Game.WORLD_SIZE];
 		this.vegetationMap = new VegetationTile[Game.WORLD_SIZE][Game.WORLD_SIZE];
+		this.elevationMap = new float[Game.WORLD_SIZE][Game.WORLD_SIZE];
 		this.temperatureMap = new float[Game.WORLD_SIZE][Game.WORLD_SIZE];
 		this.data = new DataFile();
 
 		Generator generator = new Generator(inputSeason, seed);
 		generator.generate();
-		this.villages = generator.populate(terrainMap, vegetationMap, temperatureMap);
+		this.villages = generator.populate(terrainMap, vegetationMap, elevationMap, temperatureMap);
 
 		this.nodeMap = createNodeMap();
 
@@ -141,12 +144,13 @@ public class World {
 
 		this.terrainMap = new TerrainTile[Game.WORLD_SIZE][Game.WORLD_SIZE];
 		this.vegetationMap = new VegetationTile[Game.WORLD_SIZE][Game.WORLD_SIZE];
+		this.elevationMap = new float[Game.WORLD_SIZE][Game.WORLD_SIZE];
 		this.temperatureMap = new float[Game.WORLD_SIZE][Game.WORLD_SIZE];
 
 		Generator generator = new Generator(inputSeason, inputSeed);
 		generator.generate();
 
-		this.villages = generator.populate(terrainMap, vegetationMap, temperatureMap);
+		this.villages = generator.populate(terrainMap, vegetationMap, elevationMap, temperatureMap);
 		this.terrain = new HashMap<>();
 
 		node = data.node("Map");
@@ -272,7 +276,7 @@ public class World {
 		if (!gui && isPlayerTurn()) {
 			if (Keyboard.isKeyDown(Keyboard.KEY_R) && getPlayer().canAccessShop())
 				openShop();
-			else if (Keyboard.isKeyDown(Keyboard.KEY_I))
+			else if (Keyboard.isKeyDown(Keyboard.KEY_T))
 				openInfo();
 		} else if (gui && Keyboard.isKeyDown(Keyboard.KEY_ESCAPE) && (shopFrame == null || shopFrame.canExit())) {
 			shopFrame = null;
@@ -314,7 +318,8 @@ public class World {
 			return;
 		}
 
-		if (viewport.width != Display.getWidth() || viewport.height != Display.getHeight())
+		if (viewport.width != Display.getWidth() - Display.getWidth() / 4
+				|| viewport.height != Display.getHeight() - Display.getHeight() / 5)
 			createViewport();
 
 		int offX = (int) camera.getX();
@@ -333,12 +338,23 @@ public class World {
 				ix = x + offX;
 				if (ix < 0 || ix >= Game.WORLD_SIZE)
 					continue;
-				if (!player.isVisible(ix, iy))
+				if (!player.isVisible(ix, iy)) {
 					Drawer.draw(x, y, Glyphs.SPACE, 0x000000);
-				else if (vegetationMap[ix][iy] == null)
+					continue;
+				}
+
+				if (vegetationMap[ix][iy] == null)
 					terrainMap[ix][iy].render(x, y);
 				else
 					vegetationMap[ix][iy].render(x, y);
+
+				if (Keyboard.isKey(Keyboard.KEY_L)) {
+					int index = (int) (Game.ELEVATION_GLYPHS.length * elevationMap[ix][iy]);
+					if (index >= Game.ELEVATION_GLYPHS.length)
+						index--;
+					int color = Colors.blend(0x000342, 0x000897, elevationMap[ix][iy]);
+					Drawer.draw(x, y, Game.ELEVATION_GLYPHS[index], color);
+				}
 			}
 		}
 		for (int i = 0; i < players.size(); i++)
@@ -546,6 +562,12 @@ public class World {
 		return temperatureMap[x][y];
 	}
 
+	public float getElevation(int x, int y) {
+		if (x < 0 || x >= Game.WORLD_SIZE || y < 0 || y >= Game.WORLD_SIZE)
+			return 0f;
+		return elevationMap[x][y];
+	}
+
 	public Node[][] getNodeMap() {
 		return nodeMap;
 	}
@@ -554,7 +576,7 @@ public class World {
 		Node[][] map = new Node[Game.WORLD_SIZE][Game.WORLD_SIZE];
 		for (int y = 0; y < Game.WORLD_SIZE; y++)
 			for (int x = 0; x < Game.WORLD_SIZE; x++)
-				map[x][y] = new Node(x, y, getPenalty(x, y));
+				map[x][y] = new Node(x, y, getPenalty(x, y), getElevation(x, y));
 		return map;
 	}
 

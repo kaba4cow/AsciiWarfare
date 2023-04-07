@@ -164,7 +164,7 @@ public class Unit {
 			for (int i = 0; i < path.getLength(); i++) {
 				Node pos = path.getNode(i);
 				Drawer.draw(pos.x - offX, pos.y - offY, Glyphs.SPACE,
-						Drawer.IGNORE_FOREGROUND | Drawer.IGNORE_GLYPH | 0x334000);
+						Drawer.IGNORE_FOREGROUND | Drawer.IGNORE_GLYPH | 0x222000);
 			}
 
 		if (attackPath != null && !isShooting()) {
@@ -312,10 +312,17 @@ public class Unit {
 	}
 
 	public void move(int x, int y) {
+		float elevation = world.getElevation(x, y) - world.getElevation(this.x, this.y);
+		if (elevation < 0f)
+			elevation = 1f + elevation;
+		else
+			elevation = 1f + 4f * elevation;
+		float penalty = elevation * (1f + world.getPenalty(x, y));
+
 		this.x = x;
 		this.y = y;
 		player.updateVisibility(x, y, getVisibilityRadius());
-		moves = Maths.max(moves - world.getPenalty(x, y) - 1f, 0f);
+		moves = Maths.max(moves - penalty, 0f);
 	}
 
 	public void switchMoving() {

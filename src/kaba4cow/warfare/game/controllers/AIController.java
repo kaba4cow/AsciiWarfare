@@ -25,7 +25,7 @@ public class AIController extends Controller {
 		super(0xF54);
 		this.ais = null;
 		this.currentUnit = -1;
-		resetTargetPrice();
+		this.targetPrice = UnitFile.getMinPrice();
 	}
 
 	@Override
@@ -64,7 +64,10 @@ public class AIController extends Controller {
 	}
 
 	private void resetTargetPrice() {
-		targetPrice = RNG.randomInt(UnitFile.getMinPrice(), UnitFile.getMaxPrice() + 1);
+		if (player.getIncome() < UnitFile.getMinPrice())
+			targetPrice = UnitFile.getMinPrice();
+		else
+			targetPrice = UnitFile.getMinPrice() + RNG.randomInt(player.getIncome() / 2, 2 * player.getIncome());
 	}
 
 	private void processHire() {
@@ -78,6 +81,8 @@ public class AIController extends Controller {
 			if (!player.isUnitAvailable(units.get(id)))
 				continue;
 			int price = units.get(id).getPrice();
+			if (price > player.getCash())
+				continue;
 			float priceDist = Maths.dist(targetPrice, price);
 			if (priceDist < minPriceDist) {
 				minPriceDist = priceDist;
@@ -224,7 +229,7 @@ public class AIController extends Controller {
 
 		public UnitAI(Unit unit, int index) {
 			this.unit = unit;
-			this.defender = index % 3 != 0;
+			this.defender = index < 10 || index % 3 != 0;
 			this.targetVillage = null;
 			this.targetUnit = null;
 			this.step = 0;
@@ -248,7 +253,7 @@ public class AIController extends Controller {
 						for (int i = 0; i < villages.size(); i++) {
 							Village current = villages.get(i);
 							int total = current.getTotalUnits(world, player);
-							if (total > 2)
+							if (total > 1)
 								continue;
 							float distSq = Maths.distSq(unit.getX(), unit.getY(), current.x, current.y);
 							if (distSq < minDistSq) {
@@ -280,8 +285,10 @@ public class AIController extends Controller {
 						Vector2i pos = null;
 						for (int i = 0; i < weapons.length; i++) {
 							Vector2i current = getUnitAttackPoint(unit, weapons[i], targetUnit);
-							if (current != null)
+							if (current != null) {
 								pos = current;
+								break;
+							}
 						}
 						processUnitMove(unit, pos);
 						player.setIgnoreVisibility(false);

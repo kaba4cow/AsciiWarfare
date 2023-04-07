@@ -11,12 +11,14 @@ import kaba4cow.warfare.states.State;
 
 public class Game implements MainProgram {
 
-	private static final int DEFAULT_WIDTH = 65;
+	private static final int DEFAULT_WIDTH = 64;
 	private static final int DEFAULT_HEIGHT = 40;
 
 	public static final int GUI_COLOR = 0x0009FC;
 
 	public static final int WORLD_SIZE = 240;
+
+	public static final char[] ELEVATION_GLYPHS = { ' ', '.', ',', '-', '~', '^', '=', '/', '|', 'x' };
 
 	private boolean showFPS;
 

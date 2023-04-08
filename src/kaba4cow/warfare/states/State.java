@@ -9,8 +9,8 @@ import kaba4cow.ascii.drawing.drawers.Drawer;
 import kaba4cow.ascii.drawing.glyphs.Glyphs;
 import kaba4cow.ascii.drawing.gui.GUIFrame;
 import kaba4cow.ascii.drawing.gui.GUIProgressBar;
-import kaba4cow.warfare.Game;
 import kaba4cow.warfare.game.MenuWorld;
+import kaba4cow.warfare.gui.GUI;
 
 public abstract class State {
 
@@ -35,7 +35,7 @@ public abstract class State {
 		menuWorld = new MenuWorld();
 
 		waiting = false;
-		progressBar = new GUIFrame(Game.GUI_COLOR, false, false);
+		progressBar = new GUIFrame(GUI.COLOR, false, false);
 		new GUIProgressBar(progressBar, -1, (Void) -> {
 			return PROGRESS;
 		});
@@ -46,8 +46,7 @@ public abstract class State {
 	protected static void renderTitle() {
 		menuWorld.render();
 		int pos = (int) (12f * Engine.getElapsedTime()) % (Display.getWidth() + titleWidth);
-		Drawer.drawBigString(Display.getWidth() - pos, 0, false, Display.getTitle(), Glyphs.LIGHT_SHADE,
-				Game.GUI_COLOR);
+		Drawer.drawBigString(Display.getWidth() - pos, 0, false, Display.getTitle(), Glyphs.LIGHT_SHADE, GUI.COLOR);
 	}
 
 	protected static void renderFrame(GUIFrame frame) {

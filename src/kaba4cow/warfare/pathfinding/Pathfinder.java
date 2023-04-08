@@ -14,7 +14,8 @@ public final class Pathfinder {
 	private static final ArrayList<Node> openSet = new ArrayList<>();
 	private static final ArrayList<Node> closedSet = new ArrayList<>();
 
-	private static int x0, y0, x1, y1, dx, dy, sx, sy, e1, e2, i, j, winner, size, range;
+	private static int x0, y0, x1, y1, dx, dy, sx, sy, e1, e2, i, j, winner, size, range, startElevation,
+			currentElevation;
 	private static float tempG;
 	private static boolean newPath, artillery;
 
@@ -26,6 +27,9 @@ public final class Pathfinder {
 
 		artillery = weapon.isArtillery();
 		range = (int) weapon.getRange();
+
+		startElevation = world.getElevation(startX, startY);
+		currentElevation = startElevation;
 
 		AttackPath path = new AttackPath();
 
@@ -44,10 +48,15 @@ public final class Pathfinder {
 		while (true) {
 			if (i > 0 && !artillery && !path.hasCollision()
 					&& (nodes[x0][y0] == null || !world.isVisible(player, x0, y0) || world.isObstacle(x0, y0))
-					|| (int) Maths.dist(startX, startY, x0, y0) >= range) {
+					|| (int) Maths.dist(startX, startY, x0, y0) >= range
+					|| !artillery && world.getElevation(x0, y0) > startElevation + 1) {
 				path.setCollisionIndex(i - 1);
 				path.add(x0, y0);
 				break;
+			}
+			if (world.getElevation(x0, y0) < currentElevation) {
+				currentElevation--;
+				range += 2;
 			}
 			if (x0 == x1 && y0 == y1)
 				break;
@@ -144,12 +153,11 @@ public final class Pathfinder {
 	}
 
 	private static float heuristic(Node a, Node b) {
-		float elevation = b.elevation - a.elevation;
-		if (elevation < 0f)
-			elevation = 1f + elevation;
-		else
-			elevation = 1f + 4f * elevation;
-		return Maths.dist(a.x, a.y, b.x, b.y) + elevation * (1f + b.penalty);
+		int elevation = Maths.dist(a.elevation, b.elevation);
+		if (elevation > 1)
+			return Float.POSITIVE_INFINITY;
+		float penalty = 1f + (1f + elevation) * b.penalty;
+		return Maths.dist(a.x, a.y, b.x, b.y) + penalty;
 	}
 
 	private static UnitPath createPath(Node node) {

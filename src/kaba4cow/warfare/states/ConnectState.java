@@ -6,6 +6,7 @@ import kaba4cow.ascii.drawing.gui.GUIText;
 import kaba4cow.ascii.drawing.gui.GUITextField;
 import kaba4cow.warfare.Game;
 import kaba4cow.warfare.Settings;
+import kaba4cow.warfare.gui.GUI;
 
 public class ConnectState extends State {
 
@@ -16,7 +17,7 @@ public class ConnectState extends State {
 	private final GUITextField portTextField;
 
 	public ConnectState() {
-		frame = new GUIFrame(Game.GUI_COLOR, false, false).setTitle("Multiplayer");
+		frame = new GUIFrame(GUI.COLOR, false, false).setTitle("Multiplayer");
 
 		new GUIText(frame, -1, "IP");
 		ipTextField = new GUITextField(frame, -1, Settings.getServerAddress());

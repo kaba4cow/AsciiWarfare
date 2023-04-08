@@ -7,10 +7,10 @@ import kaba4cow.ascii.core.Display;
 import kaba4cow.ascii.drawing.gui.GUIButton;
 import kaba4cow.ascii.drawing.gui.GUIFrame;
 import kaba4cow.ascii.input.Keyboard;
-import kaba4cow.warfare.Game;
 import kaba4cow.warfare.files.UnitFile;
 import kaba4cow.warfare.files.UnitTypeFile;
 import kaba4cow.warfare.game.Player;
+import kaba4cow.warfare.gui.GUI;
 
 public class ShopFrame extends GUIFrame {
 
@@ -18,7 +18,7 @@ public class ShopFrame extends GUIFrame {
 	private ShopTypeFrame typeFrame;
 
 	public ShopFrame(Player player) {
-		super(Game.GUI_COLOR, false, false);
+		super(GUI.COLOR, false, false);
 		setTitle("Types");
 
 		playerFrame = new PlayerFrame(player);

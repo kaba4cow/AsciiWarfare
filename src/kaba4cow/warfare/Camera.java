@@ -1,6 +1,5 @@
 package kaba4cow.warfare;
 
-import kaba4cow.ascii.input.Keyboard;
 import kaba4cow.ascii.input.Mouse;
 import kaba4cow.warfare.game.World;
 
@@ -29,16 +28,16 @@ public class Camera {
 
 	public void update(float dt) {
 		if (isMouseInViewport()) {
-			if (Keyboard.isKey(Keyboard.KEY_W))
+			if (Controls.CAMERA_UP.isKey())
 				y -= MOVE_SPEED * dt;
-			if (Keyboard.isKey(Keyboard.KEY_S))
+			if (Controls.CAMERA_DOWN.isKey())
 				y += MOVE_SPEED * dt;
-			if (Keyboard.isKey(Keyboard.KEY_A))
+			if (Controls.CAMERA_LEFT.isKey())
 				x -= MOVE_SPEED * dt;
-			if (Keyboard.isKey(Keyboard.KEY_D))
+			if (Controls.CAMERA_RIGHT.isKey())
 				x += MOVE_SPEED * dt;
 
-			if (Keyboard.isKey(Keyboard.KEY_SHIFT_LEFT))
+			if (Controls.CAMERA_SCROLL.isKey())
 				x += SCROLL_SPEED * Mouse.getScroll();
 			else
 				y -= SCROLL_SPEED * Mouse.getScroll();
@@ -47,11 +46,11 @@ public class Camera {
 		int mX = Mouse.getTileX();
 		int mY = Mouse.getTileY();
 
-		if (isMouseInViewport() && Mouse.isKeyDown(Mouse.MIDDLE)) {
+		if (isMouseInViewport() && Controls.CAMERA_MOVE.isKeyDown()) {
 			drag = true;
 			dragX = (int) x + mX;
 			dragY = (int) y + mY;
-		} else if (Mouse.isKeyUp(Mouse.MIDDLE))
+		} else if (Controls.CAMERA_MOVE.isKeyUp())
 			drag = false;
 
 		if (drag) {
@@ -65,12 +64,12 @@ public class Camera {
 	private void clampPosition() {
 		if (x < 0f)
 			x = 0f;
-		if (x > Game.WORLD_SIZE - world.getViewport().width)
-			x = Game.WORLD_SIZE - world.getViewport().width;
+		if (x > World.SIZE - world.getViewport().width)
+			x = World.SIZE - world.getViewport().width;
 		if (y < 0f)
 			y = 0f;
-		if (y > Game.WORLD_SIZE - world.getViewport().height)
-			y = Game.WORLD_SIZE - world.getViewport().height;
+		if (y > World.SIZE - world.getViewport().height)
+			y = World.SIZE - world.getViewport().height;
 	}
 
 	public void setPosition(int x, int y) {
@@ -96,6 +95,8 @@ public class Camera {
 	}
 
 	public boolean isMouseInViewport() {
+		if (Controls.HELP.isKey())
+			return false;
 		int x = Mouse.getTileX() - world.getViewport().x;
 		int y = Mouse.getTileY() - world.getViewport().y;
 		return x >= 0 && x < world.getViewport().width && y >= 0 && y < world.getViewport().height;

@@ -8,17 +8,14 @@ import kaba4cow.ascii.core.Display;
 import kaba4cow.ascii.drawing.drawers.Drawer;
 import kaba4cow.ascii.drawing.glyphs.Glyphs;
 import kaba4cow.ascii.drawing.gui.GUIColorText;
-import kaba4cow.ascii.input.Keyboard;
 import kaba4cow.ascii.toolbox.Colors;
 import kaba4cow.ascii.toolbox.files.DataFile;
-import kaba4cow.ascii.toolbox.maths.Conrec;
 import kaba4cow.ascii.toolbox.maths.Maths;
-import kaba4cow.ascii.toolbox.maths.vectors.Vector2f;
 import kaba4cow.ascii.toolbox.maths.vectors.Vector2i;
 import kaba4cow.ascii.toolbox.rng.RNG;
 import kaba4cow.ascii.toolbox.rng.RandomLehmer;
 import kaba4cow.warfare.Camera;
-import kaba4cow.warfare.Game;
+import kaba4cow.warfare.Controls;
 import kaba4cow.warfare.files.TerrainFile;
 import kaba4cow.warfare.files.WeaponFile;
 import kaba4cow.warfare.game.controllers.AIController;
@@ -32,6 +29,7 @@ import kaba4cow.warfare.gui.Viewport;
 import kaba4cow.warfare.gui.game.ActionFrame;
 import kaba4cow.warfare.gui.game.CurrentUnitFrame;
 import kaba4cow.warfare.gui.game.GameOverFrame;
+import kaba4cow.warfare.gui.game.HelpFrame;
 import kaba4cow.warfare.gui.game.SelectedUnitFrame;
 import kaba4cow.warfare.gui.game.WorldFrame;
 import kaba4cow.warfare.gui.info.InfoFrame;
@@ -43,15 +41,18 @@ import kaba4cow.warfare.states.State;
 
 public class World {
 
+	public static final int SIZE = 250;
+	public static final int ELEVATION = 5;
+
 	private final long inputSeed;
 	private final int inputSeason;
 
 	private final Node[][] nodeMap;
 	private final TerrainTile[][] terrainMap;
 	private final VegetationTile[][] vegetationMap;
-	private final float[][] elevationMap;
+	private final int[][] elevationMap;
+	private final boolean[][] topologyMap;
 	private final float[][] temperatureMap;
-	private final ArrayList<Vector2f[]> conrecLines;
 	private final HashMap<Vector2i, String> terrain;
 
 	private final ArrayList<Player> players;
@@ -63,13 +64,13 @@ public class World {
 	private SelectedUnitFrame selectedUnitFrame;
 	private WorldFrame worldFrame;
 	private ActionFrame actionFrame;
+	private HelpFrame helpFrame;
 	private GameOverFrame gameOverFrame;
 	private Viewport viewport;
 
 	private ShopFrame shopFrame;
 	private InfoFrame infoFrame;
 	private boolean gui;
-	private boolean topographic;
 
 	private int turn;
 	private int turnPlayer;
@@ -81,17 +82,15 @@ public class World {
 		this.inputSeed = seed;
 		this.inputSeason = season;
 
-		this.terrainMap = new TerrainTile[Game.WORLD_SIZE][Game.WORLD_SIZE];
-		this.vegetationMap = new VegetationTile[Game.WORLD_SIZE][Game.WORLD_SIZE];
-		this.elevationMap = new float[Game.WORLD_SIZE][Game.WORLD_SIZE];
-		this.temperatureMap = new float[Game.WORLD_SIZE][Game.WORLD_SIZE];
+		this.terrainMap = new TerrainTile[SIZE][SIZE];
+		this.vegetationMap = new VegetationTile[SIZE][SIZE];
+		this.elevationMap = new int[SIZE][SIZE];
+		this.topologyMap = new boolean[SIZE][SIZE];
+		this.temperatureMap = new float[SIZE][SIZE];
 
 		Generator generator = new Generator(inputSeason, seed);
 		generator.generate();
-		this.villages = generator.populate(terrainMap, vegetationMap, elevationMap, temperatureMap);
-
-		Conrec conrec = new Conrec(Game.ELEVATION_GLYPHS.length);
-		this.conrecLines = conrec.contour(elevationMap, Game.WORLD_SIZE, Game.WORLD_SIZE);
+		this.villages = generator.populate(terrainMap, vegetationMap, elevationMap, topologyMap, temperatureMap);
 
 		this.nodeMap = createNodeMap();
 
@@ -142,19 +141,17 @@ public class World {
 		this.turnPlayer = data.node("Turn").getInt(1);
 		this.currentPlayer = id < 0 ? data.node("Player").getInt() : id;
 
-		this.terrainMap = new TerrainTile[Game.WORLD_SIZE][Game.WORLD_SIZE];
-		this.vegetationMap = new VegetationTile[Game.WORLD_SIZE][Game.WORLD_SIZE];
-		this.elevationMap = new float[Game.WORLD_SIZE][Game.WORLD_SIZE];
-		this.temperatureMap = new float[Game.WORLD_SIZE][Game.WORLD_SIZE];
+		this.terrainMap = new TerrainTile[SIZE][SIZE];
+		this.vegetationMap = new VegetationTile[SIZE][SIZE];
+		this.elevationMap = new int[SIZE][SIZE];
+		this.topologyMap = new boolean[SIZE][SIZE];
+		this.temperatureMap = new float[SIZE][SIZE];
 
 		Generator generator = new Generator(inputSeason, inputSeed);
 		generator.generate();
 
-		this.villages = generator.populate(terrainMap, vegetationMap, elevationMap, temperatureMap);
+		this.villages = generator.populate(terrainMap, vegetationMap, elevationMap, topologyMap, temperatureMap);
 		this.terrain = new HashMap<>();
-
-		Conrec conrec = new Conrec(Game.ELEVATION_GLYPHS.length);
-		this.conrecLines = conrec.contour(elevationMap, Game.WORLD_SIZE, Game.WORLD_SIZE);
 
 		node = data.node("Map");
 		for (int i = 0; i < node.objectSize(); i++) {
@@ -241,6 +238,7 @@ public class World {
 		selectedUnitFrame = new SelectedUnitFrame();
 		worldFrame = new WorldFrame();
 		actionFrame = new ActionFrame();
+		helpFrame = new HelpFrame();
 		gui = false;
 		createViewport();
 	}
@@ -278,11 +276,11 @@ public class World {
 		}
 
 		if (!gui && isPlayerTurn()) {
-			if (Keyboard.isKeyDown(Keyboard.KEY_R) && getPlayer().canAccessShop())
+			if (Controls.SHOP.isKeyDown() && getPlayer().canAccessShop())
 				openShop();
-			else if (Keyboard.isKeyDown(Keyboard.KEY_T))
+			else if (Controls.INFO.isKeyDown())
 				openInfo();
-		} else if (gui && Keyboard.isKeyDown(Keyboard.KEY_ESCAPE) && (shopFrame == null || shopFrame.canExit())) {
+		} else if (gui && Controls.PAUSE.isKeyDown() && (shopFrame == null || shopFrame.canExit())) {
 			shopFrame = null;
 			infoFrame = null;
 			gui = false;
@@ -295,9 +293,6 @@ public class World {
 				infoFrame.update();
 			return;
 		}
-
-		if (Keyboard.isKeyDown(Keyboard.KEY_L))
-			topographic = !topographic;
 
 		camera.update(dt);
 
@@ -314,6 +309,7 @@ public class World {
 		selectedUnitFrame.update();
 		worldFrame.update();
 		actionFrame.update();
+		helpFrame.update();
 	}
 
 	public void render() {
@@ -339,42 +335,24 @@ public class World {
 		int x, y, ix, iy;
 		for (y = 0; y < viewport.height; y++) {
 			iy = y + offY;
-			if (iy < 0 || iy >= Game.WORLD_SIZE)
+			if (iy < 0 || iy >= SIZE)
 				continue;
 			for (x = 0; x < viewport.width; x++) {
 				ix = x + offX;
-				if (ix < 0 || ix >= Game.WORLD_SIZE)
+				if (ix < 0 || ix >= SIZE)
 					continue;
 				if (!player.isVisible(ix, iy))
 					Drawer.draw(x, y, Glyphs.SPACE, 0x000000);
-				else if (vegetationMap[ix][iy] == null) {
-					if (topographic) {
-						float elevation = elevationMap[ix][iy];
-						int index = (int) (Game.ELEVATION_GLYPHS.length * elevation);
-						if (index >= Game.ELEVATION_GLYPHS.length)
-							index--;
-						int color = Colors.blend(0x000231, 0x000786, elevation);
-						color = Colors.blend(color, terrainMap[ix][iy].getColor(), 0.7f);
-						Drawer.draw(x, y, Game.ELEVATION_GLYPHS[index], color);
-					} else
+				else {
+					if (vegetationMap[ix][iy] == null)
 						terrainMap[ix][iy].render(x, y);
-				} else
-					vegetationMap[ix][iy].render(x, y);
-			}
-		}
+					else
+						vegetationMap[ix][iy].render(x, y);
 
-		if (topographic) {
-			for (int i = 0; i < conrecLines.size(); i++) {
-				Vector2f start = conrecLines.get(i)[0];
-				Vector2f end = conrecLines.get(i)[1];
-
-				int x1 = (int) start.x;
-				int y1 = (int) start.y;
-				int x2 = (int) end.x;
-				int y2 = (int) end.y;
-
-				Drawer.drawLine(x1 - offX, y1 - offY, x2 - offX, y2 - offY, Glyphs.SPACE,
-						Drawer.IGNORE_FOREGROUND | Drawer.IGNORE_GLYPH | 0x111000);
+					if (topologyMap[ix][iy])
+						Drawer.draw(x, y, Glyphs.SPACE, Drawer.IGNORE_FOREGROUND | Drawer.IGNORE_GLYPH
+								| Colors.createBackground(elevationMap[ix][iy]));
+				}
 			}
 		}
 
@@ -397,6 +375,8 @@ public class World {
 
 		if (isGameOver())
 			gameOverFrame.render();
+		else if (Controls.HELP.isKey())
+			helpFrame.render();
 
 		if (!camera.isMouseInViewport())
 			Display.setDrawCursor(true);
@@ -429,7 +409,7 @@ public class World {
 			float dist;
 			for (iy = y - range; iy <= y + range; iy++)
 				for (ix = x - range; ix <= x + range; ix++) {
-					if (ix == x && iy == y || ix < 0 || ix >= Game.WORLD_SIZE || iy < 0 || iy >= Game.WORLD_SIZE
+					if (ix == x && iy == y || ix < 0 || ix >= SIZE || iy < 0 || iy >= SIZE
 							|| vegetationMap[ix][iy] == null)
 						continue;
 					dist = Maths.dist(x, y, ix, iy);
@@ -514,7 +494,7 @@ public class World {
 			float dist;
 			for (iy = y - range; iy <= y + range; iy++)
 				for (ix = x - range; ix <= x + range; ix++) {
-					if (ix == x && iy == y || ix < 0 || ix >= Game.WORLD_SIZE || iy < 0 || iy >= Game.WORLD_SIZE)
+					if (ix == x && iy == y || ix < 0 || ix >= SIZE || iy < 0 || iy >= SIZE)
 						continue;
 					dist = Maths.dist(x, y, ix, iy);
 					if (dist <= radius)
@@ -559,44 +539,44 @@ public class World {
 	}
 
 	public boolean isObstacle(int x, int y) {
-		if (x < 0 || x >= Game.WORLD_SIZE || y < 0 || y >= Game.WORLD_SIZE)
+		if (x < 0 || x >= SIZE || y < 0 || y >= SIZE)
 			return true;
 		return vegetationMap[x][y] != null || getUnit(x, y) != null;
 	}
 
 	public boolean isVisible(Player player, int x, int y) {
-		if (x < 0 || x >= Game.WORLD_SIZE || y < 0 || y >= Game.WORLD_SIZE)
+		if (x < 0 || x >= SIZE || y < 0 || y >= SIZE)
 			return false;
 		return player.isVisible(x, y);
 	}
 
 	public float getPenalty(int x, int y) {
-		if (x < 0 || x >= Game.WORLD_SIZE || y < 0 || y >= Game.WORLD_SIZE)
+		if (x < 0 || x >= SIZE || y < 0 || y >= SIZE)
 			return 0f;
 		return terrainMap[x][y].getPenalty();
 	}
 
 	public TerrainTile getTerrain(int x, int y) {
-		if (x < 0 || x >= Game.WORLD_SIZE || y < 0 || y >= Game.WORLD_SIZE)
+		if (x < 0 || x >= SIZE || y < 0 || y >= SIZE)
 			return null;
 		return terrainMap[x][y];
 	}
 
 	public VegetationTile getVegetation(int x, int y) {
-		if (x < 0 || x >= Game.WORLD_SIZE || y < 0 || y >= Game.WORLD_SIZE)
+		if (x < 0 || x >= SIZE || y < 0 || y >= SIZE)
 			return null;
 		return vegetationMap[x][y];
 	}
 
 	public float getTemperature(int x, int y) {
-		if (x < 0 || x >= Game.WORLD_SIZE || y < 0 || y >= Game.WORLD_SIZE)
+		if (x < 0 || x >= SIZE || y < 0 || y >= SIZE)
 			return 0.5f;
 		return temperatureMap[x][y];
 	}
 
-	public float getElevation(int x, int y) {
-		if (x < 0 || x >= Game.WORLD_SIZE || y < 0 || y >= Game.WORLD_SIZE)
-			return 0f;
+	public int getElevation(int x, int y) {
+		if (x < 0 || x >= SIZE || y < 0 || y >= SIZE)
+			return 0;
 		return elevationMap[x][y];
 	}
 
@@ -605,9 +585,9 @@ public class World {
 	}
 
 	private Node[][] createNodeMap() {
-		Node[][] map = new Node[Game.WORLD_SIZE][Game.WORLD_SIZE];
-		for (int y = 0; y < Game.WORLD_SIZE; y++)
-			for (int x = 0; x < Game.WORLD_SIZE; x++)
+		Node[][] map = new Node[SIZE][SIZE];
+		for (int y = 0; y < SIZE; y++)
+			for (int x = 0; x < SIZE; x++)
 				map[x][y] = new Node(x, y, getPenalty(x, y), getElevation(x, y));
 		return map;
 	}

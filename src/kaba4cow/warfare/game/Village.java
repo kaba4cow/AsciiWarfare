@@ -83,7 +83,7 @@ public class Village {
 	public int getIncome() {
 		if (houses.isEmpty())
 			return 0;
-		return 4 + 2 * getHouses() / 3 + (x ^ y) % 4;
+		return 7 + 3 * getHouses() / 4 + (x ^ y) % 5;
 	}
 
 }

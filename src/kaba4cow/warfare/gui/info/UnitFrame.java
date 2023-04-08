@@ -6,14 +6,14 @@ import kaba4cow.ascii.core.Display;
 import kaba4cow.ascii.drawing.gui.GUIFrame;
 import kaba4cow.ascii.drawing.gui.GUISeparator;
 import kaba4cow.ascii.drawing.gui.GUIText;
-import kaba4cow.warfare.Game;
 import kaba4cow.warfare.game.Player;
 import kaba4cow.warfare.game.Unit;
+import kaba4cow.warfare.gui.GUI;
 
 public class UnitFrame extends GUIFrame {
 
 	public UnitFrame(Player player) {
-		super(Game.GUI_COLOR, false, false);
+		super(GUI.COLOR, false, false);
 		setTitle("Units");
 
 		ArrayList<Unit> units = player.getUnits();
@@ -25,8 +25,8 @@ public class UnitFrame extends GUIFrame {
 			new GUISeparator(this, -1, true);
 
 			new GUIText(this, -1, "Amount: " + unit.getUnits());
-			new GUIText(this, -1, "Health: " + (int) unit.getHealth() + " / " + (int) unit.getMaxHealth());
-			new GUIText(this, -1, "Moves: " + (int) unit.getMoves() + " / " + (int) unit.getMaxMoves());
+			new GUIText(this, -1, "Health: " + GUI.slash(unit.getHealth(), unit.getMaxHealth()));
+			new GUIText(this, -1, "Moves: " + GUI.slash(unit.getMoves(), unit.getMaxMoves()));
 			new GUISeparator(this, -1, false);
 		}
 	}

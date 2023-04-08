@@ -4,6 +4,7 @@ import kaba4cow.ascii.core.Engine;
 import kaba4cow.ascii.drawing.gui.GUIButton;
 import kaba4cow.ascii.drawing.gui.GUIFrame;
 import kaba4cow.warfare.Game;
+import kaba4cow.warfare.gui.GUI;
 
 public class MenuState extends State {
 
@@ -12,7 +13,7 @@ public class MenuState extends State {
 	private final GUIFrame frame;
 
 	public MenuState() {
-		frame = new GUIFrame(Game.GUI_COLOR, false, false).setTitle("Menu");
+		frame = new GUIFrame(GUI.COLOR, false, false).setTitle("Menu");
 
 		new GUIButton(frame, -1, "Start New Game", f -> {
 			Game.switchState(GenerateState.getInstance());

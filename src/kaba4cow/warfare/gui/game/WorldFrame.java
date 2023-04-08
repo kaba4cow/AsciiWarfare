@@ -4,11 +4,10 @@ import kaba4cow.ascii.core.Display;
 import kaba4cow.ascii.drawing.gui.GUIFrame;
 import kaba4cow.ascii.drawing.gui.GUISeparator;
 import kaba4cow.ascii.drawing.gui.GUIText;
-import kaba4cow.ascii.toolbox.utils.StringUtils;
-import kaba4cow.warfare.Game;
 import kaba4cow.warfare.game.World;
 import kaba4cow.warfare.game.world.TerrainTile;
 import kaba4cow.warfare.game.world.VegetationTile;
+import kaba4cow.warfare.gui.GUI;
 
 public class WorldFrame extends GUIFrame {
 
@@ -26,7 +25,7 @@ public class WorldFrame extends GUIFrame {
 	private final GUIText elevation;
 
 	public WorldFrame() {
-		super(Game.GUI_COLOR, false, false);
+		super(GUI.COLOR, false, false);
 		setTitle("Info");
 
 		weeks = new GUIText(this, -1, "");
@@ -78,8 +77,7 @@ public class WorldFrame extends GUIFrame {
 			else
 				temperature.setText("Temperature: Hot");
 
-			value = world.getElevation(x, y);
-			elevation.setText("Elevation: " + StringUtils.format2(5f * value) + " m");
+			elevation.setText("Elevation: " + world.getElevation(x, y) + " m");
 		} else {
 			position.setText("Position: ?, ?");
 			biome.setText("Biome: ?");

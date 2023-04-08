@@ -7,16 +7,16 @@ import kaba4cow.ascii.drawing.gui.GUIButton;
 import kaba4cow.ascii.drawing.gui.GUIFrame;
 import kaba4cow.ascii.drawing.gui.GUISeparator;
 import kaba4cow.ascii.drawing.gui.GUIText;
-import kaba4cow.warfare.Game;
 import kaba4cow.warfare.files.UnitFile;
 import kaba4cow.warfare.game.Player;
+import kaba4cow.warfare.gui.GUI;
 
 public class ShopTypeFrame extends GUIFrame {
 
 	private ShopUnitFrame unitFrame;
 
 	public ShopTypeFrame(Player player, String type, ArrayList<UnitFile> units) {
-		super(Game.GUI_COLOR, false, false);
+		super(GUI.COLOR, false, false);
 		setTitle(type);
 
 		for (UnitFile unit : units) {

@@ -5,9 +5,9 @@ import kaba4cow.ascii.drawing.gui.GUIButton;
 import kaba4cow.ascii.drawing.gui.GUIFrame;
 import kaba4cow.ascii.drawing.gui.GUISeparator;
 import kaba4cow.ascii.drawing.gui.GUIText;
-import kaba4cow.warfare.Game;
 import kaba4cow.warfare.files.WeaponFile;
 import kaba4cow.warfare.game.Unit;
+import kaba4cow.warfare.gui.GUI;
 
 public class WeaponFrame extends GUIFrame {
 
@@ -17,7 +17,7 @@ public class WeaponFrame extends GUIFrame {
 	private final GUIButton[] buttons;
 
 	public WeaponFrame(Unit unit) {
-		super(Game.GUI_COLOR, false, false);
+		super(GUI.COLOR, false, false);
 		setTitle("Weapons");
 		this.unit = unit;
 
@@ -29,10 +29,10 @@ public class WeaponFrame extends GUIFrame {
 
 			new GUIText(this, -1, weapons[i].getName() + " " + weapons[i].getType());
 			new GUISeparator(this, -1, true);
-			new GUIText(this, -1, "Damage: " + weapons[i].getDamage());
-			new GUIText(this, -1, "Piercing: " + weapons[i].getPiercing());
-			new GUIText(this, -1, "Range: " + weapons[i].getRange());
-			new GUIText(this, -1, "Accuracy: " + weapons[i].getAccuracy());
+			new GUIText(this, -1, "Damage: " + GUI.format(weapons[i].getDamage()));
+			new GUIText(this, -1, "Piercing: " + GUI.format(weapons[i].getPiercing()));
+			new GUIText(this, -1, "Range: " + GUI.format(weapons[i].getRange()));
+			new GUIText(this, -1, "Accuracy: " + GUI.percent(weapons[i].getAccuracy()));
 			new GUISeparator(this, -1, true);
 			attacks[i] = new GUIText(this, -1, "");
 

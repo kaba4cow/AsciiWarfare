@@ -15,8 +15,8 @@ import kaba4cow.ascii.drawing.gui.GUIText;
 import kaba4cow.ascii.drawing.gui.GUITextField;
 import kaba4cow.ascii.input.Keyboard;
 import kaba4cow.ascii.input.Mouse;
-import kaba4cow.warfare.Game;
 import kaba4cow.warfare.files.GameFiles;
+import kaba4cow.warfare.gui.GUI;
 import kaba4cow.warfare.network.tcp.Server;
 
 public class ServerConsole implements MainProgram {
@@ -49,7 +49,7 @@ public class ServerConsole implements MainProgram {
 
 		starting = false;
 
-		infoFrame = new GUIFrame(Game.GUI_COLOR, false, false);
+		infoFrame = new GUIFrame(GUI.COLOR, false, false);
 		serverButton = new GUIButton(infoFrame, -1, "Start", f -> {
 			if (server == null || server.isClosed())
 				starting = true;
@@ -64,7 +64,7 @@ public class ServerConsole implements MainProgram {
 		portText = new GUIText(infoFrame, -1, "");
 		clientText = new GUIText(infoFrame, -1, "");
 
-		startFrame = new GUIFrame(Game.GUI_COLOR, false, false).setTitle("Properties");
+		startFrame = new GUIFrame(GUI.COLOR, false, false).setTitle("Properties");
 		new GUIText(startFrame, -1, "Port");
 		portTextField = new GUITextField(startFrame, -1, "");
 
@@ -143,7 +143,7 @@ public class ServerConsole implements MainProgram {
 			} else if (c == '\t')
 				x += 4;
 			else
-				Drawer.draw(x++, y, c, Game.GUI_COLOR);
+				Drawer.draw(x++, y, c, GUI.COLOR);
 
 			if (x >= Display.getWidth()) {
 				x = startX;

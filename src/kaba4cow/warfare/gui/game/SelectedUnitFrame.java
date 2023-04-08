@@ -5,8 +5,9 @@ import kaba4cow.ascii.drawing.gui.GUIFrame;
 import kaba4cow.ascii.drawing.gui.GUISeparator;
 import kaba4cow.ascii.drawing.gui.GUIText;
 import kaba4cow.ascii.toolbox.maths.Maths;
-import kaba4cow.warfare.Game;
+import kaba4cow.ascii.toolbox.utils.StringUtils;
 import kaba4cow.warfare.game.Unit;
+import kaba4cow.warfare.gui.GUI;
 
 public class SelectedUnitFrame extends GUIFrame {
 
@@ -23,7 +24,7 @@ public class SelectedUnitFrame extends GUIFrame {
 	private final GUIText visibility;
 
 	public SelectedUnitFrame() {
-		super(Game.GUI_COLOR, false, false);
+		super(GUI.COLOR, false, false);
 		setTitle("Selected Unit");
 
 		name = new GUIText(this, -1, "");
@@ -52,10 +53,10 @@ public class SelectedUnitFrame extends GUIFrame {
 
 		amount.setText("Amount: " + selectedUnit.getUnits());
 
-		health.setText("Health: " + (int) selectedUnit.getHealth() + " / " + (int) selectedUnit.getMaxHealth());
-		armor.setText("Armor: " + (int) selectedUnit.getArmor());
+		health.setText("Health: " + GUI.slash(selectedUnit.getHealth(), selectedUnit.getMaxHealth()));
+		armor.setText("Armor: " + StringUtils.format1(selectedUnit.getArmor()));
 
-		visibility.setText("Visibility Range: " + (int) selectedUnit.getVisibilityRadius());
+		visibility.setText("Visibility Range: " + StringUtils.format1(selectedUnit.getVisibilityRadius()));
 
 		super.render(0, Display.getHeight() / 2, Display.getWidth() / 4, Display.getHeight() / 2, false);
 	}

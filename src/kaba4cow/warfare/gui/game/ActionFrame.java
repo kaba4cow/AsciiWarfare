@@ -3,13 +3,13 @@ package kaba4cow.warfare.gui.game;
 import kaba4cow.ascii.core.Display;
 import kaba4cow.ascii.drawing.gui.GUIColorText;
 import kaba4cow.ascii.drawing.gui.GUIFrame;
-import kaba4cow.warfare.Game;
 import kaba4cow.warfare.game.World;
+import kaba4cow.warfare.gui.GUI;
 
 public class ActionFrame extends GUIFrame {
 
 	public ActionFrame() {
-		super(Game.GUI_COLOR, false, false);
+		super(GUI.COLOR, false, false);
 		setTitle("Actions");
 	}
 

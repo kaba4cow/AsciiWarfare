@@ -6,16 +6,16 @@ import kaba4cow.ascii.drawing.gui.GUIButton;
 import kaba4cow.ascii.drawing.gui.GUIFrame;
 import kaba4cow.ascii.drawing.gui.GUISeparator;
 import kaba4cow.ascii.drawing.gui.GUIText;
-import kaba4cow.ascii.toolbox.utils.StringUtils;
 import kaba4cow.warfare.Game;
 import kaba4cow.warfare.game.Player;
 import kaba4cow.warfare.game.World;
+import kaba4cow.warfare.gui.GUI;
 import kaba4cow.warfare.states.MenuState;
 
 public class GameOverFrame extends GUIFrame {
 
 	public GameOverFrame(World world, Player winner, Player player) {
-		super(Game.GUI_COLOR, false, false);
+		super(GUI.COLOR, false, false);
 		setTitle("Game Over");
 
 		if (player == winner)
@@ -30,7 +30,7 @@ public class GameOverFrame extends GUIFrame {
 		new GUIText(this, -1, world.getWorldHour() + " hours");
 		new GUISeparator(this, -1, true);
 
-		new GUIText(this, -1, "Map uncovered: " + StringUtils.percent(player.getMapUncovered()));
+		new GUIText(this, -1, "Map uncovered: " + GUI.percent(player.getMapUncovered()));
 		new GUISeparator(this, -1, true);
 
 		new GUIText(this, -1, "Units hired: " + player.getUnitsHired());

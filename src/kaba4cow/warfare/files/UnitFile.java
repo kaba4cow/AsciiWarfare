@@ -64,14 +64,14 @@ public class UnitFile {
 
 	private static int calculatePrice(UnitFile unit, String[] weapons) {
 		float price = 0f;
-		price += 13.8f * unit.getHealth();
+		price += 13.7f * unit.getHealth();
 		price += 6.2f * unit.getArmor();
 		price += 4.6f * unit.getMoves();
 		price += 3.4f * unit.getVisibility();
 		for (int i = 0; i < weapons.length; i++)
 			price += WeaponFile.get(weapons[i]).getPrice();
-		price *= 0.47f;
-		int result = (int) price + 73 * unit.getLevel();
+		price *= 0.46f;
+		int result = (int) price + 43 * unit.getLevel();
 		return result - result % 5;
 	}
 

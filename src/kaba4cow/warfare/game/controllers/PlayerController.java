@@ -1,8 +1,7 @@
 package kaba4cow.warfare.game.controllers;
 
-import kaba4cow.ascii.input.Keyboard;
-import kaba4cow.ascii.input.Mouse;
 import kaba4cow.warfare.Camera;
+import kaba4cow.warfare.Controls;
 import kaba4cow.warfare.game.Unit;
 
 public class PlayerController extends Controller {
@@ -18,7 +17,7 @@ public class PlayerController extends Controller {
 		int mY = camera.getMouseY();
 
 		if (camera.isMouseInViewport()) {
-			if (Mouse.isKeyDown(Mouse.LEFT)) {
+			if (Controls.PATH.isKeyDown()) {
 				Unit target = player.getUnit(mX, mY);
 				if (target != null && target.getPlayer() == player)
 					player.joinUnits(target, player.getCurrentUnit(), true);
@@ -26,7 +25,7 @@ public class PlayerController extends Controller {
 					player.getCurrentUnit().createAttackPath(mX, mY);
 				else
 					player.getCurrentUnit().createPath(mX, mY);
-			} else if (Mouse.isKeyDown(Mouse.RIGHT)) {
+			} else if (Controls.SELECT_UNIT.isKeyDown()) {
 				for (int i = 0; i < player.getUnits().size(); i++) {
 					Unit unit = player.getUnits().get(i);
 					if (unit.isDestroyed())
@@ -37,23 +36,23 @@ public class PlayerController extends Controller {
 						break;
 					}
 				}
-			} else if (Keyboard.isKeyDown(Keyboard.KEY_Q)) {
+			} else if (Controls.PREV_UNIT.isKeyDown()) {
 				player.prevUnit();
 				player.setAiming(false);
 				world.setCameraTarget(player.getCurrentUnit());
-			} else if (Keyboard.isKeyDown(Keyboard.KEY_E)) {
+			} else if (Controls.NEXT_UNIT.isKeyDown()) {
 				player.nextUnit();
 				player.setAiming(false);
 				world.setCameraTarget(player.getCurrentUnit());
-			} else if (Keyboard.isKeyDown(Keyboard.KEY_F)) {
+			} else if (Controls.FIRE_MODE.isKeyDown()) {
 				player.getCurrentUnit().resetPath();
 				player.getCurrentUnit().resetAttackPath();
 				player.setAiming(!player.isAiming());
-			} else if (Keyboard.isKeyDown(Keyboard.KEY_ENTER))
+			} else if (Controls.NEW_TURN.isKeyDown())
 				world.newTurn(player.getIndex(), true);
-			else if (Keyboard.isKeyDown(Keyboard.KEY_SPACE))
+			else if (Controls.MOVE_UNIT.isKeyDown())
 				player.getCurrentUnit().switchMoving();
-			else if (Keyboard.isKey(Keyboard.KEY_C))
+			else if (Controls.CAMERA_FOLLOW.isKeyDown())
 				world.setCameraTarget(player.getCurrentUnit());
 		}
 	}

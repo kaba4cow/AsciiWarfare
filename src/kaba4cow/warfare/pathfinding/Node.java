@@ -6,7 +6,7 @@ public class Node {
 	public final int y;
 
 	public final float penalty;
-	public final float elevation;
+	public final int elevation;
 
 	public float f;
 	public float g;
@@ -14,7 +14,7 @@ public class Node {
 
 	public Node previous;
 
-	public Node(int x, int y, float penalty, float elevation) {
+	public Node(int x, int y, float penalty, int elevation) {
 		this.x = x;
 		this.y = y;
 		this.penalty = penalty;

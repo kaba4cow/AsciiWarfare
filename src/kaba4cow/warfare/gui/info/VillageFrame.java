@@ -6,15 +6,15 @@ import kaba4cow.ascii.core.Display;
 import kaba4cow.ascii.drawing.gui.GUIFrame;
 import kaba4cow.ascii.drawing.gui.GUISeparator;
 import kaba4cow.ascii.drawing.gui.GUIText;
-import kaba4cow.warfare.Game;
 import kaba4cow.warfare.game.Player;
 import kaba4cow.warfare.game.Village;
 import kaba4cow.warfare.game.World;
+import kaba4cow.warfare.gui.GUI;
 
 public class VillageFrame extends GUIFrame {
 
 	public VillageFrame(World world, Player player) {
-		super(Game.GUI_COLOR, false, false);
+		super(GUI.COLOR, false, false);
 		setTitle("Villages");
 
 		ArrayList<Village> villages = world.getVillages();

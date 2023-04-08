@@ -4,8 +4,8 @@ import kaba4cow.ascii.MainProgram;
 import kaba4cow.ascii.core.Display;
 import kaba4cow.ascii.core.Engine;
 import kaba4cow.ascii.drawing.drawers.Drawer;
-import kaba4cow.ascii.input.Keyboard;
 import kaba4cow.warfare.files.GameFiles;
+import kaba4cow.warfare.gui.GUI;
 import kaba4cow.warfare.states.MenuState;
 import kaba4cow.warfare.states.State;
 
@@ -13,12 +13,6 @@ public class Game implements MainProgram {
 
 	private static final int DEFAULT_WIDTH = 64;
 	private static final int DEFAULT_HEIGHT = 40;
-
-	public static final int GUI_COLOR = 0x0009FC;
-
-	public static final int WORLD_SIZE = 240;
-
-	public static final char[] ELEVATION_GLYPHS = { ',', '=', '/', 'x' };
 
 	private boolean showFPS;
 
@@ -37,7 +31,7 @@ public class Game implements MainProgram {
 
 	@Override
 	public void update(float dt) {
-		if (Keyboard.isKeyDown(Keyboard.KEY_F) && Keyboard.isKey(Keyboard.KEY_CONTROL_LEFT)) {
+		if (Controls.FULLSCREEN.isKeyDown()) {
 			if (Display.isFullscreen())
 				Display.createWindowed(DEFAULT_WIDTH, DEFAULT_HEIGHT);
 			else
@@ -45,10 +39,10 @@ public class Game implements MainProgram {
 			Settings.setFullscreen(Display.isFullscreen());
 		}
 
-		if (Keyboard.isKeyDown(Keyboard.KEY_F3))
+		if (Controls.FPS.isKeyDown())
 			showFPS = !showFPS;
 
-		if (Keyboard.isKeyDown(Keyboard.KEY_F12))
+		if (Controls.SCREENSHOT.isKeyDown())
 			Display.takeScreenshot();
 
 		if (!State.isWaiting())
@@ -65,7 +59,7 @@ public class Game implements MainProgram {
 			State.renderProgressBar();
 
 		if (showFPS)
-			Drawer.drawString(0, 0, false, "FPS: " + Engine.getCurrentFramerate(), GUI_COLOR);
+			Drawer.drawString(0, 0, false, "FPS: " + Engine.getCurrentFramerate(), GUI.COLOR);
 	}
 
 	public static void switchState(State state) {

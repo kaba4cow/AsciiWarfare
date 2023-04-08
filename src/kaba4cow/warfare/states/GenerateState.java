@@ -7,6 +7,7 @@ import kaba4cow.ascii.drawing.gui.GUIRadioPanel;
 import kaba4cow.ascii.drawing.gui.GUISeparator;
 import kaba4cow.warfare.Game;
 import kaba4cow.warfare.Settings;
+import kaba4cow.warfare.gui.GUI;
 
 public class GenerateState extends State {
 
@@ -17,7 +18,7 @@ public class GenerateState extends State {
 	private final GUIRadioPanel seasonPanel;
 
 	public GenerateState() {
-		frame = new GUIFrame(Game.GUI_COLOR, false, false).setTitle("New Game");
+		frame = new GUIFrame(GUI.COLOR, false, false).setTitle("New Game");
 
 		sizePanel = new GUIRadioPanel(frame, -1, "Map Size:");
 		new GUIRadioButton(sizePanel, -1, "Small");

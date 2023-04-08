@@ -6,6 +6,7 @@ import kaba4cow.ascii.toolbox.files.DataFile;
 import kaba4cow.ascii.toolbox.maths.Maths;
 import kaba4cow.ascii.toolbox.maths.vectors.Vector2i;
 import kaba4cow.ascii.toolbox.rng.RNG;
+import kaba4cow.ascii.toolbox.utils.StringUtils;
 import kaba4cow.warfare.files.UnitFile;
 import kaba4cow.warfare.files.WeaponFile;
 import kaba4cow.warfare.gui.game.WeaponFrame;
@@ -226,7 +227,7 @@ public class Unit {
 				.addText("<" + source.getUnitFile().getName() + ">", source.getPlayer().getColor())//
 				.addText(" hits ", -1)//
 				.addText("<" + file.getName() + ">", player.getColor())//
-				.addText(" (" + (int) -damageTaken + ")", -1);
+				.addText(" (" + StringUtils.format1(-damageTaken) + ")", -1);
 
 		int killed = 0;
 		int maxUnits = units;
@@ -312,12 +313,10 @@ public class Unit {
 	}
 
 	public void move(int x, int y) {
-		float elevation = world.getElevation(x, y) - world.getElevation(this.x, this.y);
-		if (elevation < 0f)
-			elevation = 1f + elevation;
-		else
-			elevation = 1f + 4f * elevation;
-		float penalty = elevation * (1f + world.getPenalty(x, y));
+		int elevation = Maths.dist(world.getElevation(this.x, this.y), world.getElevation(x, y));
+		if (elevation > 1)
+			return;
+		float penalty = 1f + (1f + elevation) * world.getPenalty(x, y);
 
 		this.x = x;
 		this.y = y;

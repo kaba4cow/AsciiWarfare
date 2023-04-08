@@ -11,26 +11,26 @@ import kaba4cow.ascii.toolbox.maths.vectors.Vectors;
 import kaba4cow.ascii.toolbox.noise.Noise;
 import kaba4cow.ascii.toolbox.rng.RNG;
 import kaba4cow.ascii.toolbox.rng.RandomLehmer;
-import kaba4cow.warfare.Game;
 import kaba4cow.warfare.files.BiomeFile;
 import kaba4cow.warfare.files.TerrainFile;
 import kaba4cow.warfare.files.VegetationFile;
 import kaba4cow.warfare.game.Village;
+import kaba4cow.warfare.game.World;
 import kaba4cow.warfare.states.State;
 
 public class Generator {
 
 	private static final int MIN_TERRAIN_AREA = 64;
 
-	private static final int ROAD_TERRAIN_RADIUS = 3;
-	private static final int VILLAGE_ROAD_RADIUS = 2;
+	private static final int ROAD_RADIUS = 2;
 
 	private static final float TERRAIN_FREQ = 0.058f;
-	private static final float RIVER_FREQ = 0.015f;
-	private static final float ELEVATION_FREQ = 0.019f;
+	private static final float RIVER_FREQ = 0.014f;
+	private static final float ELEVATION_FREQ = 0.013f;
+	private static final float ELEVATION_FALLOFF_FREQ = 0.034f;
 	private static final float TEMPERATURE_FREQ = 0.012f;
 
-	private static final float RIVER_THRESHOLD = 0.03f;
+	private static final float RIVER_THRESHOLD = 0.028f;
 
 	private static final int TEMP = 0xFF;
 	private static final int RIVER = 0x00;
@@ -56,24 +56,24 @@ public class Generator {
 		this.season = season;
 		this.rng = new RandomLehmer(seed);
 		this.noise = new Noise(seed);
-		this.biomeIndexMap = new int[Game.WORLD_SIZE][Game.WORLD_SIZE];
-		this.terrainTypeMap = new int[Game.WORLD_SIZE][Game.WORLD_SIZE];
-		this.terrainIndexMap = new int[Game.WORLD_SIZE][Game.WORLD_SIZE];
-		this.vegetationIndexMap = new int[Game.WORLD_SIZE][Game.WORLD_SIZE];
-		this.elevationValueMap = new float[Game.WORLD_SIZE][Game.WORLD_SIZE];
-		this.temperatureValueMap = new float[Game.WORLD_SIZE][Game.WORLD_SIZE];
+		this.biomeIndexMap = new int[World.SIZE][World.SIZE];
+		this.terrainTypeMap = new int[World.SIZE][World.SIZE];
+		this.terrainIndexMap = new int[World.SIZE][World.SIZE];
+		this.vegetationIndexMap = new int[World.SIZE][World.SIZE];
+		this.elevationValueMap = new float[World.SIZE][World.SIZE];
+		this.temperatureValueMap = new float[World.SIZE][World.SIZE];
 		this.villages = new ArrayList<>();
 	}
 
 	public ArrayList<Village> populate(TerrainTile[][] terrainMap, VegetationTile[][] vegetationMap,
-			float[][] elevationMap, float[][] temperatureMap) {
+			int[][] elevationMap, boolean[][] topologyMap, float[][] temperatureMap) {
 		ArrayList<BiomeFile> biomes = BiomeFile.getBiomes();
 
-		int x, y, terrainType, biomeIndex, terrainIndex, vegetationIndex;
+		int i, j, x, y, terrainType, biomeIndex, terrainIndex, vegetationIndex;
 		float temperature;
 
-		for (y = 0; y < Game.WORLD_SIZE; y++)
-			for (x = 0; x < Game.WORLD_SIZE; x++) {
+		for (y = 0; y < World.SIZE; y++)
+			for (x = 0; x < World.SIZE; x++) {
 				biomeIndex = biomeIndexMap[x][y] % biomes.size();
 				BiomeFile biome = biomeIndex == -1 ? BiomeFile.getRiver() : biomes.get(biomeIndex);
 
@@ -102,7 +102,7 @@ public class Generator {
 					} else
 						vegetationFile = null;
 				}
-				elevationMap[x][y] = elevationValueMap[x][y];
+				elevationMap[x][y] = (int) (World.ELEVATION * elevationValueMap[x][y]);
 				temperature = temperatureValueMap[x][y];
 				temperatureMap[x][y] = temperature;
 				terrainMap[x][y] = new TerrainTile(terrainFile, biome, temperature);
@@ -110,6 +110,23 @@ public class Generator {
 					vegetationMap[x][y] = null;
 				else
 					vegetationMap[x][y] = new VegetationTile(vegetationFile, temperature);
+			}
+
+		for (y = 0; y < World.SIZE; y++)
+			for (x = 0; x < World.SIZE; x++) {
+				int center = elevationMap[x][y];
+				boolean line = false;
+				for (j = y - 1; j <= y + 1; j++)
+					for (i = x - 1; i <= x + 1; i++) {
+						if (i == x && j == y || i < 0 || i >= World.SIZE || j < 0 || j >= World.SIZE)
+							continue;
+						int current = elevationMap[i][j];
+						if (current < center) {
+							line = true;
+							break;
+						}
+					}
+				topologyMap[x][y] = line;
 			}
 
 		State.PROGRESS = 0.5f;
@@ -122,13 +139,14 @@ public class Generator {
 
 		final float pathOffset = rng.nextFloat(-1000f, 1000f);
 		final float riverOffset = rng.nextFloat(-1000f, 1000f);
+		final float elevationOffset = rng.nextFloat(-1000f, 1000f);
 		final float temperatureOffset = rng.nextFloat(-1000f, 1000f);
 
 		float minTemperature = Maths.limit(0.25f * season + rng.nextFloat(-0.1f, 0.1f));
 		float maxTemperature = Maths.limit(minTemperature + 0.25f + rng.nextFloat(-0.1f, 0.1f));
 
-		for (y = 0; y < Game.WORLD_SIZE; y++)
-			for (x = 0; x < Game.WORLD_SIZE; x++) {
+		for (y = 0; y < World.SIZE; y++)
+			for (x = 0; x < World.SIZE; x++) {
 				float temperature_x = TEMPERATURE_FREQ * x - temperatureOffset;
 				float temperature_y = TEMPERATURE_FREQ * y - temperatureOffset;
 				float temperature = noise.getCombinedValue(temperature_x, temperature_y, 2);
@@ -136,10 +154,11 @@ public class Generator {
 				temperature = Easing.EASE_IN_OUT_SINE.getValue(temperature);
 				temperatureValueMap[x][y] = temperature;
 
-				float elevation_x = ELEVATION_FREQ * x + riverOffset;
-				float elevation_y = ELEVATION_FREQ * y + riverOffset;
-				float elevation = noise.getCombinedValue(elevation_x, elevation_y, 3);
-				elevationValueMap[x][y] = elevation * elevation;
+				float elevation_x = ELEVATION_FREQ * x + elevationOffset;
+				float elevation_y = ELEVATION_FREQ * y + elevationOffset;
+				float elevation = noise.getCombinedValue(elevation_x, elevation_y, 2);
+				elevation = Maths.pow(elevation, 1.98f);
+				elevationValueMap[x][y] = elevation;
 
 				float river1_x = RIVER_FREQ * x + riverOffset;
 				float river1_y = RIVER_FREQ * y + riverOffset;
@@ -147,7 +166,7 @@ public class Generator {
 				float river2_y = 0.5f * RIVER_FREQ * y - riverOffset;
 				float river1 = noise.getCombinedValue(river1_x, river1_y, 5);
 				float river2 = noise.getCombinedValue(river2_x, river2_y, 5);
-				float river = Maths.blend(river1, river2, 0.75f);
+				float river = Maths.blend(river1, river2, 0.74f);
 				river = Maths.abs(Noise.to11(river));
 
 				if (river < RIVER_THRESHOLD)
@@ -158,20 +177,20 @@ public class Generator {
 
 		State.PROGRESS = 0.1f;
 
-		for (y = 0; y < Game.WORLD_SIZE; y++)
-			for (x = 0; x < Game.WORLD_SIZE; x++) {
+		for (y = 0; y < World.SIZE; y++)
+			for (x = 0; x < World.SIZE; x++) {
 				if (terrainTypeMap[x][y] == RIVER || terrainTypeMap[x][y] == TEMP)
 					continue;
 				int area = floodFill(terrainTypeMap, x, y, VEGETATION, TEMP);
 				if (area <= MIN_TERRAIN_AREA)
 					floodFill(terrainTypeMap, x, y, TEMP, RIVER);
 			}
-		for (y = 0; y < Game.WORLD_SIZE; y++)
-			for (x = 0; x < Game.WORLD_SIZE; x++)
+		for (y = 0; y < World.SIZE; y++)
+			for (x = 0; x < World.SIZE; x++)
 				if (terrainTypeMap[x][y] == TEMP)
 					terrainTypeMap[x][y] = VEGETATION;
 
-		populateVoronoiIndices(biomeIndexMap, 3, 1f);
+		populateVoronoiIndices(biomeIndexMap, 3, 2f);
 		State.PROGRESS = 0.15f;
 		populateVoronoiIndices(terrainIndexMap, 7, 40f);
 		State.PROGRESS = 0.2f;
@@ -183,8 +202,8 @@ public class Generator {
 
 		State.PROGRESS = 0.3f;
 
-		for (y = 0; y < Game.WORLD_SIZE; y++)
-			for (x = 0; x < Game.WORLD_SIZE; x++) {
+		for (y = 0; y < World.SIZE; y++)
+			for (x = 0; x < World.SIZE; x++) {
 				if (terrainTypeMap[x][y] == RIVER)
 					continue;
 
@@ -201,29 +220,36 @@ public class Generator {
 				}
 			}
 
-		for (y = 0; y < Game.WORLD_SIZE; y++)
-			for (x = 0; x < Game.WORLD_SIZE; x++) {
-				if (terrainTypeMap[x][y] == ROAD || terrainTypeMap[x][y] == HOUSE || terrainTypeMap[x][y] == RIVER)
-					elevationValueMap[x][y] = -1f;
+		for (y = 0; y < World.SIZE; y++)
+			for (x = 0; x < World.SIZE; x++) {
+				if (terrainTypeMap[x][y] == RIVER)
+					elevationValueMap[x][y] = -2f;
+				else if (terrainTypeMap[x][y] == ROAD || terrainTypeMap[x][y] == HOUSE) {
+					float elevationFalloff_x = ELEVATION_FALLOFF_FREQ * x - elevationOffset;
+					float elevationFalloff_y = ELEVATION_FALLOFF_FREQ * y - elevationOffset;
+					float elevationFalloff = noise.getNoiseValue(elevationFalloff_x, elevationFalloff_y);
+					elevationFalloff = 0.5f + 1.5f * Easing.EASE_IN_OUT_SINE.getValue(elevationFalloff);
+					elevationValueMap[x][y] = -elevationFalloff;
+				}
 
 				if (terrainTypeMap[x][y] != ROAD)
 					continue;
-				for (iy = y - ROAD_TERRAIN_RADIUS; iy <= y + ROAD_TERRAIN_RADIUS; iy++)
-					for (ix = x - ROAD_TERRAIN_RADIUS; ix <= x + ROAD_TERRAIN_RADIUS; ix++) {
-						if (rng.nextBoolean() || ix < 0 || ix >= Game.WORLD_SIZE || iy < 0 || iy >= Game.WORLD_SIZE
+				for (iy = y - ROAD_RADIUS; iy <= y + ROAD_RADIUS; iy++)
+					for (ix = x - ROAD_RADIUS; ix <= x + ROAD_RADIUS; ix++) {
+						if (rng.nextBoolean() || ix < 0 || ix >= World.SIZE || iy < 0 || iy >= World.SIZE
 								|| terrainTypeMap[ix][iy] == ROAD || terrainTypeMap[ix][iy] == RIVER
 								|| terrainTypeMap[ix][iy] == HOUSE)
 							continue;
 						float dist = Maths.dist(x, y, ix, iy);
-						if (dist < ROAD_TERRAIN_RADIUS)
+						if (dist < ROAD_RADIUS)
 							terrainTypeMap[ix][iy] = TERRAIN;
 					}
 			}
 
 		blur(elevationValueMap, 2);
 		blur(elevationValueMap, 1);
-		for (y = 0; y < Game.WORLD_SIZE; y++)
-			for (x = 0; x < Game.WORLD_SIZE; x++) {
+		for (y = 0; y < World.SIZE; y++)
+			for (x = 0; x < World.SIZE; x++) {
 				float value = elevationValueMap[x][y];
 				value = Easing.EASE_IN_OUT_SINE.getValue(value);
 				if (value <= 0f)
@@ -237,17 +263,17 @@ public class Generator {
 	}
 
 	private void blur(float[][] map, int dist) {
-		final float[][] temp = new float[Game.WORLD_SIZE][Game.WORLD_SIZE];
+		final float[][] temp = new float[World.SIZE][World.SIZE];
 		final float div = 1f / Maths.sqr(1f + 2f * dist);
 		int i, j, x, y;
 		float sum;
 
-		for (y = 0; y < Game.WORLD_SIZE; y++)
-			for (x = 0; x < Game.WORLD_SIZE; x++) {
+		for (y = 0; y < World.SIZE; y++)
+			for (x = 0; x < World.SIZE; x++) {
 				sum = 0f;
 				for (j = y - dist; j <= y + dist; j++)
 					for (i = x - dist; i <= x + dist; i++) {
-						if (i < 0 || i >= Game.WORLD_SIZE || j < 0 || j >= Game.WORLD_SIZE)
+						if (i < 0 || i >= World.SIZE || j < 0 || j >= World.SIZE)
 							sum += map[x][y];
 						else
 							sum += map[i][j];
@@ -259,8 +285,8 @@ public class Generator {
 					temp[x][y] = 1f;
 			}
 
-		for (y = 0; y < Game.WORLD_SIZE; y++)
-			for (x = 0; x < Game.WORLD_SIZE; x++)
+		for (y = 0; y < World.SIZE; y++)
+			for (x = 0; x < World.SIZE; x++)
 				map[x][y] = temp[x][y];
 	}
 
@@ -270,7 +296,7 @@ public class Generator {
 
 		final float offsetFreq = offsetScale * rng.nextFloat(0.042f, 0.064f);
 		final float offsetPower = rng.nextFloat(16f, 20f);
-		final int cellSize = Game.WORLD_SIZE / resolution;
+		final int cellSize = World.SIZE / resolution;
 
 		Vector2i[][] points = new Vector2i[resolution][resolution];
 		for (y = 0; y < resolution; y++)
@@ -278,8 +304,8 @@ public class Generator {
 				points[x][y] = new Vector2i(x * cellSize + rng.nextInt(0, cellSize),
 						y * cellSize + rng.nextInt(0, cellSize));
 
-		for (y = 0; y < Game.WORLD_SIZE; y++)
-			for (x = 0; x < Game.WORLD_SIZE; x++) {
+		for (y = 0; y < World.SIZE; y++)
+			for (x = 0; x < World.SIZE; x++) {
 				if (terrainTypeMap[x][y] == RIVER) {
 					map[x][y] = -1;
 					continue;
@@ -338,7 +364,7 @@ public class Generator {
 				boolean blocked = false;
 				for (ix = x - 1; ix <= x + 1; ix++)
 					for (iy = y - 1; iy <= y + 1; iy++) {
-						if (ix < 0 || ix >= Game.WORLD_SIZE || iy < 0 || iy >= Game.WORLD_SIZE
+						if (ix < 0 || ix >= World.SIZE || iy < 0 || iy >= World.SIZE
 								|| terrainTypeMap[ix][iy] == RIVER || houses[ix][iy] == 1) {
 							blocked = true;
 							break;
@@ -356,14 +382,14 @@ public class Generator {
 			}
 		}
 
-		float pathRadiusSq = VILLAGE_ROAD_RADIUS * VILLAGE_ROAD_RADIUS;
-		for (y = 0; y < Game.WORLD_SIZE; y++)
-			for (x = 0; x < Game.WORLD_SIZE; x++) {
+		float pathRadiusSq = ROAD_RADIUS * ROAD_RADIUS;
+		for (y = 0; y < World.SIZE; y++)
+			for (x = 0; x < World.SIZE; x++) {
 				if (houses[x][y] != 1)
 					continue;
-				for (ix = x - VILLAGE_ROAD_RADIUS; ix <= x + VILLAGE_ROAD_RADIUS; ix++)
-					for (iy = y - VILLAGE_ROAD_RADIUS; iy <= y + VILLAGE_ROAD_RADIUS; iy++) {
-						if (ix < 0 || ix >= Game.WORLD_SIZE || iy < 0 || iy >= Game.WORLD_SIZE || houses[ix][iy] != 0
+				for (ix = x - ROAD_RADIUS; ix <= x + ROAD_RADIUS; ix++)
+					for (iy = y - ROAD_RADIUS; iy <= y + ROAD_RADIUS; iy++) {
+						if (ix < 0 || ix >= World.SIZE || iy < 0 || iy >= World.SIZE || houses[ix][iy] != 0
 								|| terrainTypeMap[ix][iy] == RIVER || rng.nextFloat(0f, 1f) > pathDensity)
 							continue;
 						float distSq = Maths.distSq(x, y, ix, iy);
@@ -378,9 +404,9 @@ public class Generator {
 	private int[][] createHouseMap() {
 		int x, y, radius;
 
-		final int[][] houses = new int[Game.WORLD_SIZE][Game.WORLD_SIZE];
-		for (y = 0; y < Game.WORLD_SIZE; y++)
-			for (x = 0; x < Game.WORLD_SIZE; x++)
+		final int[][] houses = new int[World.SIZE][World.SIZE];
+		for (y = 0; y < World.SIZE; y++)
+			for (x = 0; x < World.SIZE; x++)
 				houses[x][y] = 0;
 
 		int maxIterations = 32;
@@ -394,8 +420,8 @@ public class Generator {
 			radius = rng.nextInt(3, 7);
 			iterations = 0;
 			while (true) {
-				x = rng.nextInt(radius, Game.WORLD_SIZE - radius);
-				y = rng.nextInt(radius, Game.WORLD_SIZE - radius);
+				x = rng.nextInt(radius, World.SIZE - radius);
+				y = rng.nextInt(radius, World.SIZE - radius);
 
 				boolean blocked = false;
 				for (int j = 0; j < villages.size(); j++) {
@@ -424,14 +450,14 @@ public class Generator {
 	private int[][] createPathMap() {
 		int x, y, ix, iy;
 
-		final int[][] paths = new int[Game.WORLD_SIZE][Game.WORLD_SIZE];
-		for (y = 0; y < Game.WORLD_SIZE; y++)
-			for (x = 0; x < Game.WORLD_SIZE; x++)
+		final int[][] paths = new int[World.SIZE][World.SIZE];
+		for (y = 0; y < World.SIZE; y++)
+			for (x = 0; x < World.SIZE; x++)
 				paths[x][y] = 0;
 
-		final int numLeaves = Game.WORLD_SIZE / 10;
+		final int numLeaves = World.SIZE / 10;
 		final float minDist = 5f;
-		final float maxDist = Game.WORLD_SIZE;
+		final float maxDist = World.SIZE;
 
 		int i, j;
 		float record;
@@ -443,8 +469,8 @@ public class Generator {
 
 		ArrayList<Leaf> leaves = new ArrayList<>();
 		for (i = 0; i < numLeaves; i++) {
-			float lx = rng.nextFloat(0, Game.WORLD_SIZE);
-			float ly = rng.nextFloat(0, Game.WORLD_SIZE);
+			float lx = rng.nextFloat(0, World.SIZE);
+			float ly = rng.nextFloat(0, World.SIZE);
 			leaf = new Leaf(lx, ly);
 			leaves.add(leaf);
 		}
@@ -533,21 +559,21 @@ public class Generator {
 						e += dx;
 						y0 += sy;
 					}
-					if (x0 >= 0 && x0 < Game.WORLD_SIZE && y0 >= 0 && y0 < Game.WORLD_SIZE
+					if (x0 >= 0 && x0 < World.SIZE && y0 >= 0 && y0 < World.SIZE
 							&& terrainTypeMap[x0][y0] != RIVER)
 						paths[x0][y0] = 1;
 				}
 			}
 		}
 
-		for (y = 0; y < Game.WORLD_SIZE; y++)
-			for (x = 0; x < Game.WORLD_SIZE; x++) {
+		for (y = 0; y < World.SIZE; y++)
+			for (x = 0; x < World.SIZE; x++) {
 				if (paths[x][y] == 0)
 					continue;
 
 				for (iy = y - 1; iy <= y; iy++)
 					for (ix = x - 1; ix <= x; ix++) {
-						if (ix < 0 || ix >= Game.WORLD_SIZE || iy < 0 || iy >= Game.WORLD_SIZE)
+						if (ix < 0 || ix >= World.SIZE || iy < 0 || iy >= World.SIZE)
 							continue;
 						paths[ix][iy] = 1;
 					}
@@ -557,10 +583,10 @@ public class Generator {
 	}
 
 	private int floodFill(int[][] data, int startX, int startY, int prevValue, int newValue) {
-		if (startX < 0 || startX >= Game.WORLD_SIZE || startY < 0 || startY >= Game.WORLD_SIZE
+		if (startX < 0 || startX >= World.SIZE || startY < 0 || startY >= World.SIZE
 				|| data[startX][startY] != prevValue)
 			return 0;
-		boolean[][] visited = new boolean[Game.WORLD_SIZE][Game.WORLD_SIZE];
+		boolean[][] visited = new boolean[World.SIZE][World.SIZE];
 		int area = 0;
 		int x, y, value;
 		int[] currentPosition;
@@ -570,7 +596,7 @@ public class Generator {
 			currentPosition = stack.pop();
 			x = currentPosition[0];
 			y = currentPosition[1];
-			if (x < 0 || x >= Game.WORLD_SIZE || y < 0 || y >= Game.WORLD_SIZE || visited[x][y])
+			if (x < 0 || x >= World.SIZE || y < 0 || y >= World.SIZE || visited[x][y])
 				continue;
 			value = data[x][y];
 			if (value == prevValue) {

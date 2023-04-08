@@ -7,11 +7,11 @@ import kaba4cow.ascii.core.Display;
 import kaba4cow.ascii.core.Engine;
 import kaba4cow.ascii.drawing.drawers.Drawer;
 import kaba4cow.ascii.drawing.glyphs.Glyphs;
+import kaba4cow.ascii.input.Keyboard;
 import kaba4cow.ascii.toolbox.files.DataFile;
 import kaba4cow.ascii.toolbox.maths.Maths;
 import kaba4cow.ascii.toolbox.maths.vectors.Vector2i;
 import kaba4cow.ascii.toolbox.rng.RNG;
-import kaba4cow.warfare.Game;
 import kaba4cow.warfare.files.UnitFile;
 import kaba4cow.warfare.game.controllers.Controller;
 import kaba4cow.warfare.game.controllers.PlayerController;
@@ -55,7 +55,7 @@ public class Player {
 		this.level = 0f;
 		this.units = new ArrayList<Unit>();
 		this.visibility = new HashMap<>();
-		this.visibilityMap = new boolean[Game.WORLD_SIZE][Game.WORLD_SIZE];
+		this.visibilityMap = new boolean[World.SIZE][World.SIZE];
 		this.currentUnit = 0;
 		this.aiming = false;
 		this.cash = 0;
@@ -131,7 +131,7 @@ public class Player {
 		}
 
 		for (int i = 0; i < 3; i++) {
-			UnitFile unit = available.get(0 * RNG.randomInt(available.size()));
+			UnitFile unit = available.get(RNG.randomInt(available.size()));
 			units.add(new Unit(world, village, this, unit));
 		}
 	}
@@ -165,6 +165,9 @@ public class Player {
 		if (visibility.containsKey(pos))
 			prevRadius = visibility.get(pos);
 
+		int elevation = world.getElevation(x, y);
+		radius += elevation;
+
 		if (radius > prevRadius) {
 			visibility.put(pos, radius);
 
@@ -172,7 +175,7 @@ public class Player {
 			for (oY = y - radius; oY <= y + radius; oY++)
 				for (oX = x - radius; oX <= x + radius; oX++) {
 					if (oX < 0 || oX >= visibilityMap.length || oY < 0 || oY >= visibilityMap.length
-							|| visibilityMap[oX][oY])
+							|| visibilityMap[oX][oY] || world.getElevation(oX, oY) > elevation + 1)
 						continue;
 					float dist = Maths.dist(x, y, oX, oY);
 					if (dist < radius)
@@ -372,7 +375,7 @@ public class Player {
 	public boolean isVisible(int x, int y) {
 		if (ignoreVisibility)
 			return true;
-		if (controller instanceof PlayerController)
+		if (controller instanceof PlayerController && Keyboard.isKey(Keyboard.KEY_V))
 			return true;
 		return visibilityMap[x][y]; // TODO
 	}

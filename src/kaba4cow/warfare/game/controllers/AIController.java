@@ -63,10 +63,7 @@ public class AIController extends Controller {
 	}
 
 	private void resetTargetPrice() {
-		if (player.getIncome() < UnitFile.getMinPrice())
-			targetPrice = UnitFile.getMinPrice();
-		else
-			targetPrice = UnitFile.getMinPrice() + RNG.randomInt(player.getIncome() / 2, 2 * player.getIncome());
+		targetPrice = UnitFile.getMinPrice() + RNG.randomInt(player.getIncome() / 2, 4 * player.getIncome());
 	}
 
 	private void processHire() {
@@ -231,7 +228,7 @@ public class AIController extends Controller {
 
 		public UnitAI(Unit unit, int index) {
 			this.unit = unit;
-			this.defender = index < 10 || index % 3 == 0;
+			this.defender = index < 8 || index % 3 == 0;
 			this.targetVillage = null;
 			this.targetUnit = null;
 			this.step = 0;
@@ -244,7 +241,7 @@ public class AIController extends Controller {
 
 			boolean join = false;
 			int maxAmount = (int) Maths.map(unit.getUnitFile().getPrice(), UnitFile.getMinPrice(),
-					UnitFile.getMaxPrice(), 20, 5);
+					UnitFile.getMaxPrice(), 12, 4);
 			if (unit.getUnits() < maxAmount && player.getUnits().size() >= 6) {
 				float minDistSq = 1024f;
 				float distSq;

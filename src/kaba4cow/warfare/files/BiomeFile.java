@@ -7,7 +7,6 @@ import kaba4cow.ascii.toolbox.tools.Table;
 public class BiomeFile {
 
 	private static final ArrayList<BiomeFile> list = new ArrayList<>();
-	private static BiomeFile river;
 
 	private final String id;
 	private final String name;
@@ -25,10 +24,7 @@ public class BiomeFile {
 		this.terrain = table.getCell("Terrain", row).split(",");
 		this.vegetation = table.getCell("Vegetation", row).split(",");
 
-		if (id.equals("RIVER"))
-			river = this;
-		else
-			list.add(this);
+		list.add(this);
 	}
 
 	public static ArrayList<BiomeFile> getBiomes() {
@@ -39,10 +35,6 @@ public class BiomeFile {
 		int rows = table.rows();
 		for (int row = 0; row < rows; row++)
 			new BiomeFile(table, row);
-	}
-
-	public static BiomeFile getRiver() {
-		return river;
 	}
 
 	public String getID() {

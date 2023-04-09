@@ -8,7 +8,7 @@ import kaba4cow.ascii.toolbox.tools.Table;
 public class VegetationFile {
 
 	private static final HashMap<String, VegetationFile> map = new HashMap<>();
-	private static VegetationFile building;
+	private static VegetationFile house;
 
 	private final String id;
 	private final String name;
@@ -30,16 +30,16 @@ public class VegetationFile {
 		this.colorCold = 0xFFF & Integer.parseInt(table.getCell("Cold Color", row), 16);
 
 		map.put(id, this);
-		if (id.equalsIgnoreCase("BUILDING"))
-			building = this;
+		if (id.equalsIgnoreCase("HOUSE"))
+			house = this;
 	}
 
 	public static VegetationFile get(String name) {
 		return map.get(name);
 	}
 
-	public static VegetationFile getBuilding() {
-		return building;
+	public static VegetationFile getHouse() {
+		return house;
 	}
 
 	public static void loadFiles(Table table) {

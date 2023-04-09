@@ -3,7 +3,6 @@ package kaba4cow.warfare.files;
 import java.util.HashMap;
 
 import kaba4cow.ascii.toolbox.Colors;
-import kaba4cow.ascii.toolbox.maths.Maths;
 import kaba4cow.ascii.toolbox.tools.Table;
 
 public class TerrainFile {
@@ -14,7 +13,7 @@ public class TerrainFile {
 	private final String id;
 	private final String name;
 	private final boolean allowCrater;
-	private final float penaltyWarm, penaltyCold;
+	private final float penalty;
 	private final int colorWarm, colorCold;
 	private final char glyph;
 
@@ -25,8 +24,7 @@ public class TerrainFile {
 
 		this.allowCrater = Integer.parseInt(table.getCell("Craters", row)) != 0;
 
-		this.penaltyWarm = Float.parseFloat(table.getCell("Warm Penalty", row));
-		this.penaltyCold = Float.parseFloat(table.getCell("Cold Penalty", row));
+		this.penalty = Float.parseFloat(table.getCell("Penalty", row));
 
 		this.colorWarm = 0xFFF & Integer.parseInt(table.getCell("Warm Color", row), 16);
 		this.colorCold = 0xFFF & Integer.parseInt(table.getCell("Cold Color", row), 16);
@@ -70,8 +68,8 @@ public class TerrainFile {
 		return Colors.blendForeground(colorCold, colorWarm, temperature);
 	}
 
-	public float getPenalty(float temperature) {
-		return Maths.blend(penaltyCold, penaltyWarm, temperature);
+	public float getPenalty() {
+		return penalty;
 	}
 
 	public boolean allowsCrater() {

@@ -19,7 +19,7 @@ public class TerrainTile {
 		this.file = file;
 		this.name = file.getName();
 		this.biome = biome;
-		this.penalty = file.getPenalty(temperature);
+		this.penalty = file.getPenalty();
 		this.glyph = file.getGlyph();
 		this.color = file.getColor(temperature);
 		this.allowCrater = file.allowsCrater();

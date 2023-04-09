@@ -77,7 +77,7 @@ public class Generator {
 		for (y = 0; y < World.SIZE; y++)
 			for (x = 0; x < World.SIZE; x++) {
 				biomeIndex = biomeIndexMap[x][y] % biomes.size();
-				BiomeFile biome = biomeIndex == -1 ? BiomeFile.getRiver() : biomes.get(biomeIndex);
+				BiomeFile biome = biomes.get(biomeIndex);
 
 				String[] terrainTiles = biome.getTerrain();
 				String[] vegetationTiles = biome.getVegetation();
@@ -93,7 +93,7 @@ public class Generator {
 					vegetationFile = null;
 				} else if (terrainType == HOUSE) {
 					terrainFile = TerrainFile.getRuins();
-					vegetationFile = VegetationFile.getBuilding();
+					vegetationFile = VegetationFile.getHouse();
 				} else {
 					terrainIndex = (terrainIndexMap[x][y] + biomeIndex) % terrainTiles.length;
 					terrainFile = TerrainFile.get(terrainTiles[terrainIndex]);

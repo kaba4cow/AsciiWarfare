@@ -4,6 +4,7 @@ import kaba4cow.ascii.drawing.gui.GUIButton;
 import kaba4cow.ascii.drawing.gui.GUIFrame;
 import kaba4cow.ascii.drawing.gui.GUIText;
 import kaba4cow.ascii.drawing.gui.GUITextField;
+import kaba4cow.ascii.input.Keyboard;
 import kaba4cow.warfare.Game;
 import kaba4cow.warfare.Settings;
 import kaba4cow.warfare.gui.GUI;
@@ -43,6 +44,9 @@ public class ConnectState extends State {
 
 	@Override
 	public void update(float dt) {
+		if (Keyboard.isKeyDown(Keyboard.KEY_ESCAPE))
+			Game.switchState(MenuState.getInstance());
+
 		frame.update();
 	}
 

@@ -26,11 +26,11 @@ public class Generator {
 
 	private static final float TERRAIN_FREQ = 0.058f;
 	private static final float RIVER_FREQ = 0.014f;
-	private static final float ELEVATION_FREQ = 0.013f;
-	private static final float ELEVATION_FALLOFF_FREQ = 0.034f;
-	private static final float TEMPERATURE_FREQ = 0.012f;
+	private static final float ELEVATION_FREQ = 0.012f;
+	private static final float ELEVATION_FALLOFF_FREQ = 0.026f;
+	private static final float TEMPERATURE_FREQ = 0.011f;
 
-	private static final float RIVER_THRESHOLD = 0.028f;
+	private static final float RIVER_THRESHOLD = 0.031f;
 
 	private static final int TEMP = 0xFF;
 	private static final int RIVER = 0x00;
@@ -72,6 +72,8 @@ public class Generator {
 		int i, j, x, y, terrainType, biomeIndex, terrainIndex, vegetationIndex;
 		float temperature;
 
+		final int maxElevation = rng.nextInt(2, 7);
+
 		for (y = 0; y < World.SIZE; y++)
 			for (x = 0; x < World.SIZE; x++) {
 				biomeIndex = biomeIndexMap[x][y] % biomes.size();
@@ -102,7 +104,7 @@ public class Generator {
 					} else
 						vegetationFile = null;
 				}
-				elevationMap[x][y] = (int) (World.ELEVATION * elevationValueMap[x][y]);
+				elevationMap[x][y] = (int) (maxElevation * elevationValueMap[x][y]);
 				temperature = temperatureValueMap[x][y];
 				temperatureMap[x][y] = temperature;
 				terrainMap[x][y] = new TerrainTile(terrainFile, biome, temperature);
@@ -156,8 +158,8 @@ public class Generator {
 
 				float elevation_x = ELEVATION_FREQ * x + elevationOffset;
 				float elevation_y = ELEVATION_FREQ * y + elevationOffset;
-				float elevation = noise.getCombinedValue(elevation_x, elevation_y, 2);
-				elevation = Maths.pow(elevation, 1.98f);
+				float elevation = noise.getCombinedValue(elevation_x, elevation_y, 3);
+				elevation = Maths.pow(elevation, 1.93f);
 				elevationValueMap[x][y] = elevation;
 
 				float river1_x = RIVER_FREQ * x + riverOffset;
@@ -204,14 +206,12 @@ public class Generator {
 
 		for (y = 0; y < World.SIZE; y++)
 			for (x = 0; x < World.SIZE; x++) {
-				if (terrainTypeMap[x][y] == RIVER)
-					continue;
-
 				if (houseMap_gen[x][y] == 1)
 					terrainTypeMap[x][y] = HOUSE;
 				else if (pathMap_gen[x][y] == 1 || houseMap_gen[x][y] == 2)
 					terrainTypeMap[x][y] = ROAD;
-				else if (terrainTypeMap[x][y] != RIVER && rng.nextFloat(0f, 1f) < 0.9f) {
+				else if (terrainTypeMap[x][y] != RIVER && terrainTypeMap[x][y] != TERRAIN
+						&& rng.nextFloat(0f, 1f) < 0.9f) {
 					float px = -0.5f * TERRAIN_FREQ * x - pathOffset;
 					float py = 0.5f * TERRAIN_FREQ * y - pathOffset;
 					float value = noise.getCombinedValue(px, py, 2);
@@ -223,12 +223,11 @@ public class Generator {
 		for (y = 0; y < World.SIZE; y++)
 			for (x = 0; x < World.SIZE; x++) {
 				if (terrainTypeMap[x][y] == RIVER)
-					elevationValueMap[x][y] = -2f;
+					elevationValueMap[x][y] = -4f;
 				else if (terrainTypeMap[x][y] == ROAD || terrainTypeMap[x][y] == HOUSE) {
 					float elevationFalloff_x = ELEVATION_FALLOFF_FREQ * x - elevationOffset;
 					float elevationFalloff_y = ELEVATION_FALLOFF_FREQ * y - elevationOffset;
-					float elevationFalloff = noise.getNoiseValue(elevationFalloff_x, elevationFalloff_y);
-					elevationFalloff = 0.5f + 1.5f * Easing.EASE_IN_OUT_SINE.getValue(elevationFalloff);
+					float elevationFalloff = 1f + noise.getNoiseValue(elevationFalloff_x, elevationFalloff_y);
 					elevationValueMap[x][y] = -elevationFalloff;
 				}
 
@@ -237,8 +236,7 @@ public class Generator {
 				for (iy = y - ROAD_RADIUS; iy <= y + ROAD_RADIUS; iy++)
 					for (ix = x - ROAD_RADIUS; ix <= x + ROAD_RADIUS; ix++) {
 						if (rng.nextBoolean() || ix < 0 || ix >= World.SIZE || iy < 0 || iy >= World.SIZE
-								|| terrainTypeMap[ix][iy] == ROAD || terrainTypeMap[ix][iy] == RIVER
-								|| terrainTypeMap[ix][iy] == HOUSE)
+								|| terrainTypeMap[ix][iy] == ROAD || terrainTypeMap[ix][iy] == HOUSE)
 							continue;
 						float dist = Maths.dist(x, y, ix, iy);
 						if (dist < ROAD_RADIUS)
@@ -306,10 +304,6 @@ public class Generator {
 
 		for (y = 0; y < World.SIZE; y++)
 			for (x = 0; x < World.SIZE; x++) {
-				if (terrainTypeMap[x][y] == RIVER) {
-					map[x][y] = -1;
-					continue;
-				}
 				cX = x / cellSize;
 				cY = y / cellSize;
 
@@ -364,8 +358,7 @@ public class Generator {
 				boolean blocked = false;
 				for (ix = x - 1; ix <= x + 1; ix++)
 					for (iy = y - 1; iy <= y + 1; iy++) {
-						if (ix < 0 || ix >= World.SIZE || iy < 0 || iy >= World.SIZE
-								|| terrainTypeMap[ix][iy] == RIVER || houses[ix][iy] == 1) {
+						if (ix < 0 || ix >= World.SIZE || iy < 0 || iy >= World.SIZE || houses[ix][iy] == 1) {
 							blocked = true;
 							break;
 						}
@@ -390,7 +383,7 @@ public class Generator {
 				for (ix = x - ROAD_RADIUS; ix <= x + ROAD_RADIUS; ix++)
 					for (iy = y - ROAD_RADIUS; iy <= y + ROAD_RADIUS; iy++) {
 						if (ix < 0 || ix >= World.SIZE || iy < 0 || iy >= World.SIZE || houses[ix][iy] != 0
-								|| terrainTypeMap[ix][iy] == RIVER || rng.nextFloat(0f, 1f) > pathDensity)
+								|| rng.nextFloat(0f, 1f) > pathDensity)
 							continue;
 						float distSq = Maths.distSq(x, y, ix, iy);
 						if (distSq < pathRadiusSq)
@@ -559,8 +552,7 @@ public class Generator {
 						e += dx;
 						y0 += sy;
 					}
-					if (x0 >= 0 && x0 < World.SIZE && y0 >= 0 && y0 < World.SIZE
-							&& terrainTypeMap[x0][y0] != RIVER)
+					if (x0 >= 0 && x0 < World.SIZE && y0 >= 0 && y0 < World.SIZE)
 						paths[x0][y0] = 1;
 				}
 			}

@@ -228,7 +228,7 @@ public class AIController extends Controller {
 
 		public UnitAI(Unit unit, int index) {
 			this.unit = unit;
-			this.defender = index < 8 || index % 3 == 0;
+			this.defender = index < 15 || index % 3 == 0;
 			this.targetVillage = null;
 			this.targetUnit = null;
 			this.step = 0;
@@ -242,7 +242,7 @@ public class AIController extends Controller {
 			boolean join = false;
 			int maxAmount = (int) Maths.map(unit.getUnitFile().getPrice(), UnitFile.getMinPrice(),
 					UnitFile.getMaxPrice(), 12, 4);
-			if (unit.getUnits() < maxAmount && player.getUnits().size() >= 6) {
+			if (unit.getUnits() < maxAmount && player.getUnits().size() > 5) {
 				float minDistSq = 1024f;
 				float distSq;
 				Unit target = null;
@@ -285,12 +285,12 @@ public class AIController extends Controller {
 					}
 				} else if (step == 1) {
 					if (targetVillage == null || targetVillage.getHouses() == 0
-							|| targetVillage.getTotalUnits(world, player) > 2) {
+							|| targetVillage.getTotalUnits(world, player) > 3) {
 						float minDistSq = Float.POSITIVE_INFINITY;
 						for (int i = 0; i < villages.size(); i++) {
 							Village current = villages.get(i);
 							int total = current.getTotalUnits(world, player);
-							if (total > 1)
+							if (total > 3)
 								continue;
 							float distSq = Maths.distSq(unit.getX(), unit.getY(), current.x, current.y);
 							if (distSq < minDistSq) {

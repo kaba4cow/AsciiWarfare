@@ -11,7 +11,7 @@ import kaba4cow.warfare.states.State;
 
 public class Game implements MainProgram {
 
-	private static final int DEFAULT_WIDTH = 64;
+	private static final int DEFAULT_WIDTH = 70;
 	private static final int DEFAULT_HEIGHT = 40;
 
 	private boolean showFPS;
@@ -24,9 +24,16 @@ public class Game implements MainProgram {
 
 	@Override
 	public void init() {
-		Display.setScreenshotLocation("USER/");
-		switchState(MenuState.getInstance());
 		showFPS = false;
+		Display.setScreenshotLocation("USER/");
+		Settings.init();
+		GameFiles.init();
+		State.init();
+		if (Settings.isFullscreen())
+			Display.createFullscreen();
+		else
+			Display.createWindowed(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+		switchState(MenuState.getInstance());
 	}
 
 	@Override
@@ -67,14 +74,11 @@ public class Game implements MainProgram {
 	}
 
 	public static void main(String[] args) throws Exception {
-		Settings.init();
-		GameFiles.init();
 		Engine.init("Ascii Warfare", 60);
-		State.init();
-		if (Settings.isFullscreen())
-			Display.createFullscreen();
-		else
-			Display.createWindowed(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+		Display.createWindowed(20, 5);
+		Display.setDrawCursor(false);
+		Drawer.drawString(0, Display.getHeight() - 1, false, "Loading...", GUI.COLOR);
+		Display.repaint();
 		Engine.start(new Game());
 	}
 

@@ -139,8 +139,7 @@ public class Player {
 	public void update(float dt) {
 		for (int i = 0; i < units.size(); i++)
 			units.get(i).update(dt);
-
-		income = 5 * (int) Maths.sqrt(level);
+		income = 0;
 		ArrayList<Village> villages = world.getVillages();
 		for (int i = 0; i < villages.size(); i++) {
 			Player occupier = villages.get(i).getOccupier(world);
@@ -153,7 +152,6 @@ public class Player {
 		for (int i = 0; i < units.size(); i++) {
 			Unit unit = units.get(i);
 			unit.render(offX, offY, Drawer.IGNORE_BACKGROUND | color);
-
 			if (i == currentUnit && this == world.getPlayer())
 				unit.renderPaths(offX, offY);
 		}

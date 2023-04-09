@@ -41,8 +41,7 @@ import kaba4cow.warfare.states.State;
 
 public class World {
 
-	public static final int SIZE = 250;
-	public static final int ELEVATION = 5;
+	public static final int SIZE = 320;
 
 	private final long inputSeed;
 	private final int inputSeason;
@@ -276,7 +275,7 @@ public class World {
 		}
 
 		if (!gui && isPlayerTurn()) {
-			if (Controls.SHOP.isKeyDown() && getPlayer().canAccessShop())
+			if (Controls.HIRE.isKeyDown() && getPlayer().canAccessShop())
 				openShop();
 			else if (Controls.INFO.isKeyDown())
 				openInfo();

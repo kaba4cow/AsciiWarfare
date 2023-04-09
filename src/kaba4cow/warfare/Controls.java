@@ -12,8 +12,8 @@ public enum Controls {
 	HELP("Help", Keyboard.KEY_H, true), //
 	PAUSE("Pause", Keyboard.KEY_ESCAPE, true), //
 
-	SHOP("Shop", Keyboard.KEY_R, true), //
-	INFO("Info", Keyboard.KEY_T, true), //
+	HIRE("Hire Units", Keyboard.KEY_R, true), //
+	INFO("Player Info", Keyboard.KEY_T, true), //
 
 	NEW_TURN("End Turn", Keyboard.KEY_TAB, true), //
 	FIRE_MODE("Fire Mode", Keyboard.KEY_F, true), //
@@ -25,10 +25,10 @@ public enum Controls {
 
 	CAMERA_FOLLOW("Follow Unit", Keyboard.KEY_C, true), //
 	CAMERA_MOVE("Move Camera", Mouse.MIDDLE, false), //
-	CAMERA_UP("Camera Up", Keyboard.KEY_UP, true), //
-	CAMERA_DOWN("Camera Down", Keyboard.KEY_DOWN, true), //
-	CAMERA_LEFT("Camera Left", Keyboard.KEY_LEFT, true), //
-	CAMERA_RIGHT("Camera Right", Keyboard.KEY_RIGHT, true), //
+	CAMERA_UP("Camera Up", Keyboard.KEY_W, true), //
+	CAMERA_DOWN("Camera Down", Keyboard.KEY_S, true), //
+	CAMERA_LEFT("Camera Left", Keyboard.KEY_A, true), //
+	CAMERA_RIGHT("Camera Right", Keyboard.KEY_D, true), //
 	CAMERA_SCROLL("Horizontal Scrolling", Keyboard.KEY_SHIFT_LEFT, true);
 
 	private final String name;

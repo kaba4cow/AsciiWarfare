@@ -23,7 +23,7 @@ public class MenuWorld {
 		this.topologyMap = new boolean[World.SIZE][World.SIZE];
 		float[][] temperatureMap = new float[World.SIZE][World.SIZE];
 
-		Generator generator = new Generator(RNG.randomInt(1, 4), RNG.randomLong());
+		Generator generator = new Generator(2, RNG.randomLong());
 		generator.generate();
 		generator.populate(terrainMap, vegetationMap, elevationMap, topologyMap, temperatureMap);
 	}

@@ -26,12 +26,12 @@ public class Server implements Runnable {
 
 	private final StringBuilder output;
 
-	public Server(int port, int worldSeason) throws IOException {
+	public Server(int port, int season) throws IOException {
 		this.server = new ServerSocket(port);
 		this.output = new StringBuilder();
 		log("Server started on port " + server.getLocalPort());
 
-		this.world = new World(worldSeason, RNG.randomLong());
+		this.world = new World(season, RNG.randomLong());
 
 		this.clients = new ArrayList<>();
 		this.ids = new LinkedList<>();

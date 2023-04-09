@@ -25,14 +25,18 @@ public class Game implements MainProgram {
 	@Override
 	public void init() {
 		showFPS = false;
+		new Thread("Initialization") {
+			@Override
+			public void run() {
+				initThread();
+			}
+		}.start();
+	}
+
+	private void initThread() {
 		Display.setScreenshotLocation("USER/");
-		Settings.init();
 		GameFiles.init();
 		State.init();
-		if (Settings.isFullscreen())
-			Display.createFullscreen();
-		else
-			Display.createWindowed(DEFAULT_WIDTH, DEFAULT_HEIGHT);
 		switchState(MenuState.getInstance());
 	}
 
@@ -52,12 +56,17 @@ public class Game implements MainProgram {
 		if (Controls.SCREENSHOT.isKeyDown())
 			Display.takeScreenshot();
 
-		if (!State.isWaiting())
+		if (state != null && !State.isWaiting())
 			state.update(dt);
 	}
 
 	@Override
 	public void render() {
+		if (state == null) {
+			Drawer.drawString(0, Display.getHeight() - 1, false, "Loading...", GUI.COLOR);
+			return;
+		}
+
 		Display.setDrawCursor(true);
 		Display.setCursorWaiting(false);
 
@@ -74,11 +83,13 @@ public class Game implements MainProgram {
 	}
 
 	public static void main(String[] args) throws Exception {
+		Settings.init();
 		Engine.init("Ascii Warfare", 60);
-		Display.createWindowed(20, 5);
-		Display.setDrawCursor(false);
-		Drawer.drawString(0, Display.getHeight() - 1, false, "Loading...", GUI.COLOR);
-		Display.repaint();
+		if (Settings.isFullscreen())
+			Display.createFullscreen();
+		else
+			Display.createWindowed(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+		Display.setCursorWaiting(true);
 		Engine.start(new Game());
 	}
 

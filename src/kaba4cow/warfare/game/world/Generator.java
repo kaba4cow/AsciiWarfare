@@ -118,11 +118,12 @@ public class Generator {
 			for (x = 0; x < World.SIZE; x++) {
 				int center = elevationMap[x][y];
 				boolean line = false;
-				for (j = y - 1; j <= y + 1; j++)
-					for (i = x - 1; i <= x + 1; i++) {
-						if (i == x && j == y || i < 0 || i >= World.SIZE || j < 0 || j >= World.SIZE)
+				for (j = -1; j <= 1; j++)
+					for (i = -1; i <= 1; i++) {
+						if (i != 0 && j != 0 || i == 0 && j == 0 || x + i < 0 || x + i >= World.SIZE || y + j < 0
+								|| y + j >= World.SIZE)
 							continue;
-						int current = elevationMap[i][j];
+						int current = elevationMap[x + i][y + j];
 						if (current < center) {
 							line = true;
 							break;
@@ -405,7 +406,7 @@ public class Generator {
 		int maxIterations = 32;
 		int iterations;
 
-		int numVillages = rng.nextInt(10, 13);
+		int numVillages = rng.nextInt(12, 16);
 		if (numVillages <= 0)
 			numVillages = 1;
 		Village village;
@@ -420,7 +421,7 @@ public class Generator {
 				for (int j = 0; j < villages.size(); j++) {
 					village = villages.get(j);
 					if (terrainTypeMap[x][y] == RIVER
-							|| Maths.distSq(x, y, village.x, village.y) < 16f * Maths.sqr(radius + village.radius)) {
+							|| Maths.distSq(x, y, village.x, village.y) < 32f * Maths.sqr(radius + village.radius)) {
 						blocked = true;
 						break;
 					}

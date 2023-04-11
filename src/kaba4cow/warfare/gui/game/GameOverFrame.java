@@ -44,7 +44,7 @@ public class GameOverFrame extends GUIFrame {
 
 		new GUIButton(this, -1, "Menu", f -> {
 			if (world.getClient() != null)
-				world.getClient().close();
+				world.getClient().close(true);
 			Game.switchState(MenuState.getInstance());
 		});
 	}

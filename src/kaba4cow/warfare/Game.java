@@ -4,19 +4,25 @@ import kaba4cow.ascii.MainProgram;
 import kaba4cow.ascii.core.Display;
 import kaba4cow.ascii.core.Engine;
 import kaba4cow.ascii.drawing.drawers.Drawer;
+import kaba4cow.ascii.input.Keyboard;
 import kaba4cow.warfare.files.GameFiles;
 import kaba4cow.warfare.gui.GUI;
+import kaba4cow.warfare.gui.MessageFrame;
 import kaba4cow.warfare.states.MenuState;
-import kaba4cow.warfare.states.State;
+import kaba4cow.warfare.states.AbstractState;
 
 public class Game implements MainProgram {
 
 	private static final int DEFAULT_WIDTH = 70;
 	private static final int DEFAULT_HEIGHT = 40;
 
+	public static boolean testMode = false;
+
 	private boolean showFPS;
 
-	private static State state;
+	private static AbstractState state;
+
+	private static MessageFrame message;
 
 	public Game() {
 
@@ -24,20 +30,17 @@ public class Game implements MainProgram {
 
 	@Override
 	public void init() {
+		message = new MessageFrame();
 		showFPS = false;
 		new Thread("Initialization") {
 			@Override
 			public void run() {
-				initThread();
+				Display.setScreenshotLocation("user/");
+				GameFiles.init();
+				AbstractState.init();
+				switchState(MenuState.getInstance());
 			}
 		}.start();
-	}
-
-	private void initThread() {
-		Display.setScreenshotLocation("USER/");
-		GameFiles.init();
-		State.init();
-		switchState(MenuState.getInstance());
 	}
 
 	@Override
@@ -50,13 +53,18 @@ public class Game implements MainProgram {
 			Settings.setFullscreen(Display.isFullscreen());
 		}
 
+		if (Keyboard.isKeyDown(Keyboard.KEY_V))
+			testMode = !testMode;
+
 		if (Controls.FPS.isKeyDown())
 			showFPS = !showFPS;
 
 		if (Controls.SCREENSHOT.isKeyDown())
 			Display.takeScreenshot();
 
-		if (state != null && !State.isWaiting())
+		if (message.isActive())
+			message.update();
+		else if (state != null && !AbstractState.isWaiting())
 			state.update(dt);
 	}
 
@@ -71,18 +79,25 @@ public class Game implements MainProgram {
 		Display.setCursorWaiting(false);
 
 		state.render();
-		if (State.isWaiting())
-			State.renderProgressBar();
+		if (AbstractState.isWaiting())
+			AbstractState.renderProgressBar();
+
+		if (message.isActive())
+			message.render();
 
 		if (showFPS)
 			Drawer.drawString(0, 0, false, "FPS: " + Engine.getCurrentFramerate(), GUI.COLOR);
 	}
 
-	public static void switchState(State state) {
+	public static void switchState(AbstractState state) {
 		Game.state = state;
 	}
 
-	public static void main(String[] args) throws Exception {
+	public static void message(String text) {
+		Game.message.setText(text);
+	}
+
+	public static void main(String[] args) {
 		Settings.init();
 		Engine.init("Ascii Warfare", 60);
 		if (Settings.isFullscreen())

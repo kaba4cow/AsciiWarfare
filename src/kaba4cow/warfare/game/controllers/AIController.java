@@ -11,7 +11,7 @@ import kaba4cow.warfare.files.WeaponFile;
 import kaba4cow.warfare.game.Unit;
 import kaba4cow.warfare.game.Village;
 import kaba4cow.warfare.pathfinding.Pathfinder;
-import kaba4cow.warfare.states.State;
+import kaba4cow.warfare.states.AbstractState;
 
 public class AIController extends Controller {
 
@@ -36,7 +36,7 @@ public class AIController extends Controller {
 			return;
 
 		player.setCurrentUnit(currentUnit);
-		State.PROGRESS = (float) currentUnit / (float) ais.size();
+		AbstractState.PROGRESS = (float) currentUnit / (float) ais.size();
 
 		UnitAI ai = ais.get(currentUnit);
 		if (ai.unit.isDestroyed() || !player.getUnits().contains(ai.unit))

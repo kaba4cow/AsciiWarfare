@@ -4,7 +4,6 @@ import kaba4cow.ascii.core.Display;
 import kaba4cow.ascii.drawing.gui.GUIFrame;
 import kaba4cow.ascii.drawing.gui.GUISeparator;
 import kaba4cow.ascii.drawing.gui.GUIText;
-import kaba4cow.ascii.toolbox.maths.Maths;
 import kaba4cow.ascii.toolbox.utils.StringUtils;
 import kaba4cow.warfare.game.Unit;
 import kaba4cow.warfare.gui.GUI;
@@ -13,8 +12,6 @@ public class SelectedUnitFrame extends GUIFrame {
 
 	private final GUIText name;
 	private final GUIText type;
-
-	private final GUIText distance;
 
 	private final GUIText amount;
 
@@ -31,9 +28,6 @@ public class SelectedUnitFrame extends GUIFrame {
 		type = new GUIText(this, -1, "");
 		new GUISeparator(this, -1, false);
 
-		distance = new GUIText(this, -1, "");
-		new GUISeparator(this, -1, false);
-
 		amount = new GUIText(this, -1, "");
 		new GUISeparator(this, -1, false);
 
@@ -44,12 +38,9 @@ public class SelectedUnitFrame extends GUIFrame {
 		visibility = new GUIText(this, -1, "");
 	}
 
-	public void render(Unit currentUnit, Unit selectedUnit) {
+	public void render(Unit selectedUnit) {
 		name.setText("Name: " + selectedUnit.getUnitFile().getName());
 		type.setText("Type: " + selectedUnit.getUnitFile().getTypeName());
-
-		distance.setText("Distance: "
-				+ (int) Maths.dist(currentUnit.getX(), currentUnit.getY(), selectedUnit.getX(), selectedUnit.getY()));
 
 		amount.setText("Amount: " + selectedUnit.getUnits());
 

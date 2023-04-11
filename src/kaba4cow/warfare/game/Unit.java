@@ -1,7 +1,9 @@
 package kaba4cow.warfare.game;
 
+import kaba4cow.ascii.core.Engine;
 import kaba4cow.ascii.drawing.drawers.Drawer;
 import kaba4cow.ascii.drawing.glyphs.Glyphs;
+import kaba4cow.ascii.toolbox.Colors;
 import kaba4cow.ascii.toolbox.files.DataFile;
 import kaba4cow.ascii.toolbox.maths.Maths;
 import kaba4cow.ascii.toolbox.maths.vectors.Vector2i;
@@ -11,9 +13,9 @@ import kaba4cow.warfare.files.UnitFile;
 import kaba4cow.warfare.files.WeaponFile;
 import kaba4cow.warfare.gui.game.WeaponFrame;
 import kaba4cow.warfare.pathfinding.AttackPath;
+import kaba4cow.warfare.pathfinding.MovePath;
 import kaba4cow.warfare.pathfinding.Node;
 import kaba4cow.warfare.pathfinding.Pathfinder;
-import kaba4cow.warfare.pathfinding.UnitPath;
 
 public class Unit {
 
@@ -27,7 +29,7 @@ public class Unit {
 
 	private int attackPos = -1;
 
-	private UnitPath path = null;
+	private MovePath movePath = null;
 	private AttackPath attackPath = null;
 	private long attackSeed;
 	private boolean moving = false;
@@ -105,7 +107,7 @@ public class Unit {
 			moves = 0;
 			for (int i = 0; i < attacks.length; i++)
 				attacks[i] = 0;
-			path = null;
+			movePath = null;
 			attackPath = null;
 		} else {
 			moves = getMaxMoves();
@@ -116,7 +118,7 @@ public class Unit {
 	}
 
 	public void update(float dt) {
-		if (path == null || moves <= 0)
+		if (movePath == null || moves <= 0)
 			moving = false;
 
 		if (isShooting()) {
@@ -135,9 +137,9 @@ public class Unit {
 			moveDelayTime += dt;
 			if (moving && moveDelayTime >= (world.getPenalty(x, y) + 1f) / file.getMoves()) {
 				moveDelayTime = 0f;
-				Node nextNode = path.move();
+				Node nextNode = movePath.move();
 				if (nextNode == null)
-					path = null;
+					movePath = null;
 				else {
 					move(nextNode.x, nextNode.y);
 					world.moveUnit(player.getIndex(), getIndex(), x, y, true);
@@ -152,21 +154,42 @@ public class Unit {
 		if (isDestroyed() || !world.isVisible(world.getPlayer(), x, y))
 			return;
 
+		if (player == world.getPlayer() && this == player.getCurrentUnit()) {
+			float mod = (Maths.SQRT2 * Engine.getElapsedTime()) % 4f;
+			color = Colors.blendForeground(0, color, mod % 2f);
+			if (mod < 1f) {
+				float radius = mod * getVisibilityRadius();
+				int brightness = Colors.blend(0x040000, 0x010000, mod);
+				if (radius > 1f)
+					Drawer.drawCircle(x - offX, y - offY, (int) radius, ' ',
+							Drawer.IGNORE_FOREGROUND | Drawer.IGNORE_GLYPH | brightness);
+			}
+		}
+
 		Drawer.draw(x - offX, y - offY, file.getTypeGlyph(), color);
 
 		if (isShooting()) {
 			Vector2i pos = attackPath.getNode(attackPos);
-			Drawer.draw(pos.x - offX, pos.y - offY, getCurrentWeapon().getGlyph(), 0xF52);
+			Drawer.draw(pos.x - offX, pos.y - offY, getCurrentWeapon().getGlyph(), 0xD52);
 		}
 	}
 
 	public void renderPaths(int offX, int offY) {
-		if (path != null)
-			for (int i = 0; i < path.getLength(); i++) {
-				Node pos = path.getNode(i);
-				Drawer.draw(pos.x - offX, pos.y - offY, Glyphs.SPACE,
-						Drawer.IGNORE_FOREGROUND | Drawer.IGNORE_GLYPH | 0x422000);
+		if (movePath != null) {
+			float movesLeft = moves;
+			int nextX, nextY;
+			int prevX = x;
+			int prevY = y;
+			int color;
+			for (int i = 0; i < movePath.getLength(); i++) {
+				nextX = movePath.getNode(i).x;
+				nextY = movePath.getNode(i).y;
+				color = movesLeft > 0f ? 0x223000 : 0x211000;
+				Drawer.draw(nextX - offX, nextY - offY, Glyphs.SPACE,
+						Drawer.IGNORE_FOREGROUND | Drawer.IGNORE_GLYPH | color);
+				movesLeft -= getPenalty(prevX, prevY, nextX, nextY);
 			}
+		}
 
 		if (attackPath != null && !isShooting()) {
 			for (int i = 0; i < attackPath.getLength(); i++) {
@@ -267,20 +290,16 @@ public class Unit {
 			return;
 
 		moving = false;
-		if (path == null)
-			path = Pathfinder.getUnitPath(world, player, this.x, this.y, x, y);
+		if (movePath == null)
+			movePath = Pathfinder.getMovePath(world, player, this.x, this.y, x, y);
 		else {
-			if (x == path.getEndX() && y == path.getEndY()) {
+			if (x == movePath.getEndX() && y == movePath.getEndY()) {
 				moving = true;
-			} else if (path.contains(x, y))
-				path.shrink(x, y);
+			} else if (movePath.contains(x, y))
+				movePath.shrink(x, y);
 			else
-				path = null;
+				movePath = null;
 		}
-	}
-
-	public void resetPath() {
-		path = null;
 	}
 
 	public void createAttackPath(int x, int y) {
@@ -313,15 +332,21 @@ public class Unit {
 	}
 
 	public void move(int x, int y) {
-		int elevation = Maths.dist(world.getElevation(this.x, this.y), world.getElevation(x, y));
-		if (elevation > 1)
+		float penalty = getPenalty(this.x, this.y, x, y);
+		if (Float.isInfinite(penalty))
 			return;
-		float penalty = 1f + (1f + elevation) * world.getPenalty(x, y);
 
 		this.x = x;
 		this.y = y;
 		player.updateVisibility(x, y, getVisibilityRadius());
 		moves = Maths.max(moves - penalty, 0f);
+	}
+
+	public float getPenalty(int x0, int y0, int x1, int y1) {
+		int elevation = Maths.dist(world.getElevation(x0, y0), world.getElevation(x1, y1));
+		if (elevation > 1)
+			return Float.POSITIVE_INFINITY;
+		return 1f + (1f + elevation) * world.getPenalty(x1, y1);
 	}
 
 	public void switchMoving() {

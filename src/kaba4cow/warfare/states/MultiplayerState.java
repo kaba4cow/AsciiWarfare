@@ -8,7 +8,7 @@ import kaba4cow.warfare.Game;
 import kaba4cow.warfare.game.World;
 import kaba4cow.warfare.network.tcp.Client;
 
-public class MultiplayerState extends State {
+public class MultiplayerState extends AbstractState {
 
 	private static final MultiplayerState instance = new MultiplayerState();
 
@@ -29,6 +29,11 @@ public class MultiplayerState extends State {
 			Game.switchState(MultiplayerPauseState.getInstance());
 
 		world.update(dt);
+
+		if (client.isClosed()) {
+			disconnect();
+			Game.message("Connection lost");
+		}
 	}
 
 	@Override
@@ -37,12 +42,12 @@ public class MultiplayerState extends State {
 
 		if (!world.isPlayerTurn() && !world.isGameOver()) {
 			progressBar.setTitle("Opponent's turn");
-			State.renderProgressBar();
+			AbstractState.renderProgressBar();
 		}
 	}
 
 	public void generateWorld(DataFile data, int id) {
-		State.thread("Generating", f -> {
+		AbstractState.thread("Generating", f -> {
 			world = new World(data, id);
 			client.setWorld(world);
 			world.setClient(client);
@@ -51,18 +56,19 @@ public class MultiplayerState extends State {
 	}
 
 	public void connect(String ip, int port) {
-		State.thread("Connecting", f -> {
+		AbstractState.thread("Connecting", f -> {
 			try {
 				new Client(this, ip, port);
 			} catch (IOException e) {
 				setClient(null);
+				Game.message("Connection failed");
 			}
 		});
 	}
 
 	public void disconnect() {
-		State.thread("Disconnecting", f -> {
-			client.close();
+		AbstractState.thread("Disconnecting", f -> {
+			client.close(true);
 			Game.switchState(MenuState.getInstance());
 		});
 	}

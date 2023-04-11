@@ -16,7 +16,7 @@ import kaba4cow.warfare.files.TerrainFile;
 import kaba4cow.warfare.files.VegetationFile;
 import kaba4cow.warfare.game.Village;
 import kaba4cow.warfare.game.World;
-import kaba4cow.warfare.states.State;
+import kaba4cow.warfare.states.AbstractState;
 
 public class Generator {
 
@@ -132,7 +132,7 @@ public class Generator {
 				topologyMap[x][y] = line;
 			}
 
-		State.PROGRESS = 0.5f;
+		AbstractState.PROGRESS = 0.5f;
 
 		return villages;
 	}
@@ -178,7 +178,7 @@ public class Generator {
 					terrainTypeMap[x][y] = VEGETATION;
 			}
 
-		State.PROGRESS = 0.1f;
+		AbstractState.PROGRESS = 0.1f;
 
 		for (y = 0; y < World.SIZE; y++)
 			for (x = 0; x < World.SIZE; x++) {
@@ -194,16 +194,16 @@ public class Generator {
 					terrainTypeMap[x][y] = VEGETATION;
 
 		populateVoronoiIndices(biomeIndexMap, 3, 2f);
-		State.PROGRESS = 0.15f;
+		AbstractState.PROGRESS = 0.15f;
 		populateVoronoiIndices(terrainIndexMap, 7, 40f);
-		State.PROGRESS = 0.2f;
+		AbstractState.PROGRESS = 0.2f;
 		populateVoronoiIndices(vegetationIndexMap, 8, 50f);
-		State.PROGRESS = 0.25f;
+		AbstractState.PROGRESS = 0.25f;
 
 		int[][] houseMap_gen = createHouseMap();
 		int[][] pathMap_gen = createPathMap();
 
-		State.PROGRESS = 0.3f;
+		AbstractState.PROGRESS = 0.3f;
 
 		for (y = 0; y < World.SIZE; y++)
 			for (x = 0; x < World.SIZE; x++) {
@@ -258,7 +258,7 @@ public class Generator {
 				elevationValueMap[x][y] = value;
 			}
 
-		State.PROGRESS = 0.4f;
+		AbstractState.PROGRESS = 0.4f;
 	}
 
 	private void blur(float[][] map, int dist) {

@@ -10,6 +10,7 @@ public class Message {
 
 	public static final String CONNECT = "C";
 	public static final String DISCONNECT = "D";
+	public static final String PING = "P";
 	public static final String WORLD = "W";
 
 	public static final String TURN = "t";

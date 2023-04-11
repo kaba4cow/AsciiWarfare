@@ -7,11 +7,11 @@ import kaba4cow.ascii.core.Display;
 import kaba4cow.ascii.core.Engine;
 import kaba4cow.ascii.drawing.drawers.Drawer;
 import kaba4cow.ascii.drawing.glyphs.Glyphs;
-import kaba4cow.ascii.input.Keyboard;
 import kaba4cow.ascii.toolbox.files.DataFile;
 import kaba4cow.ascii.toolbox.maths.Maths;
 import kaba4cow.ascii.toolbox.maths.vectors.Vector2i;
 import kaba4cow.ascii.toolbox.rng.RNG;
+import kaba4cow.warfare.Game;
 import kaba4cow.warfare.files.UnitFile;
 import kaba4cow.warfare.game.controllers.Controller;
 import kaba4cow.warfare.game.controllers.PlayerController;
@@ -213,6 +213,7 @@ public class Player {
 	}
 
 	public void onNewTurn() {
+		level += 0.0006f * income;
 		world.setStats(getIndex(), level, cashEarned, cashSpent, unitsHired, unitsLost, unitsKilled, true);
 		for (Unit unit : units)
 			unit.onNewTurn();
@@ -373,7 +374,7 @@ public class Player {
 	public boolean isVisible(int x, int y) {
 		if (ignoreVisibility)
 			return true;
-		if (controller instanceof PlayerController && Keyboard.isKey(Keyboard.KEY_V))
+		if (controller instanceof PlayerController && Game.testMode)
 			return true;
 		return visibilityMap[x][y]; // TODO
 	}

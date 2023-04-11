@@ -45,7 +45,6 @@ public class PlayerController extends Controller {
 				player.setAiming(false);
 				world.setCameraTarget(player.getCurrentUnit());
 			} else if (Controls.FIRE_MODE.isKeyDown()) {
-				player.getCurrentUnit().resetPath();
 				player.getCurrentUnit().resetAttackPath();
 				player.setAiming(!player.isAiming());
 			} else if (Controls.NEW_TURN.isKeyDown())

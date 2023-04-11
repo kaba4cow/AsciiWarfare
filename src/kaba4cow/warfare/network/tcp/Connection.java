@@ -20,8 +20,6 @@ public class Connection implements Runnable {
 	private final BufferedReader reader;
 	private final BufferedWriter writer;
 
-	private Thread thread;
-
 	public Connection(Server server, Socket client, int id) throws IOException {
 		this.server = server;
 		this.client = client;
@@ -31,8 +29,13 @@ public class Connection implements Runnable {
 		this.reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
 		this.writer = new BufferedWriter(new OutputStreamWriter(client.getOutputStream()));
 
-		this.thread = new Thread(this, "Client:" + id);
-		this.thread.start();
+		new Thread(this, "Client:" + id).start();
+		new Thread("Ping") {
+			@Override
+			public void run() {
+				ping();
+			}
+		}.start();
 
 		if (id == -1) {
 			server.log("Connection rejected: " + client.getInetAddress().getHostAddress());
@@ -49,18 +52,28 @@ public class Connection implements Runnable {
 		}
 	}
 
+	private void ping() {
+		while (!isClosed()) {
+			try {
+				Thread.sleep(2000l);
+			} catch (InterruptedException e) {
+			}
+			synchronized (writer) {
+				send(Message.PING);
+			}
+		}
+	}
+
 	@Override
 	public void run() {
 		String message;
 		while (!isClosed()) {
 			try {
 				message = reader.readLine();
-				if (message != null) {
-					if (message.startsWith(Message.DISCONNECT))
-						close();
-					else
-						server.send(this, message);
-				}
+				if (message == null || message.startsWith(Message.DISCONNECT))
+					close();
+				else
+					server.send(this, message);
 			} catch (IOException e) {
 				close();
 				break;
@@ -70,7 +83,9 @@ public class Connection implements Runnable {
 
 	public synchronized void send(String message, Object... parameters) {
 		String output = Message.send(writer, message, parameters);
-		if (output != null)
+		if (output == null)
+			close();
+		else
 			server.log("Sent: " + output);
 	}
 

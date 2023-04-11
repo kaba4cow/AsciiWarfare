@@ -6,7 +6,7 @@ import kaba4cow.ascii.input.Keyboard;
 import kaba4cow.warfare.Game;
 import kaba4cow.warfare.gui.GUI;
 
-public class MultiplayerPauseState extends State {
+public class MultiplayerPauseState extends AbstractState {
 
 	private static final MultiplayerPauseState instance = new MultiplayerPauseState();
 

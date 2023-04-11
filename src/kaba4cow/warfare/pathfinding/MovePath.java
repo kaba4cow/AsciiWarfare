@@ -3,7 +3,7 @@ package kaba4cow.warfare.pathfinding;
 import java.util.ArrayList;
 import java.util.Collections;
 
-public class UnitPath {
+public class MovePath {
 
 	private ArrayList<Node> nodes;
 
@@ -12,7 +12,7 @@ public class UnitPath {
 
 	private boolean finished;
 
-	public UnitPath() {
+	public MovePath() {
 		this.nodes = new ArrayList<>();
 		this.finished = false;
 	}
@@ -52,7 +52,7 @@ public class UnitPath {
 		endY = y;
 	}
 
-	public UnitPath finish() {
+	public MovePath finish() {
 		if (finished)
 			return this;
 		finished = true;

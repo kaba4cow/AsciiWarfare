@@ -78,7 +78,7 @@ public final class Pathfinder {
 		return path;
 	}
 
-	public static UnitPath getUnitPath(World world, Player player, int startX, int startY, int endX, int endY) {
+	public static MovePath getMovePath(World world, Player player, int startX, int startY, int endX, int endY) {
 		if (world == null || startX == endX && startY == endY || !world.isVisible(player, endX, endY)
 				|| world.isObstacle(endX, endY))
 			return null;
@@ -123,6 +123,8 @@ public final class Pathfinder {
 							|| !world.isVisible(player, i, j) || world.isObstacle(i, j))
 						continue;
 					neighbor = nodes[i][j];
+					if (Maths.dist(current.elevation, neighbor.elevation) > 1)
+						continue;
 
 					if (!closedSet.contains(neighbor)) {
 						tempG = current.g + heuristic(neighbor, current);
@@ -140,7 +142,7 @@ public final class Pathfinder {
 						}
 
 						if (newPath) {
-							neighbor.h = heuristic(neighbor, end);
+							neighbor.h = dist(neighbor, end);
 							neighbor.f = neighbor.g + neighbor.h;
 							neighbor.previous = current;
 						}
@@ -152,16 +154,20 @@ public final class Pathfinder {
 		return null;
 	}
 
+	private static float dist(Node a, Node b) {
+		return Maths.dist(a.x, a.y, b.x, b.y);
+	}
+
 	private static float heuristic(Node a, Node b) {
 		int elevation = Maths.dist(a.elevation, b.elevation);
 		if (elevation > 1)
 			return Float.POSITIVE_INFINITY;
 		float penalty = 1f + (1f + elevation) * b.penalty;
-		return Maths.dist(a.x, a.y, b.x, b.y) + penalty;
+		return dist(a, b) + penalty;
 	}
 
-	private static UnitPath createPath(Node node) {
-		UnitPath path = new UnitPath();
+	private static MovePath createPath(Node node) {
+		MovePath path = new MovePath();
 		path.add(current);
 		while (node.previous != null) {
 			path.add(node.previous);

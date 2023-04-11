@@ -2,6 +2,6 @@
 .project
 .settings/
 bin/
-SAVE
-USER
+save
+user
 *.xml

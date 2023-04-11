@@ -37,14 +37,14 @@ import kaba4cow.warfare.gui.shop.ShopFrame;
 import kaba4cow.warfare.network.Message;
 import kaba4cow.warfare.network.tcp.Client;
 import kaba4cow.warfare.pathfinding.Node;
-import kaba4cow.warfare.states.State;
+import kaba4cow.warfare.states.AbstractState;
 
 public class World {
 
-	public static final int SIZE = 320;
+	public static final int SIZE = 300;
 
-	private final long inputSeed;
-	private final int inputSeason;
+	private final long seed;
+	private final int season;
 
 	private final Node[][] nodeMap;
 	private final TerrainTile[][] terrainMap;
@@ -77,9 +77,9 @@ public class World {
 
 	private Client client;
 
-	public World(int season, long seed) {
-		this.inputSeed = seed;
-		this.inputSeason = season;
+	public World() {
+		this.seed = RNG.randomLong();
+		this.season = RNG.randomInt(4);
 
 		this.terrainMap = new TerrainTile[SIZE][SIZE];
 		this.vegetationMap = new VegetationTile[SIZE][SIZE];
@@ -87,7 +87,7 @@ public class World {
 		this.topologyMap = new boolean[SIZE][SIZE];
 		this.temperatureMap = new float[SIZE][SIZE];
 
-		Generator generator = new Generator(inputSeason, seed);
+		Generator generator = new Generator(season, seed);
 		generator.generate();
 		this.villages = generator.populate(terrainMap, vegetationMap, elevationMap, topologyMap, temperatureMap);
 
@@ -110,7 +110,7 @@ public class World {
 			}
 		}
 
-		State.PROGRESS = 0.7f;
+		AbstractState.PROGRESS = 0.7f;
 
 		this.players = new ArrayList<>();
 		for (int i = 0; i < 2; i++)
@@ -122,19 +122,19 @@ public class World {
 		this.currentPlayer = 0;
 		this.terrain = new HashMap<>();
 
-		State.PROGRESS = 0.8f;
+		AbstractState.PROGRESS = 0.8f;
 
 		this.camera = new Camera(this);
 		createGUI();
 
-		State.PROGRESS = 1f;
+		AbstractState.PROGRESS = 1f;
 	}
 
 	public World(DataFile data, int id) {
 		DataFile node;
 
-		this.inputSeed = data.node("Seed").getLong();
-		this.inputSeason = data.node("Season").getInt();
+		this.seed = data.node("Seed").getLong();
+		this.season = data.node("Season").getInt();
 
 		this.turn = data.node("Turn").getInt(0);
 		this.turnPlayer = data.node("Turn").getInt(1);
@@ -146,7 +146,7 @@ public class World {
 		this.topologyMap = new boolean[SIZE][SIZE];
 		this.temperatureMap = new float[SIZE][SIZE];
 
-		Generator generator = new Generator(inputSeason, inputSeed);
+		Generator generator = new Generator(season, seed);
 		generator.generate();
 
 		this.villages = generator.populate(terrainMap, vegetationMap, elevationMap, topologyMap, temperatureMap);
@@ -165,7 +165,7 @@ public class World {
 			terrain.put(new Vector2i(x, y), terrainID);
 		}
 
-		State.PROGRESS = 0.7f;
+		AbstractState.PROGRESS = 0.7f;
 
 		this.nodeMap = createNodeMap();
 
@@ -174,7 +174,7 @@ public class World {
 		for (int i = 0; i < node.objectSize(); i++)
 			players.add(new Player(this, i, node.node(i)));
 
-		State.PROGRESS = 1f;
+		AbstractState.PROGRESS = 1f;
 
 		this.camera = new Camera(this);
 		createGUI();
@@ -199,21 +199,21 @@ public class World {
 	public DataFile getDataFile() {
 		DataFile data = new DataFile();
 		DataFile node;
-		State.PROGRESS = 0f;
+		AbstractState.PROGRESS = 0f;
 
 		int index;
 
-		data.node("Seed").clear().setLong(inputSeed);
-		data.node("Season").clear().setInt(inputSeason);
+		data.node("Seed").clear().setLong(seed);
+		data.node("Season").clear().setInt(season);
 
 		data.node("Turn").clear().setInt(turn).setInt(turnPlayer);
 		data.node("Player").clear().setInt(currentPlayer);
-		State.PROGRESS = 0.2f;
+		AbstractState.PROGRESS = 0.2f;
 
 		node = data.node("Players");
 		for (index = 0; index < players.size(); index++)
 			players.get(index).save(node.node(Integer.toString(index)));
-		State.PROGRESS = 0.4f;
+		AbstractState.PROGRESS = 0.4f;
 
 		node = data.node("Map").clear();
 		index = 0;
@@ -221,15 +221,15 @@ public class World {
 			node.node(Integer.toString(index++)).clear()//
 					.setInt(pos.x).setInt(pos.y)//
 					.setString(terrain.get(pos));
-		State.PROGRESS = 0.7f;
+		AbstractState.PROGRESS = 0.7f;
 
 		return data;
 	}
 
 	public void save() {
 		DataFile data = getDataFile();
-		DataFile.write(data, new File("SAVE"));
-		State.PROGRESS = 1f;
+		DataFile.write(data, new File("save"));
+		AbstractState.PROGRESS = 1f;
 	}
 
 	private void createGUI() {
@@ -257,8 +257,7 @@ public class World {
 	}
 
 	private void createViewport() {
-		viewport = new Viewport(Display.getWidth() / 4, Display.getHeight() / 5,
-				Display.getWidth() - Display.getWidth() / 4, Display.getHeight() - Display.getHeight() / 5);
+		viewport = new Viewport();
 	}
 
 	public void update(float dt) {
@@ -365,7 +364,7 @@ public class World {
 		currentUnitFrame.render(player.getCurrentUnit());
 		Unit mouseUnit = getUnit(camera.getMouseX(), camera.getMouseY());
 		if (mouseUnit != null)
-			selectedUnitFrame.render(player.getCurrentUnit(), mouseUnit);
+			selectedUnitFrame.render(mouseUnit);
 		else
 			worldFrame.render(this);
 		actionFrame.render();
@@ -514,7 +513,7 @@ public class World {
 	public void newTurn(int player, boolean send) {
 		if (client != null && send)
 			client.send(Message.TURN, player);
-		State.PROGRESS = 0f;
+		AbstractState.PROGRESS = 0f;
 		players.get(player).onNewTurn();
 		turnPlayer++;
 		if (turnPlayer >= players.size()) {
@@ -551,7 +550,7 @@ public class World {
 
 	public float getPenalty(int x, int y) {
 		if (x < 0 || x >= SIZE || y < 0 || y >= SIZE)
-			return 0f;
+			return Float.POSITIVE_INFINITY;
 		return terrainMap[x][y].getPenalty();
 	}
 
@@ -624,11 +623,11 @@ public class World {
 	}
 
 	public long getInputSeed() {
-		return inputSeed;
+		return seed;
 	}
 
 	public int getInputSeason() {
-		return inputSeason;
+		return season;
 	}
 
 	public int getTurns() {

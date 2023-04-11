@@ -9,7 +9,6 @@ import java.util.LinkedList;
 
 import kaba4cow.ascii.toolbox.Printer;
 import kaba4cow.ascii.toolbox.files.DataFile;
-import kaba4cow.ascii.toolbox.rng.RNG;
 import kaba4cow.warfare.game.World;
 import kaba4cow.warfare.network.Message;
 
@@ -20,26 +19,23 @@ public class Server implements Runnable {
 	private final ArrayList<Connection> clients;
 	private final LinkedList<Integer> ids;
 
-	private Thread thread;
-
 	private final World world;
 
 	private final StringBuilder output;
 
-	public Server(int port, int season) throws IOException {
+	public Server(int port) throws IOException {
 		this.server = new ServerSocket(port);
 		this.output = new StringBuilder();
 		log("Server started on port " + server.getLocalPort());
 
-		this.world = new World(season, RNG.randomLong());
+		this.world = new World();
 
 		this.clients = new ArrayList<>();
 		this.ids = new LinkedList<>();
 		ids.add(0);
 		ids.add(1);
 
-		this.thread = new Thread(this, "Server");
-		this.thread.start();
+		new Thread(this, "Server").start();
 	}
 
 	public void update(float dt) {
@@ -63,8 +59,10 @@ public class Server implements Runnable {
 	}
 
 	public synchronized void send(Connection sender, String message) {
-		if (message == null)
+		if (message == null) {
+			sender.close();
 			return;
+		}
 		log("Received: " + message);
 		process(message);
 		for (Connection client : clients)

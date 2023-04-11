@@ -12,7 +12,7 @@ import kaba4cow.ascii.drawing.gui.GUIProgressBar;
 import kaba4cow.warfare.game.MenuWorld;
 import kaba4cow.warfare.gui.GUI;
 
-public abstract class State {
+public abstract class AbstractState {
 
 	public static float PROGRESS;
 
@@ -23,7 +23,7 @@ public abstract class State {
 
 	private static int titleWidth;
 
-	public State() {
+	public AbstractState() {
 
 	}
 

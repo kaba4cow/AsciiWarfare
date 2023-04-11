@@ -6,7 +6,7 @@ import kaba4cow.ascii.drawing.gui.GUIFrame;
 import kaba4cow.warfare.Game;
 import kaba4cow.warfare.gui.GUI;
 
-public class MenuState extends State {
+public class MenuState extends AbstractState {
 
 	private static final MenuState instance = new MenuState();
 
@@ -16,7 +16,7 @@ public class MenuState extends State {
 		frame = new GUIFrame(GUI.COLOR, false, false).setTitle("Menu");
 
 		new GUIButton(frame, -1, "Start New Game", f -> {
-			Game.switchState(GenerateState.getInstance());
+			SingleplayerState.getInstance().generateWorld();
 		});
 
 		new GUIButton(frame, -1, "Load Game", f -> {

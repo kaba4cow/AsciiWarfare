@@ -1,15 +1,11 @@
 package kaba4cow.warfare.network;
 
-import java.io.IOException;
-
 import kaba4cow.ascii.MainProgram;
 import kaba4cow.ascii.core.Display;
 import kaba4cow.ascii.core.Engine;
 import kaba4cow.ascii.drawing.drawers.Drawer;
 import kaba4cow.ascii.drawing.gui.GUIButton;
 import kaba4cow.ascii.drawing.gui.GUIFrame;
-import kaba4cow.ascii.drawing.gui.GUIRadioButton;
-import kaba4cow.ascii.drawing.gui.GUIRadioPanel;
 import kaba4cow.ascii.drawing.gui.GUISeparator;
 import kaba4cow.ascii.drawing.gui.GUIText;
 import kaba4cow.ascii.drawing.gui.GUITextField;
@@ -35,7 +31,6 @@ public class ServerConsole implements MainProgram {
 	private boolean starting;
 	private GUIFrame startFrame;
 	private GUITextField portTextField;
-	private GUIRadioPanel seasonPanel;
 
 	public ServerConsole() {
 
@@ -68,17 +63,10 @@ public class ServerConsole implements MainProgram {
 		new GUIText(startFrame, -1, "Port");
 		portTextField = new GUITextField(startFrame, -1, "");
 
-		seasonPanel = new GUIRadioPanel(startFrame, -1, "Season:");
-		new GUIRadioButton(seasonPanel, -1, "Winter");
-		new GUIRadioButton(seasonPanel, -1, "Autumn");
-		new GUIRadioButton(seasonPanel, -1, "Spring");
-		new GUIRadioButton(seasonPanel, -1, "Summer");
-
 		new GUIButton(startFrame, -1, "Start", f -> {
 			try {
 				int port = Integer.parseInt(portTextField.getText());
-				int season = seasonPanel.getIndex();
-				server = new Server(port, season);
+				server = new Server(port);
 				serverButton.setText("Close");
 				portText.setText("Port: " + port);
 				starting = false;
@@ -162,30 +150,10 @@ public class ServerConsole implements MainProgram {
 		prevOutput = output.length();
 	}
 
-	public Server getServer() {
-		return server;
-	}
-
-	public boolean startServer(int port, int season) {
-		try {
-			server = new Server(port, season);
-			return true;
-		} catch (IOException e) {
-			return false;
-		}
-	}
-
-	public void closeServer() {
-		if (server != null) {
-			server.close();
-			server = null;
-		}
-	}
-
 	public static void main(String[] args) {
 		GameFiles.init();
 		Engine.init("Ascii Warfare Server", 60);
-		Display.createWindowed(70, 30);
+		Display.createWindowed(60, 30);
 		Engine.start(new ServerConsole());
 	}
 

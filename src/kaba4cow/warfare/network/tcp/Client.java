@@ -22,8 +22,6 @@ public class Client implements Runnable {
 	private final BufferedReader reader;
 	private final BufferedWriter writer;
 
-	private Thread thread;
-
 	private final MultiplayerState game;
 	private World world;
 
@@ -40,8 +38,25 @@ public class Client implements Runnable {
 		this.reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
 		this.writer = new BufferedWriter(new OutputStreamWriter(client.getOutputStream()));
 
-		this.thread = new Thread(this, "Client");
-		this.thread.start();
+		new Thread(this, "Client").start();
+		new Thread("Ping") {
+			@Override
+			public void run() {
+				ping();
+			}
+		}.start();
+	}
+
+	private void ping() {
+		while (!isClosed()) {
+			try {
+				Thread.sleep(2000l);
+			} catch (InterruptedException e) {
+			}
+			synchronized (writer) {
+				send(Message.PING);
+			}
+		}
 	}
 
 	@Override
@@ -83,7 +98,7 @@ public class Client implements Runnable {
 				worldBuilder.append(parameters[0]);
 			}
 		} else if (message.equals(Message.DISCONNECT)) {
-			close();
+			close(true);
 		} else if (message.equals(Message.TURN)) {
 			int player = Integer.parseInt(parameters[0]);
 			world.newTurn(player, false);
@@ -126,15 +141,19 @@ public class Client implements Runnable {
 
 	public synchronized void send(String message, Object... parameters) {
 		String output = Message.send(writer, message, parameters);
-		Printer.println("Sent: " + output);
+		if (output == null)
+			close(false);
+		else
+			Printer.println("Sent: " + output);
 	}
 
-	public synchronized void close() {
+	public synchronized void close(boolean manual) {
 		if (isClosed())
 			return;
 		try {
 			Printer.println("Client closing");
-			send(Message.DISCONNECT);
+			if (manual)
+				send(Message.DISCONNECT);
 			try {
 				Thread.sleep(500l);
 			} catch (InterruptedException e) {

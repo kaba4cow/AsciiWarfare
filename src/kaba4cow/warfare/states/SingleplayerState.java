@@ -4,11 +4,10 @@ import java.io.File;
 
 import kaba4cow.ascii.input.Keyboard;
 import kaba4cow.ascii.toolbox.files.DataFile;
-import kaba4cow.ascii.toolbox.rng.RNG;
 import kaba4cow.warfare.Game;
 import kaba4cow.warfare.game.World;
 
-public class SingleplayerState extends State {
+public class SingleplayerState extends AbstractState {
 
 	private static final SingleplayerState instance = new SingleplayerState();
 
@@ -36,29 +35,34 @@ public class SingleplayerState extends State {
 
 		if (!world.isPlayerTurn() && !world.isGameOver()) {
 			progressBar.setTitle("Opponent's turn");
-			State.renderProgressBar();
+			AbstractState.renderProgressBar();
 		}
 	}
 
-	public void generateWorld(int season) {
-		State.thread("Generating", f -> {
-			world = new World(season, RNG.randomLong());
+	public void generateWorld() {
+		AbstractState.thread("Generating", f -> {
+			world = new World();
 			world.setCurrentPlayer(0, true);
 			Game.switchState(instance);
 		});
 	}
 
 	public void saveWorld() {
-		State.thread("Saving", f -> {
+		AbstractState.thread("Saving", f -> {
 			world.save();
+			Game.message("Game saved");
 		});
 	}
 
 	public void loadWorld() {
-		State.thread("Loading", f -> {
+		File file = new File("save");
+		if (!file.exists())
+			return;
+
+		AbstractState.thread("Loading", f -> {
 			World newWorld;
 			try {
-				newWorld = new World(DataFile.read(new File("SAVE")), -1);
+				newWorld = new World(DataFile.read(file), -1);
 			} catch (Exception e) {
 				newWorld = null;
 			}

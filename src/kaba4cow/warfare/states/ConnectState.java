@@ -9,7 +9,7 @@ import kaba4cow.warfare.Game;
 import kaba4cow.warfare.Settings;
 import kaba4cow.warfare.gui.GUI;
 
-public class ConnectState extends State {
+public class ConnectState extends AbstractState {
 
 	private static final ConnectState instance = new ConnectState();
 

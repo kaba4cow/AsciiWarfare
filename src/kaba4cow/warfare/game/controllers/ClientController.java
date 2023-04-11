@@ -8,7 +8,7 @@ public class ClientController extends Controller {
 
 	@Override
 	public void update(float dt) {
-
+		player.setIgnoreVisibility(true);
 	}
 
 	@Override

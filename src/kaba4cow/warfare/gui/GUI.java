@@ -10,6 +10,10 @@ public final class GUI {
 
 	}
 
+	public static String slash(int value1, int value2) {
+		return value1 + " / " + value2;
+	}
+
 	public static String slash(float value1, float value2) {
 		return format(value1) + " / " + format(value2);
 	}

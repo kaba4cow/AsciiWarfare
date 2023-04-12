@@ -95,8 +95,6 @@ public class Camera {
 	}
 
 	public boolean isMouseInViewport() {
-		if (Controls.HELP.isKey())
-			return false;
 		int x = Mouse.getTileX() - world.getViewport().x;
 		int y = Mouse.getTileY() - world.getViewport().y;
 		return x >= 0 && x < world.getViewport().width && y >= 0 && y < world.getViewport().height;

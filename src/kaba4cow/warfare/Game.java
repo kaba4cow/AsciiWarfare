@@ -71,7 +71,7 @@ public class Game implements MainProgram {
 	@Override
 	public void render() {
 		if (state == null) {
-			Drawer.drawString(0, Display.getHeight() - 1, false, "Loading...", GUI.COLOR);
+			Drawer.drawString(Display.getWidth() / 2, Display.getHeight() / 2, true, "Loading...", GUI.COLOR);
 			return;
 		}
 

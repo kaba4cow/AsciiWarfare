@@ -38,6 +38,7 @@ public class WeaponFrame extends GUIFrame {
 
 			buttons[i] = new GUIButton(this, -1, "", f -> {
 				unit.setCurrentWeapon(index);
+				unit.resetAttackPath();
 			});
 			new GUISeparator(this, -1, false);
 		}
@@ -46,15 +47,12 @@ public class WeaponFrame extends GUIFrame {
 	@Override
 	public void render() {
 		for (int i = 0; i < attacks.length; i++) {
-			attacks[i].setText(String.format("Rounds: %d / %d", unit.getAttacks(i),
-					unit.getUnitFile().getWeapons()[i].getAttacks()));
-			if (i == unit.getCurrentWeaponIndex()) {
+			attacks[i].setText(
+					"Rounds: " + GUI.slash(unit.getAttacks(i), unit.getUnitFile().getWeapons()[i].getAttacks()));
+			if (i == unit.getCurrentWeaponIndex())
 				buttons[i].setText("Selected");
-				buttons[i].setColor(0x000888 & getColor());
-			} else {
+			else
 				buttons[i].setText("Select");
-				buttons[i].setColor(getColor());
-			}
 		}
 
 		super.render(0, 0, Display.getWidth() / 4, Display.getHeight() / 2, false);

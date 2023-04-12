@@ -8,6 +8,7 @@ import kaba4cow.ascii.core.Display;
 import kaba4cow.ascii.drawing.drawers.Drawer;
 import kaba4cow.ascii.drawing.glyphs.Glyphs;
 import kaba4cow.ascii.drawing.gui.GUIColorText;
+import kaba4cow.ascii.input.Keyboard;
 import kaba4cow.ascii.toolbox.Colors;
 import kaba4cow.ascii.toolbox.files.DataFile;
 import kaba4cow.ascii.toolbox.maths.Maths;
@@ -27,6 +28,7 @@ import kaba4cow.warfare.game.world.TerrainTile;
 import kaba4cow.warfare.game.world.VegetationTile;
 import kaba4cow.warfare.gui.Viewport;
 import kaba4cow.warfare.gui.game.ActionFrame;
+import kaba4cow.warfare.gui.game.ChatFrame;
 import kaba4cow.warfare.gui.game.CurrentUnitFrame;
 import kaba4cow.warfare.gui.game.GameOverFrame;
 import kaba4cow.warfare.gui.game.HelpFrame;
@@ -67,6 +69,7 @@ public class World {
 	private GameOverFrame gameOverFrame;
 	private Viewport viewport;
 
+	private ChatFrame chatFrame;
 	private ShopFrame shopFrame;
 	private InfoFrame infoFrame;
 	private boolean gui;
@@ -252,6 +255,11 @@ public class World {
 		infoFrame = new InfoFrame(this, getPlayer());
 	}
 
+	private void openChat() {
+		gui = true;
+		chatFrame = new ChatFrame();
+	}
+
 	public boolean canExit() {
 		return !gui && gameOverFrame == null;
 	}
@@ -273,14 +281,24 @@ public class World {
 			return;
 		}
 
-		if (!gui && isPlayerTurn()) {
-			if (Controls.HIRE.isKeyDown() && getPlayer().canAccessShop())
-				openShop();
-			else if (Controls.INFO.isKeyDown())
-				openInfo();
+		if (Controls.HELP.isKey()) {
+			helpFrame.update();
+			return;
+		}
+
+		if (!gui) {
+			if (isPlayerTurn()) {
+				if (Controls.HIRE.isKeyDown() && getPlayer().canAccessShop())
+					openShop();
+				else if (Controls.INFO.isKeyDown())
+					openInfo();
+			}
+			if (Controls.CHAT.isKeyDown())
+				openChat();
 		} else if (gui && Controls.PAUSE.isKeyDown() && (shopFrame == null || shopFrame.canExit())) {
 			shopFrame = null;
 			infoFrame = null;
+			chatFrame = null;
 			gui = false;
 		}
 
@@ -289,6 +307,15 @@ public class World {
 				shopFrame.update();
 			else if (infoFrame != null)
 				infoFrame.update();
+			else if (chatFrame != null) {
+				chatFrame.update();
+				if (Keyboard.isKeyDown(Keyboard.KEY_ENTER)) {
+					String text = chatFrame.getText();
+					gui = false;
+					chatFrame = null;
+					newMessage(currentPlayer, text, true);
+				}
+			}
 			return;
 		}
 
@@ -307,16 +334,17 @@ public class World {
 		selectedUnitFrame.update();
 		worldFrame.update();
 		actionFrame.update();
-		helpFrame.update();
 	}
 
 	public void render() {
 		if (gui) {
-			if (shopFrame != null)
+			if (shopFrame != null) {
 				shopFrame.render();
-			else if (infoFrame != null)
+				return;
+			} else if (infoFrame != null) {
 				infoFrame.render();
-			return;
+				return;
+			}
 		}
 
 		if (viewport.width != Display.getWidth() - Display.getWidth() / 4
@@ -373,6 +401,8 @@ public class World {
 
 		if (isGameOver())
 			gameOverFrame.render();
+		else if (gui && chatFrame != null)
+			chatFrame.render();
 		else if (Controls.HELP.isKey())
 			helpFrame.render();
 
@@ -475,6 +505,13 @@ public class World {
 				client.send(Message.STATS, player, level, cashEarned, cashSpent, unitsHired, unitsLost, unitsKilled);
 		} else
 			getPlayer(player).setStats(level, cashEarned, cashSpent, unitsHired, unitsLost, unitsKilled);
+	}
+
+	public void newMessage(int player, String message, boolean send) {
+		int color = getPlayer(player).getColor();
+		actionFrame.addAction(this).addText(message, color);
+		if (send && client != null)
+			client.send(Message.MESSAGE, player, message);
 	}
 
 	public void damageUnits(int x, int y, Unit source, long seed, WeaponFile weapon) {

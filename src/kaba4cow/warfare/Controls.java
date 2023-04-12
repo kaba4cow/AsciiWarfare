@@ -11,9 +11,10 @@ public enum Controls {
 
 	HELP("Help", Keyboard.KEY_H, true), //
 	PAUSE("Pause", Keyboard.KEY_ESCAPE, true), //
+	CHAT("Chat", Keyboard.KEY_T, true), //
 
 	HIRE("Hire Units", Keyboard.KEY_R, true), //
-	INFO("Player Info", Keyboard.KEY_T, true), //
+	INFO("Player Info", Keyboard.KEY_I, true), //
 
 	NEW_TURN("End Turn", Keyboard.KEY_TAB, true), //
 	FIRE_MODE("Fire Mode", Keyboard.KEY_F, true), //

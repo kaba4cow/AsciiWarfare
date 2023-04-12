@@ -70,7 +70,7 @@ public class UnitFile {
 		price += 2.6f * unit.getVisibility();
 		for (int i = 0; i < weapons.length; i++)
 			price += WeaponFile.get(weapons[i]).getPrice();
-		price *= 0.22f;
+		price *= 0.34f;
 		int result = (int) price + 38 * unit.getLevel();
 		return result - result % 5;
 	}

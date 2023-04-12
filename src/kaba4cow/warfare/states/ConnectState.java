@@ -25,8 +25,8 @@ public class ConnectState extends AbstractState {
 		ipTextField.setMaxCharacters(15);
 
 		new GUIText(frame, -1, "Port");
-		portTextField = new GUITextField(frame, -1, Settings.getServerPort());
-		portTextField.setMaxCharacters(5);
+		portTextField = new GUITextField(frame, -1, Settings.getServerPort()).setCharset("0123456789")
+				.setMaxCharacters(5);
 
 		new GUIButton(frame, -1, "Connect", f -> {
 			Settings.setServerInfo(ipTextField.getText(), portTextField.getText());

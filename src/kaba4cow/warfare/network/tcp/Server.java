@@ -12,9 +12,10 @@ import kaba4cow.ascii.toolbox.files.DataFile;
 import kaba4cow.warfare.game.World;
 import kaba4cow.warfare.network.Message;
 
-public class Server implements Runnable {
+public class Server {
 
 	private final ServerSocket server;
+	private final int port;
 
 	private final ArrayList<Connection> clients;
 	private final LinkedList<Integer> ids;
@@ -25,6 +26,7 @@ public class Server implements Runnable {
 
 	public Server(int port) throws IOException {
 		this.server = new ServerSocket(port);
+		this.port = server.getLocalPort();
 		this.output = new StringBuilder();
 		log("Server started on port " + server.getLocalPort());
 
@@ -35,15 +37,19 @@ public class Server implements Runnable {
 		ids.add(0);
 		ids.add(1);
 
-		new Thread(this, "Server").start();
+		new Thread("Server-Listen") {
+			@Override
+			public void run() {
+				listen();
+			}
+		}.start();
 	}
 
 	public void update(float dt) {
 		world.update(dt);
 	}
 
-	@Override
-	public void run() {
+	private void listen() {
 		while (!isClosed()) {
 			try {
 				Socket socket = server.accept();
@@ -75,7 +81,11 @@ public class Server implements Runnable {
 			return;
 		String[] parameters = Message.getParameters(message);
 		message = Message.getMessage(message);
-		if (message.equals(Message.TURN)) {
+		if (message.equals(Message.MESSAGE)) {
+			int player = Integer.parseInt(parameters[0]);
+			String text = parameters[1];
+			world.newMessage(player, text, false);
+		} else if (message.equals(Message.TURN)) {
 			int player = Integer.parseInt(parameters[0]);
 			world.newTurn(player, false);
 		} else if (message.equals(Message.MOVE)) {
@@ -165,6 +175,10 @@ public class Server implements Runnable {
 
 	public String getOutput() {
 		return output.toString();
+	}
+
+	public int getPort() {
+		return port;
 	}
 
 }

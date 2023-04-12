@@ -9,11 +9,12 @@ import java.net.Socket;
 
 import kaba4cow.ascii.toolbox.Printer;
 import kaba4cow.ascii.toolbox.files.DataFile;
+import kaba4cow.warfare.Game;
 import kaba4cow.warfare.game.World;
 import kaba4cow.warfare.network.Message;
 import kaba4cow.warfare.states.MultiplayerState;
 
-public class Client implements Runnable {
+public class Client {
 
 	private final Socket client;
 
@@ -31,6 +32,7 @@ public class Client implements Runnable {
 		game.setClient(this);
 		this.game = game;
 		this.client = new Socket(address, port);
+		Printer.println("Connected to server: " + address + ":" + port);
 
 		this.id = -1;
 		this.worldBuilder = null;
@@ -38,8 +40,13 @@ public class Client implements Runnable {
 		this.reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
 		this.writer = new BufferedWriter(new OutputStreamWriter(client.getOutputStream()));
 
-		new Thread(this, "Client").start();
-		new Thread("Ping") {
+		new Thread("Client-Listen") {
+			@Override
+			public void run() {
+				listen();
+			}
+		}.start();
+		new Thread("Client-Ping") {
 			@Override
 			public void run() {
 				ping();
@@ -50,7 +57,7 @@ public class Client implements Runnable {
 	private void ping() {
 		while (!isClosed()) {
 			try {
-				Thread.sleep(2000l);
+				Thread.sleep(1000l);
 			} catch (InterruptedException e) {
 			}
 			synchronized (writer) {
@@ -59,8 +66,7 @@ public class Client implements Runnable {
 		}
 	}
 
-	@Override
-	public void run() {
+	private void listen() {
 		String message;
 		while (!isClosed()) {
 			try {
@@ -98,7 +104,12 @@ public class Client implements Runnable {
 				worldBuilder.append(parameters[0]);
 			}
 		} else if (message.equals(Message.DISCONNECT)) {
+			Game.message("Disconnected");
 			close(true);
+		} else if (message.equals(Message.MESSAGE)) {
+			int player = Integer.parseInt(parameters[0]);
+			String text = parameters[1];
+			world.newMessage(player, text, false);
 		} else if (message.equals(Message.TURN)) {
 			int player = Integer.parseInt(parameters[0]);
 			world.newTurn(player, false);

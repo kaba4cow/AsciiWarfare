@@ -56,8 +56,10 @@ public class SingleplayerState extends AbstractState {
 
 	public void loadWorld() {
 		File file = new File("save");
-		if (!file.exists())
+		if (!file.exists()) {
+			Game.message("No save found");
 			return;
+		}
 
 		AbstractState.thread("Loading", f -> {
 			World newWorld;

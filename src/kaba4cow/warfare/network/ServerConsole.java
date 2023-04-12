@@ -61,14 +61,14 @@ public class ServerConsole implements MainProgram {
 
 		startFrame = new GUIFrame(GUI.COLOR, false, false).setTitle("Properties");
 		new GUIText(startFrame, -1, "Port");
-		portTextField = new GUITextField(startFrame, -1, "");
+		portTextField = new GUITextField(startFrame, -1, "").setCharset("0123456789");
 
 		new GUIButton(startFrame, -1, "Start", f -> {
 			try {
 				int port = Integer.parseInt(portTextField.getText());
 				server = new Server(port);
 				serverButton.setText("Close");
-				portText.setText("Port: " + port);
+				portText.setText("Port: " + server.getPort());
 				starting = false;
 			} catch (Exception e) {
 			}

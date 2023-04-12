@@ -15,7 +15,7 @@ public class MessageFrame extends GUIFrame {
 		super(GUI.COLOR, false, false);
 
 		text = new GUIText(this, -1, "");
-		new GUISeparator(this, -1, false);
+		new GUISeparator(this, -1, true);
 		new GUIButton(this, -1, "OK", f -> {
 			text.setText("");
 		});

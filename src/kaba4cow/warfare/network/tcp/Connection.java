@@ -10,7 +10,7 @@ import java.net.Socket;
 
 import kaba4cow.warfare.network.Message;
 
-public class Connection implements Runnable {
+public class Connection {
 
 	private final Server server;
 	private final Socket client;
@@ -29,8 +29,13 @@ public class Connection implements Runnable {
 		this.reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
 		this.writer = new BufferedWriter(new OutputStreamWriter(client.getOutputStream()));
 
-		new Thread(this, "Client:" + id).start();
-		new Thread("Ping") {
+		new Thread("Server-Connection[" + id + "]-Listen") {
+			@Override
+			public void run() {
+				listen();
+			}
+		}.start();
+		new Thread("Server-Connection[" + id + "]-Ping") {
 			@Override
 			public void run() {
 				ping();
@@ -55,7 +60,7 @@ public class Connection implements Runnable {
 	private void ping() {
 		while (!isClosed()) {
 			try {
-				Thread.sleep(2000l);
+				Thread.sleep(1000l);
 			} catch (InterruptedException e) {
 			}
 			synchronized (writer) {
@@ -64,8 +69,7 @@ public class Connection implements Runnable {
 		}
 	}
 
-	@Override
-	public void run() {
+	private void listen() {
 		String message;
 		while (!isClosed()) {
 			try {

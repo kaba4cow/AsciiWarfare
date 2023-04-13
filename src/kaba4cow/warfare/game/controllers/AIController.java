@@ -279,18 +279,15 @@ public class AIController extends Controller {
 
 			if (defender && !villages.isEmpty()) {
 				if (step == 0) {
-					if (weaponStep < maxWeaponStep && unit.getAttacks(weaponStep) > 0) {
-						processUnitAttack(unit, getUnitTarget(unit, weapons[weaponStep]), weaponStep);
-						weaponStep++;
-					}
+					weaponStep = maxWeaponStep;
 				} else if (step == 1) {
 					if (targetVillage == null || targetVillage.getHouses() == 0
-							|| targetVillage.getTotalUnits(world, player) > 3) {
+							|| targetVillage.getTotalUnits(world, player) > 2) {
 						float minDistSq = Float.POSITIVE_INFINITY;
 						for (int i = 0; i < villages.size(); i++) {
 							Village current = villages.get(i);
 							int total = current.getTotalUnits(world, player);
-							if (total > 3)
+							if (total > 2)
 								continue;
 							float distSq = Maths.distSq(unit.getX(), unit.getY(), current.x, current.y);
 							if (distSq < minDistSq) {
@@ -305,17 +302,16 @@ public class AIController extends Controller {
 					}
 					weaponStep = maxWeaponStep;
 				} else if (step == 2) {
-					if (weaponStep < maxWeaponStep && unit.getAttacks(weaponStep) > 0)
+					if (weaponStep < maxWeaponStep)
 						processUnitAttack(unit, getUnitTarget(unit, weapons[weaponStep]), weaponStep);
 					weaponStep++;
 				}
 			} else if (!units.isEmpty()) {
 				if (step == 0) {
 					targetUnit = getClosestUnit(unit);
-					if (targetUnit != null && weaponStep < maxWeaponStep && unit.getAttacks(weaponStep) > 0) {
+					if (targetUnit != null && weaponStep < maxWeaponStep)
 						processUnitAttack(unit, targetUnit, weaponStep);
-						weaponStep++;
-					}
+					weaponStep = maxWeaponStep;
 				} else if (step == 1) {
 					if (!join && targetUnit != null) {
 						player.setIgnoreVisibility(true);
@@ -332,10 +328,9 @@ public class AIController extends Controller {
 					}
 					weaponStep = maxWeaponStep;
 				} else if (step == 2) {
-					if (targetUnit != null && weaponStep < maxWeaponStep && unit.getAttacks(weaponStep) > 0) {
+					if (targetUnit != null && weaponStep < maxWeaponStep)
 						processUnitAttack(unit, targetUnit, weaponStep);
-						weaponStep++;
-					}
+					weaponStep++;
 				}
 			}
 

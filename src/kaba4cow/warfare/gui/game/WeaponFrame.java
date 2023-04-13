@@ -47,8 +47,7 @@ public class WeaponFrame extends GUIFrame {
 	@Override
 	public void render() {
 		for (int i = 0; i < attacks.length; i++) {
-			attacks[i].setText(
-					"Rounds: " + GUI.slash(unit.getAttacks(i), unit.getUnitFile().getWeapons()[i].getAttacks()));
+			attacks[i].setText("Available: " + (unit.canShoot(i) ? "YES" : "NO"));
 			if (i == unit.getCurrentWeaponIndex())
 				buttons[i].setText("Selected");
 			else

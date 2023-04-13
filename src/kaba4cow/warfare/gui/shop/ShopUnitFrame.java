@@ -51,7 +51,6 @@ public class ShopUnitFrame extends GUIFrame {
 			new GUIText(this, -1, "Range: " + GUI.format(weapons[i].getRange()));
 			new GUIText(this, -1, "Accuracy: " + GUI.percent(weapons[i].getAccuracy()));
 			new GUISeparator(this, -1, true);
-			new GUIText(this, -1, "Attacks: " + weapons[i].getAttacks());
 		}
 
 	}

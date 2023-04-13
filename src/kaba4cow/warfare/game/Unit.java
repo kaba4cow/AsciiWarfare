@@ -42,7 +42,7 @@ public class Unit {
 	private float moves;
 
 	private int currentWeapon;
-	private int[] attacks;
+	private boolean[] attacks;
 
 	private WeaponFrame weaponFrame;
 
@@ -55,7 +55,7 @@ public class Unit {
 			y = RNG.randomInt(village.y - village.radius, village.y + village.radius);
 		} while (world.getPenalty(x, y) > 1f || world.isObstacle(x, y));
 
-		this.attacks = new int[file.getWeapons().length];
+		this.attacks = new boolean[file.getWeapons().length];
 
 		this.currentWeapon = 0;
 		this.moveDelayTime = 0f;
@@ -79,9 +79,9 @@ public class Unit {
 		this.health = data.getFloat(3);
 		this.units = data.getInt(4);
 		this.moves = data.getFloat(5);
-		this.attacks = new int[file.getWeapons().length];
+		this.attacks = new boolean[file.getWeapons().length];
 		for (int i = 0; i < attacks.length; i++)
-			attacks[i] = data.getInt(6 + i);
+			attacks[i] = data.getInt(6 + i) != 0;
 
 		this.currentWeapon = 0;
 		this.moveDelayTime = 0f;
@@ -99,20 +99,20 @@ public class Unit {
 		data.setInt(units);
 		data.setFloat(moves);
 		for (int i = 0; i < attacks.length; i++)
-			data.setInt(attacks[i]);
+			data.setInt(attacks[i] ? 1 : 0);
 	}
 
 	public void onNewTurn() {
 		if (isDestroyed()) {
 			moves = 0;
 			for (int i = 0; i < attacks.length; i++)
-				attacks[i] = 0;
+				attacks[i] = false;
 			movePath = null;
 			attackPath = null;
 		} else {
 			moves = getMaxMoves();
 			for (int i = 0; i < attacks.length; i++)
-				attacks[i] = file.getWeapons()[i].getAttacks();
+				attacks[i] = true;
 		}
 		moving = false;
 	}
@@ -307,12 +307,12 @@ public class Unit {
 	}
 
 	public void createAttackPath(int x, int y, long seed) {
-		if (attacks[currentWeapon] <= 0)
+		if (!attacks[currentWeapon])
 			return;
 		if (attackPath != null) {
 			if (x == attackPath.getEndX() && y == attackPath.getEndY()) {
 				moves = Maths.max(moves - getCurrentWeapon().getPenalty(), 0f);
-				attacks[currentWeapon]--;
+				attacks[currentWeapon] = false;
 				attackSeed = seed;
 				attackPos = 0;
 				if (player == world.getPlayer())
@@ -363,7 +363,11 @@ public class Unit {
 	}
 
 	public boolean canShoot() {
-		return attacks[currentWeapon] > 0;
+		return attacks[currentWeapon];
+	}
+
+	public boolean canShoot(int weapon) {
+		return attacks[weapon];
 	}
 
 	public boolean isDestroyed() {
@@ -416,10 +420,6 @@ public class Unit {
 
 	public void setCurrentWeapon(int weapon) {
 		this.currentWeapon = weapon;
-	}
-
-	public int getAttacks(int weapon) {
-		return attacks[weapon];
 	}
 
 	public UnitFile getUnitFile() {

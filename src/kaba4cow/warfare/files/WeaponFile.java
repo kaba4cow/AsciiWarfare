@@ -17,7 +17,6 @@ public class WeaponFile {
 	private final float accuracy;
 	private final float penalty;
 	private final float radius;
-	private final int attacks;
 	private final boolean artillery;
 	private final boolean createCrater;
 
@@ -34,7 +33,6 @@ public class WeaponFile {
 		this.penalty = Float.parseFloat(table.getCell("Penalty", row));
 		this.radius = Float.parseFloat(table.getCell("Radius", row));
 
-		this.attacks = Integer.parseInt(table.getCell("Attacks", row));
 		this.artillery = Integer.parseInt(table.getCell("Artillery", row)) != 0;
 		this.createCrater = Integer.parseInt(table.getCell("Craters", row)) != 0;
 
@@ -51,7 +49,6 @@ public class WeaponFile {
 		price += 4.6f * weapon.getRange();
 		price += 2.3f * weapon.getRadius();
 		price += -1.2f * weapon.getPenalty();
-		price += 9.3f * weapon.getAttacks();
 		price *= weapon.isArtillery() ? 2.64f : 0.62f;
 		return (int) price + 12;
 	}
@@ -108,10 +105,6 @@ public class WeaponFile {
 
 	public float getRadius() {
 		return radius;
-	}
-
-	public int getAttacks() {
-		return attacks;
 	}
 
 	public boolean isArtillery() {

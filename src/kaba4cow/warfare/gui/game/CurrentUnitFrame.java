@@ -1,6 +1,6 @@
 package kaba4cow.warfare.gui.game;
 
-import kaba4cow.ascii.core.Display;
+import kaba4cow.ascii.core.Window;
 import kaba4cow.ascii.drawing.gui.GUIFrame;
 import kaba4cow.ascii.drawing.gui.GUISeparator;
 import kaba4cow.ascii.drawing.gui.GUIText;
@@ -53,7 +53,7 @@ public class CurrentUnitFrame extends GUIFrame {
 			visibility.setText("Visibility: " + GUI.format(unit.getVisibilityRadius()));
 		}
 
-		super.render(0, 0, Display.getWidth() / 4, Display.getHeight() / 2, false);
+		super.render(0, 0, Window.getWidth() / 4, Window.getHeight() / 2, false);
 	}
 
 }

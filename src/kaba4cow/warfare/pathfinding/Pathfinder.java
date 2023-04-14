@@ -162,7 +162,7 @@ public final class Pathfinder {
 		int elevation = Maths.dist(a.elevation, b.elevation);
 		if (elevation > 1)
 			return Float.POSITIVE_INFINITY;
-		float penalty = 1f + (1f + elevation) * b.penalty;
+		float penalty = (1f + elevation) * (1f + b.penalty);
 		return dist(a, b) + penalty;
 	}
 

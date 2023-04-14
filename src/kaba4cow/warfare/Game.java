@@ -1,15 +1,15 @@
 package kaba4cow.warfare;
 
 import kaba4cow.ascii.MainProgram;
-import kaba4cow.ascii.core.Display;
 import kaba4cow.ascii.core.Engine;
+import kaba4cow.ascii.core.Input;
+import kaba4cow.ascii.core.Window;
 import kaba4cow.ascii.drawing.drawers.Drawer;
-import kaba4cow.ascii.input.Keyboard;
 import kaba4cow.warfare.files.GameFiles;
 import kaba4cow.warfare.gui.GUI;
 import kaba4cow.warfare.gui.MessageFrame;
-import kaba4cow.warfare.states.MenuState;
 import kaba4cow.warfare.states.AbstractState;
+import kaba4cow.warfare.states.MenuState;
 
 public class Game implements MainProgram {
 
@@ -35,7 +35,6 @@ public class Game implements MainProgram {
 		new Thread("Initialization") {
 			@Override
 			public void run() {
-				Display.setScreenshotLocation("user/");
 				GameFiles.init();
 				AbstractState.init();
 				switchState(MenuState.getInstance());
@@ -46,21 +45,18 @@ public class Game implements MainProgram {
 	@Override
 	public void update(float dt) {
 		if (Controls.FULLSCREEN.isKeyDown()) {
-			if (Display.isFullscreen())
-				Display.createWindowed(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+			if (Window.isFullscreen())
+				Window.createWindowed(DEFAULT_WIDTH, DEFAULT_HEIGHT);
 			else
-				Display.createFullscreen();
-			Settings.setFullscreen(Display.isFullscreen());
+				Window.createFullscreen();
+			Settings.setFullscreen(Window.isFullscreen());
 		}
 
-		if (Keyboard.isKeyDown(Keyboard.KEY_V))
+		if (Input.isKeyDown(Input.KEY_F5))
 			testMode = !testMode;
 
 		if (Controls.FPS.isKeyDown())
 			showFPS = !showFPS;
-
-		if (Controls.SCREENSHOT.isKeyDown())
-			Display.takeScreenshot();
 
 		if (message.isActive())
 			message.update();
@@ -71,12 +67,12 @@ public class Game implements MainProgram {
 	@Override
 	public void render() {
 		if (state == null) {
-			Drawer.drawString(Display.getWidth() / 2, Display.getHeight() / 2, true, "Loading...", GUI.COLOR);
+			Drawer.drawString(Window.getWidth() / 2, Window.getHeight() / 2, true, "Loading...", GUI.COLOR);
 			return;
 		}
 
-		Display.setDrawCursor(true);
-		Display.setCursorWaiting(false);
+		Window.setDrawCursor(true);
+		Window.setCursorWaiting(false);
 
 		state.render();
 		if (AbstractState.isWaiting())
@@ -101,10 +97,10 @@ public class Game implements MainProgram {
 		Settings.init();
 		Engine.init("Ascii Warfare", 60);
 		if (Settings.isFullscreen())
-			Display.createFullscreen();
+			Window.createFullscreen();
 		else
-			Display.createWindowed(DEFAULT_WIDTH, DEFAULT_HEIGHT);
-		Display.setCursorWaiting(true);
+			Window.createWindowed(DEFAULT_WIDTH, DEFAULT_HEIGHT);
+		Window.setCursorWaiting(true);
 		Engine.start(new Game());
 	}
 

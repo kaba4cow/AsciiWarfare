@@ -2,8 +2,8 @@ package kaba4cow.warfare.states;
 
 import java.util.function.Consumer;
 
-import kaba4cow.ascii.core.Display;
 import kaba4cow.ascii.core.Engine;
+import kaba4cow.ascii.core.Window;
 import kaba4cow.ascii.drawing.drawers.BoxDrawer;
 import kaba4cow.ascii.drawing.drawers.Drawer;
 import kaba4cow.ascii.drawing.glyphs.Glyphs;
@@ -40,23 +40,23 @@ public abstract class AbstractState {
 			return PROGRESS;
 		});
 
-		titleWidth = Drawer.totalWidth(Display.getTitle());
+		titleWidth = Drawer.totalWidth(Window.getTitle());
 	}
 
 	protected static void renderTitle() {
 		menuWorld.render();
-		int pos = (int) (12f * Engine.getElapsedTime()) % (Display.getWidth() + titleWidth);
-		Drawer.drawBigString(Display.getWidth() - pos, 0, false, Display.getTitle(), Glyphs.LIGHT_SHADE, GUI.COLOR);
+		int pos = (int) (12f * Engine.getElapsedTime()) % (Window.getWidth() + titleWidth);
+		Drawer.drawBigString(Window.getWidth() - pos, 0, false, Window.getTitle(), Glyphs.LIGHT_SHADE, GUI.COLOR);
 	}
 
 	protected static void renderFrame(GUIFrame frame) {
-		frame.render(0, Display.getGlyphSize(), 22, Display.getHeight() - Display.getGlyphSize(), false);
+		frame.render(0, Window.GLYPH_SIZE, 22, Window.getHeight() - Window.GLYPH_SIZE, false);
 	}
 
 	public static void renderProgressBar() {
-		Display.setCursorWaiting(true);
+		Window.setCursorWaiting(true);
 		BoxDrawer.disableCollision();
-		progressBar.render(Display.getWidth() / 2, Display.getHeight() / 2, Display.getWidth() / 2, 3, true);
+		progressBar.render(Window.getWidth() / 2, Window.getHeight() / 2, Window.getWidth() / 2, 3, true);
 		BoxDrawer.enableCollision();
 	}
 

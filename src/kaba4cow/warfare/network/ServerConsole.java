@@ -1,16 +1,15 @@
 package kaba4cow.warfare.network;
 
 import kaba4cow.ascii.MainProgram;
-import kaba4cow.ascii.core.Display;
 import kaba4cow.ascii.core.Engine;
+import kaba4cow.ascii.core.Input;
+import kaba4cow.ascii.core.Window;
 import kaba4cow.ascii.drawing.drawers.Drawer;
 import kaba4cow.ascii.drawing.gui.GUIButton;
 import kaba4cow.ascii.drawing.gui.GUIFrame;
 import kaba4cow.ascii.drawing.gui.GUISeparator;
 import kaba4cow.ascii.drawing.gui.GUIText;
 import kaba4cow.ascii.drawing.gui.GUITextField;
-import kaba4cow.ascii.input.Keyboard;
-import kaba4cow.ascii.input.Mouse;
 import kaba4cow.warfare.files.GameFiles;
 import kaba4cow.warfare.gui.GUI;
 import kaba4cow.warfare.network.tcp.Server;
@@ -80,7 +79,7 @@ public class ServerConsole implements MainProgram {
 
 	@Override
 	public void update(float dt) {
-		if (Keyboard.isKeyDown(Keyboard.KEY_ESCAPE))
+		if (Input.isKeyDown(Input.KEY_ESCAPE))
 			if (server != null && !server.isClosed()) {
 				server.close();
 				serverButton.setText("Start");
@@ -92,7 +91,7 @@ public class ServerConsole implements MainProgram {
 		infoFrame.update();
 		startFrame.update();
 
-		scroll -= 2 * Mouse.getScroll();
+		scroll -= 2 * Input.getScroll();
 		if (scroll < 0)
 			scroll = 0;
 		if (scroll > maxScroll)
@@ -108,17 +107,17 @@ public class ServerConsole implements MainProgram {
 	public void render() {
 		drawServerLog();
 
-		infoFrame.render(0, 0, Display.getWidth() / 4, Display.getHeight(), false);
+		infoFrame.render(0, 0, Window.getWidth() / 4, Window.getHeight(), false);
 		if (starting)
-			startFrame.render(Display.getWidth() / 4, 0, Display.getWidth() - Display.getWidth() / 4,
-					Display.getHeight(), false);
+			startFrame.render(Window.getWidth() / 4, 0, Window.getWidth() - Window.getWidth() / 4, Window.getHeight(),
+					false);
 	}
 
 	private void drawServerLog() {
 		if (server == null)
 			return;
 
-		final int startX = Display.getWidth() / 4;
+		final int startX = Window.getWidth() / 4;
 
 		String output = server.getOutput();
 		int x = startX;
@@ -133,17 +132,17 @@ public class ServerConsole implements MainProgram {
 			else
 				Drawer.draw(x++, y, c, GUI.COLOR);
 
-			if (x >= Display.getWidth()) {
+			if (x >= Window.getWidth()) {
 				x = startX;
 				y++;
 			}
 		}
 
 		y += scroll;
-		if (y < Display.getHeight())
+		if (y < Window.getHeight())
 			maxScroll = 0;
 		else
-			maxScroll = y + 2 - Display.getHeight();
+			maxScroll = y + 2 - Window.getHeight();
 
 		if (output.length() != prevOutput)
 			scroll = maxScroll;
@@ -153,7 +152,7 @@ public class ServerConsole implements MainProgram {
 	public static void main(String[] args) {
 		GameFiles.init();
 		Engine.init("Ascii Warfare Server", 60);
-		Display.createWindowed(60, 30);
+		Window.createWindowed(60, 30);
 		Engine.start(new ServerConsole());
 	}
 

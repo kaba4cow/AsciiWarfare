@@ -1,6 +1,6 @@
 package kaba4cow.warfare;
 
-import kaba4cow.ascii.input.Mouse;
+import kaba4cow.ascii.core.Input;
 import kaba4cow.warfare.game.World;
 
 public class Camera {
@@ -38,13 +38,13 @@ public class Camera {
 				x += MOVE_SPEED * dt;
 
 			if (Controls.CAMERA_SCROLL.isKey())
-				x += SCROLL_SPEED * Mouse.getScroll();
+				x += SCROLL_SPEED * Input.getScroll();
 			else
-				y -= SCROLL_SPEED * Mouse.getScroll();
+				y -= SCROLL_SPEED * Input.getScroll();
 		}
 
-		int mX = Mouse.getTileX();
-		int mY = Mouse.getTileY();
+		int mX = Input.getTileX();
+		int mY = Input.getTileY();
 
 		if (isMouseInViewport() && Controls.CAMERA_MOVE.isKeyDown()) {
 			drag = true;
@@ -87,16 +87,16 @@ public class Camera {
 	}
 
 	public int getMouseX() {
-		return Mouse.getTileX() - world.getViewport().x + (int) x;
+		return Input.getTileX() - world.getViewport().x + (int) x;
 	}
 
 	public int getMouseY() {
-		return Mouse.getTileY() - world.getViewport().y + (int) y;
+		return Input.getTileY() - world.getViewport().y + (int) y;
 	}
 
 	public boolean isMouseInViewport() {
-		int x = Mouse.getTileX() - world.getViewport().x;
-		int y = Mouse.getTileY() - world.getViewport().y;
+		int x = Input.getTileX() - world.getViewport().x;
+		int y = Input.getTileY() - world.getViewport().y;
 		return x >= 0 && x < world.getViewport().width && y >= 0 && y < world.getViewport().height;
 	}
 

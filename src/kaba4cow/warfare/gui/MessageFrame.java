@@ -1,6 +1,6 @@
 package kaba4cow.warfare.gui;
 
-import kaba4cow.ascii.core.Display;
+import kaba4cow.ascii.core.Window;
 import kaba4cow.ascii.drawing.drawers.BoxDrawer;
 import kaba4cow.ascii.drawing.gui.GUIButton;
 import kaba4cow.ascii.drawing.gui.GUIFrame;
@@ -25,8 +25,8 @@ public class MessageFrame extends GUIFrame {
 	public void render() {
 		BoxDrawer.disableCollision();
 		if (isActive())
-			super.render(Display.getWidth() / 2, Display.getHeight() / 2, Display.getWidth() / 2,
-					Display.getHeight() / 5, true);
+			super.render(Window.getWidth() / 2, Window.getHeight() / 2, Window.getWidth() / 2,
+					Window.getHeight() / 5, true);
 		BoxDrawer.enableCollision();
 	}
 

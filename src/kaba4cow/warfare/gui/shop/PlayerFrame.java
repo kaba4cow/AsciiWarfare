@@ -1,6 +1,6 @@
 package kaba4cow.warfare.gui.shop;
 
-import kaba4cow.ascii.core.Display;
+import kaba4cow.ascii.core.Window;
 import kaba4cow.ascii.drawing.gui.GUIFrame;
 import kaba4cow.ascii.drawing.gui.GUIText;
 import kaba4cow.warfare.game.Player;
@@ -26,10 +26,10 @@ public class PlayerFrame extends GUIFrame {
 	public void render(boolean full) {
 		cash.setText("Cash: " + player.getCash());
 		if (full)
-			super.render(0, 0, Display.getWidth(), Display.getHeight() / 5, false);
+			super.render(0, 0, Window.getWidth(), Window.getHeight() / 5, false);
 		else
-			super.render(Display.getWidth() / 4, 0, Display.getWidth() - Display.getWidth() / 4,
-					Display.getHeight() / 5, false);
+			super.render(Window.getWidth() / 4, 0, Window.getWidth() - Window.getWidth() / 4,
+					Window.getHeight() / 5, false);
 	}
 
 }

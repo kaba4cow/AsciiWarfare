@@ -2,7 +2,7 @@ package kaba4cow.warfare.gui.shop;
 
 import java.util.ArrayList;
 
-import kaba4cow.ascii.core.Display;
+import kaba4cow.ascii.core.Window;
 import kaba4cow.ascii.drawing.gui.GUIButton;
 import kaba4cow.ascii.drawing.gui.GUIFrame;
 import kaba4cow.ascii.drawing.gui.GUISeparator;
@@ -39,8 +39,8 @@ public class ShopTypeFrame extends GUIFrame {
 
 	@Override
 	public void render() {
-		super.render(Display.getWidth() / 4, Display.getHeight() / 5, Display.getWidth() - Display.getWidth() / 4,
-				Display.getHeight() - Display.getHeight() / 5, false);
+		super.render(Window.getWidth() / 4, Window.getHeight() / 5, Window.getWidth() - Window.getWidth() / 4,
+				Window.getHeight() - Window.getHeight() / 5, false);
 		unitFrame.render();
 	}
 

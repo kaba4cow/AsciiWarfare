@@ -1,6 +1,6 @@
 package kaba4cow.warfare.gui.info;
 
-import kaba4cow.ascii.core.Display;
+import kaba4cow.ascii.core.Window;
 import kaba4cow.ascii.drawing.gui.GUIFrame;
 import kaba4cow.ascii.drawing.gui.GUIText;
 import kaba4cow.warfare.game.Player;
@@ -19,7 +19,7 @@ public class PlayerFrame extends GUIFrame {
 
 	@Override
 	public void render() {
-		super.render(Display.getWidth() / 4, 0, Display.getWidth() - Display.getWidth() / 4, Display.getHeight() / 5,
+		super.render(Window.getWidth() / 4, 0, Window.getWidth() - Window.getWidth() / 4, Window.getHeight() / 5,
 				false);
 	}
 

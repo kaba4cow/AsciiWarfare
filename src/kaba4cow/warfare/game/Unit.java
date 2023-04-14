@@ -188,6 +188,8 @@ public class Unit {
 				Drawer.draw(nextX - offX, nextY - offY, Glyphs.SPACE,
 						Drawer.IGNORE_FOREGROUND | Drawer.IGNORE_GLYPH | color);
 				movesLeft -= getPenalty(prevX, prevY, nextX, nextY);
+				prevX = nextX;
+				prevY = nextY;
 			}
 		}
 
@@ -199,20 +201,19 @@ public class Unit {
 						Drawer.IGNORE_FOREGROUND | Drawer.IGNORE_GLYPH | color);
 			}
 
-			float radius = getCurrentWeapon().getRadius();
-			if (radius > 0f) {
+			int radius = getCurrentWeapon().getRadius();
+			if (radius > 0) {
 				Vector2i pos = attackPath.getNode(attackPath.getCollisionIndex());
-				int range = 1 + (int) radius;
 				int ix, iy;
 				float dist;
-				for (iy = pos.y - range; iy <= pos.y + range; iy++)
-					for (ix = pos.x - range; ix <= pos.x + range; ix++) {
+				for (iy = pos.y - radius; iy <= pos.y + radius; iy++)
+					for (ix = pos.x - radius; ix <= pos.x + radius; ix++) {
 						if (ix == pos.x && iy == pos.y)
 							continue;
 						dist = Maths.dist(pos.x, pos.y, ix, iy);
 						if (dist <= radius)
 							Drawer.draw(ix - offX, iy - offY, Glyphs.SPACE,
-									Drawer.IGNORE_FOREGROUND | Drawer.IGNORE_GLYPH | 0x520000);
+									Drawer.IGNORE_FOREGROUND | Drawer.IGNORE_GLYPH | 0x630000);
 					}
 			}
 		}
@@ -346,7 +347,7 @@ public class Unit {
 		int elevation = Maths.dist(world.getElevation(x0, y0), world.getElevation(x1, y1));
 		if (elevation > 1)
 			return Float.POSITIVE_INFINITY;
-		return 1f + (1f + elevation) * world.getPenalty(x1, y1);
+		return (1f + elevation) * (1f + world.getPenalty(x1, y1));
 	}
 
 	public void switchMoving() {

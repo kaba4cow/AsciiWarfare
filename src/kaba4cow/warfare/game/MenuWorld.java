@@ -1,6 +1,6 @@
 package kaba4cow.warfare.game;
 
-import kaba4cow.ascii.core.Display;
+import kaba4cow.ascii.core.Window;
 import kaba4cow.ascii.drawing.drawers.Drawer;
 import kaba4cow.ascii.drawing.glyphs.Glyphs;
 import kaba4cow.ascii.toolbox.Colors;
@@ -30,8 +30,8 @@ public class MenuWorld {
 
 	public void render() {
 		int x, y;
-		for (y = 0; y < Display.getHeight(); y++) {
-			for (x = 0; x < Display.getWidth(); x++) {
+		for (y = 0; y < Window.getHeight(); y++) {
+			for (x = 0; x < Window.getWidth(); x++) {
 				if (x >= World.SIZE || y >= World.SIZE)
 					continue;
 

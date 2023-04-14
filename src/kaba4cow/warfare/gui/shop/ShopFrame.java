@@ -3,10 +3,10 @@ package kaba4cow.warfare.gui.shop;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
-import kaba4cow.ascii.core.Display;
+import kaba4cow.ascii.core.Input;
+import kaba4cow.ascii.core.Window;
 import kaba4cow.ascii.drawing.gui.GUIButton;
 import kaba4cow.ascii.drawing.gui.GUIFrame;
-import kaba4cow.ascii.input.Keyboard;
 import kaba4cow.warfare.files.UnitFile;
 import kaba4cow.warfare.files.UnitTypeFile;
 import kaba4cow.warfare.game.Player;
@@ -47,7 +47,7 @@ public class ShopFrame extends GUIFrame {
 			super.update();
 		else
 			typeFrame.update();
-		if (Keyboard.isKeyDown(Keyboard.KEY_ESCAPE))
+		if (Input.isKeyDown(Input.KEY_ESCAPE))
 			typeFrame = null;
 	}
 
@@ -55,7 +55,7 @@ public class ShopFrame extends GUIFrame {
 	public void render() {
 		playerFrame.render(canExit());
 		if (typeFrame == null)
-			super.render(0, Display.getHeight() / 5, Display.getWidth(), Display.getHeight() - Display.getHeight() / 5,
+			super.render(0, Window.getHeight() / 5, Window.getWidth(), Window.getHeight() - Window.getHeight() / 5,
 					false);
 		else
 			typeFrame.render();

@@ -4,11 +4,11 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import kaba4cow.ascii.core.Display;
+import kaba4cow.ascii.core.Input;
+import kaba4cow.ascii.core.Window;
 import kaba4cow.ascii.drawing.drawers.Drawer;
 import kaba4cow.ascii.drawing.glyphs.Glyphs;
 import kaba4cow.ascii.drawing.gui.GUIColorText;
-import kaba4cow.ascii.input.Keyboard;
 import kaba4cow.ascii.toolbox.Colors;
 import kaba4cow.ascii.toolbox.files.DataFile;
 import kaba4cow.ascii.toolbox.maths.Maths;
@@ -309,7 +309,7 @@ public class World {
 				infoFrame.update();
 			else if (chatFrame != null) {
 				chatFrame.update();
-				if (Keyboard.isKeyDown(Keyboard.KEY_ENTER)) {
+				if (Input.isKeyDown(Input.KEY_ENTER)) {
 					String text = chatFrame.getText();
 					gui = false;
 					chatFrame = null;
@@ -347,8 +347,8 @@ public class World {
 			}
 		}
 
-		if (viewport.width != Display.getWidth() - Display.getWidth() / 4
-				|| viewport.height != Display.getHeight() - Display.getHeight() / 5)
+		if (viewport.width != Window.getWidth() - Window.getWidth() / 4
+				|| viewport.height != Window.getHeight() - Window.getHeight() / 5)
 			createViewport();
 
 		int offX = (int) camera.getX();
@@ -382,6 +382,8 @@ public class World {
 			}
 		}
 
+		for (int i = 0; i < villages.size(); i++)
+			villages.get(i).render(this, offX, offY);
 		for (int i = 0; i < players.size(); i++)
 			players.get(i).render(offX, offY);
 		player.renderController(offX, offY);
@@ -407,8 +409,8 @@ public class World {
 			helpFrame.render();
 
 		if (!camera.isMouseInViewport())
-			Display.setDrawCursor(true);
-		Display.setCursorWaiting(!isPlayerTurn() && gameOverFrame == null);
+			Window.setDrawCursor(true);
+		Window.setCursorWaiting(!isPlayerTurn() && gameOverFrame == null);
 	}
 
 	public Unit getUnit(int x, int y) {
@@ -424,7 +426,7 @@ public class World {
 		camera.setPosition(unit.getX(), unit.getY());
 	}
 
-	public void createExplosion(int x, int y, float radius, boolean send) {
+	public void createExplosion(int x, int y, int radius, boolean send) {
 		vegetationMap[x][y] = null;
 		if (terrainMap[x][y].allowsCrater()) {
 			terrainMap[x][y] = new TerrainTile(TerrainFile.getCrater(), terrainMap[x][y].getBiome(),
@@ -432,7 +434,7 @@ public class World {
 			terrain.put(new Vector2i(x, y), TerrainFile.getCrater().getID());
 		}
 		if (radius > 0f) {
-			int range = (int) (1f + radius);
+			int range = 1 + radius;
 			int ix, iy;
 			float dist;
 			for (iy = y - range; iy <= y + range; iy++)
@@ -522,13 +524,12 @@ public class World {
 		rng.iterate(16);
 
 		damageUnit(source, x, y, rng.nextFloat(0f, 1f));
-		float radius = weapon.getRadius();
-		if (radius > 0f) {
-			int range = (int) (1f + radius);
+		int radius = weapon.getRadius();
+		if (radius > 0) {
 			int ix, iy;
 			float dist;
-			for (iy = y - range; iy <= y + range; iy++)
-				for (ix = x - range; ix <= x + range; ix++) {
+			for (iy = y - radius; iy <= y + radius; iy++)
+				for (ix = x - radius; ix <= x + radius; ix++) {
 					if (ix == x && iy == y || ix < 0 || ix >= SIZE || iy < 0 || iy >= SIZE)
 						continue;
 					dist = Maths.dist(x, y, ix, iy);

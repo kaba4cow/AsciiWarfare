@@ -2,7 +2,7 @@ package kaba4cow.warfare.states;
 
 import java.io.File;
 
-import kaba4cow.ascii.input.Keyboard;
+import kaba4cow.ascii.core.Input;
 import kaba4cow.ascii.toolbox.files.DataFile;
 import kaba4cow.warfare.Game;
 import kaba4cow.warfare.game.World;
@@ -23,7 +23,7 @@ public class SingleplayerState extends AbstractState {
 
 	@Override
 	public void update(float dt) {
-		if (world.canExit() && Keyboard.isKeyDown(Keyboard.KEY_ESCAPE))
+		if (world.canExit() && Input.isKeyDown(Input.KEY_ESCAPE))
 			Game.switchState(SingleplayerPauseState.getInstance());
 
 		world.update(dt);

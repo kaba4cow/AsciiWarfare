@@ -1,8 +1,8 @@
 package kaba4cow.warfare.states;
 
+import kaba4cow.ascii.core.Input;
 import kaba4cow.ascii.drawing.gui.GUIButton;
 import kaba4cow.ascii.drawing.gui.GUIFrame;
-import kaba4cow.ascii.input.Keyboard;
 import kaba4cow.warfare.Game;
 import kaba4cow.warfare.gui.GUI;
 
@@ -30,7 +30,7 @@ public class MultiplayerPauseState extends AbstractState {
 
 	@Override
 	public void update(float dt) {
-		if (Keyboard.isKeyDown(Keyboard.KEY_ESCAPE))
+		if (Input.isKeyDown(Input.KEY_ESCAPE))
 			Game.switchState(MultiplayerState.getInstance());
 
 		frame.update();

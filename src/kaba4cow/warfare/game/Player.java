@@ -3,8 +3,8 @@ package kaba4cow.warfare.game;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import kaba4cow.ascii.core.Display;
 import kaba4cow.ascii.core.Engine;
+import kaba4cow.ascii.core.Window;
 import kaba4cow.ascii.drawing.drawers.Drawer;
 import kaba4cow.ascii.drawing.glyphs.Glyphs;
 import kaba4cow.ascii.toolbox.files.DataFile;
@@ -196,7 +196,7 @@ public class Player {
 		if (world.getTurnPlayer() != getIndex())
 			return;
 
-		Display.setDrawCursor(!aiming);
+		Window.setDrawCursor(!aiming);
 		if (aiming) {
 			if (Engine.getElapsedTime() % 0.75f < 0.5f) {
 				int mX = world.getCamera().getMouseX() - (int) world.getCamera().getX();

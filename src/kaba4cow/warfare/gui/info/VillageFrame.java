@@ -2,7 +2,7 @@ package kaba4cow.warfare.gui.info;
 
 import java.util.ArrayList;
 
-import kaba4cow.ascii.core.Display;
+import kaba4cow.ascii.core.Window;
 import kaba4cow.ascii.drawing.gui.GUIFrame;
 import kaba4cow.ascii.drawing.gui.GUISeparator;
 import kaba4cow.ascii.drawing.gui.GUIText;
@@ -35,7 +35,7 @@ public class VillageFrame extends GUIFrame {
 
 	@Override
 	public void render() {
-		super.render(0, 0, Display.getWidth() / 4, Display.getHeight(), false);
+		super.render(0, 0, Window.getWidth() / 4, Window.getHeight(), false);
 	}
 
 }

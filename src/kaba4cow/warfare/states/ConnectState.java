@@ -1,10 +1,10 @@
 package kaba4cow.warfare.states;
 
+import kaba4cow.ascii.core.Input;
 import kaba4cow.ascii.drawing.gui.GUIButton;
 import kaba4cow.ascii.drawing.gui.GUIFrame;
 import kaba4cow.ascii.drawing.gui.GUIText;
 import kaba4cow.ascii.drawing.gui.GUITextField;
-import kaba4cow.ascii.input.Keyboard;
 import kaba4cow.warfare.Game;
 import kaba4cow.warfare.Settings;
 import kaba4cow.warfare.gui.GUI;
@@ -44,7 +44,7 @@ public class ConnectState extends AbstractState {
 
 	@Override
 	public void update(float dt) {
-		if (Keyboard.isKeyDown(Keyboard.KEY_ESCAPE))
+		if (Input.isKeyDown(Input.KEY_ESCAPE))
 			Game.switchState(MenuState.getInstance());
 
 		frame.update();

@@ -282,12 +282,12 @@ public class AIController extends Controller {
 					weaponStep = maxWeaponStep;
 				} else if (step == 1) {
 					if (targetVillage == null || targetVillage.getHouses() == 0
-							|| targetVillage.getTotalUnits(world, player) > 2) {
+							|| targetVillage.getTotalUnits(world, player) >= 3) {
 						float minDistSq = Float.POSITIVE_INFINITY;
 						for (int i = 0; i < villages.size(); i++) {
 							Village current = villages.get(i);
 							int total = current.getTotalUnits(world, player);
-							if (total > 2)
+							if (total >= 2)
 								continue;
 							float distSq = Maths.distSq(unit.getX(), unit.getY(), current.x, current.y);
 							if (distSq < minDistSq) {

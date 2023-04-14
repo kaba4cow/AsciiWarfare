@@ -2,6 +2,8 @@ package kaba4cow.warfare.game;
 
 import java.util.ArrayList;
 
+import kaba4cow.ascii.core.Engine;
+import kaba4cow.ascii.drawing.drawers.Drawer;
 import kaba4cow.ascii.toolbox.maths.Maths;
 import kaba4cow.ascii.toolbox.maths.vectors.Vector2i;
 
@@ -25,6 +27,20 @@ public class Village {
 			int y = houses.get(i).y;
 			if (world.getVegetation(x, y) == null)
 				houses.remove(i);
+		}
+	}
+
+	public void render(World world, int offX, int offY) {
+		if (Engine.getElapsedTime() % 1f < 0.5f)
+			return;
+		Player occupier = getOccupier(world);
+		if (occupier == null)
+			return;
+		int color = occupier.getColor() | Drawer.IGNORE_BACKGROUND | Drawer.IGNORE_GLYPH;
+		for (int i = 0; i < houses.size(); i++) {
+			int x = houses.get(i).x;
+			int y = houses.get(i).y;
+			Drawer.draw(x - offX, y - offY, ' ', color);
 		}
 	}
 

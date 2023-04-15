@@ -1,6 +1,6 @@
 package kaba4cow.warfare.game.world;
 
-import kaba4cow.ascii.drawing.drawers.Drawer;
+import kaba4cow.ascii.drawing.Drawer;
 import kaba4cow.warfare.files.BiomeFile;
 import kaba4cow.warfare.files.TerrainFile;
 

@@ -1,6 +1,6 @@
 package kaba4cow.warfare.gui.info;
 
-import kaba4cow.ascii.drawing.gui.GUIFrame;
+import kaba4cow.ascii.gui.GUIFrame;
 import kaba4cow.warfare.game.Player;
 import kaba4cow.warfare.game.World;
 

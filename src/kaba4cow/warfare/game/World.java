@@ -6,9 +6,9 @@ import java.util.HashMap;
 
 import kaba4cow.ascii.core.Input;
 import kaba4cow.ascii.core.Window;
-import kaba4cow.ascii.drawing.drawers.Drawer;
-import kaba4cow.ascii.drawing.glyphs.Glyphs;
-import kaba4cow.ascii.drawing.gui.GUIColorText;
+import kaba4cow.ascii.drawing.Drawer;
+import kaba4cow.ascii.drawing.Glyphs;
+import kaba4cow.ascii.gui.GUIColorText;
 import kaba4cow.ascii.toolbox.Colors;
 import kaba4cow.ascii.toolbox.files.DataFile;
 import kaba4cow.ascii.toolbox.maths.Maths;
@@ -407,10 +407,6 @@ public class World {
 			chatFrame.render();
 		else if (Controls.HELP.isKey())
 			helpFrame.render();
-
-		if (!camera.isMouseInViewport())
-			Window.setDrawCursor(true);
-		Window.setCursorWaiting(!isPlayerTurn() && gameOverFrame == null);
 	}
 
 	public Unit getUnit(int x, int y) {

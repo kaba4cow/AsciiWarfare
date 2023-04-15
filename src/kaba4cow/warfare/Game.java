@@ -3,8 +3,9 @@ package kaba4cow.warfare;
 import kaba4cow.ascii.MainProgram;
 import kaba4cow.ascii.core.Engine;
 import kaba4cow.ascii.core.Input;
+import kaba4cow.ascii.core.Renderer;
 import kaba4cow.ascii.core.Window;
-import kaba4cow.ascii.drawing.drawers.Drawer;
+import kaba4cow.ascii.drawing.Drawer;
 import kaba4cow.warfare.files.GameFiles;
 import kaba4cow.warfare.gui.GUI;
 import kaba4cow.warfare.gui.MessageFrame;
@@ -52,11 +53,11 @@ public class Game implements MainProgram {
 			Settings.setFullscreen(Window.isFullscreen());
 		}
 
-		if (Input.isKeyDown(Input.KEY_F5))
-			testMode = !testMode;
-
 		if (Controls.FPS.isKeyDown())
 			showFPS = !showFPS;
+
+		if (Input.isKeyDown(Input.KEY_5))
+			testMode = !testMode;
 
 		if (message.isActive())
 			message.update();
@@ -70,9 +71,6 @@ public class Game implements MainProgram {
 			Drawer.drawString(Window.getWidth() / 2, Window.getHeight() / 2, true, "Loading...", GUI.COLOR);
 			return;
 		}
-
-		Window.setDrawCursor(true);
-		Window.setCursorWaiting(false);
 
 		state.render();
 		if (AbstractState.isWaiting())
@@ -93,14 +91,20 @@ public class Game implements MainProgram {
 		Game.message.setText(text);
 	}
 
+	@Override
+	public void onLostFocus() {
+		if (state != null)
+			state.onLostFocus();
+	}
+
 	public static void main(String[] args) {
 		Settings.init();
-		Engine.init("Ascii Warfare", 60);
+		Engine.init("Ascii Warfare", 12, 60);
 		if (Settings.isFullscreen())
 			Window.createFullscreen();
 		else
 			Window.createWindowed(DEFAULT_WIDTH, DEFAULT_HEIGHT);
-		Window.setCursorWaiting(true);
+		Renderer.setFont(Settings.getFont());
 		Engine.start(new Game());
 	}
 

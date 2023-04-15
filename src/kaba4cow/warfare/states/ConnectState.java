@@ -1,10 +1,10 @@
 package kaba4cow.warfare.states;
 
 import kaba4cow.ascii.core.Input;
-import kaba4cow.ascii.drawing.gui.GUIButton;
-import kaba4cow.ascii.drawing.gui.GUIFrame;
-import kaba4cow.ascii.drawing.gui.GUIText;
-import kaba4cow.ascii.drawing.gui.GUITextField;
+import kaba4cow.ascii.gui.GUIButton;
+import kaba4cow.ascii.gui.GUIFrame;
+import kaba4cow.ascii.gui.GUIText;
+import kaba4cow.ascii.gui.GUITextField;
 import kaba4cow.warfare.Game;
 import kaba4cow.warfare.Settings;
 import kaba4cow.warfare.gui.GUI;

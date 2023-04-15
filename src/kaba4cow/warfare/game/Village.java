@@ -3,7 +3,7 @@ package kaba4cow.warfare.game;
 import java.util.ArrayList;
 
 import kaba4cow.ascii.core.Engine;
-import kaba4cow.ascii.drawing.drawers.Drawer;
+import kaba4cow.ascii.drawing.Drawer;
 import kaba4cow.ascii.toolbox.maths.Maths;
 import kaba4cow.ascii.toolbox.maths.vectors.Vector2i;
 

@@ -1,11 +1,11 @@
 package kaba4cow.warfare.gui;
 
 import kaba4cow.ascii.core.Window;
-import kaba4cow.ascii.drawing.drawers.BoxDrawer;
-import kaba4cow.ascii.drawing.gui.GUIButton;
-import kaba4cow.ascii.drawing.gui.GUIFrame;
-import kaba4cow.ascii.drawing.gui.GUISeparator;
-import kaba4cow.ascii.drawing.gui.GUIText;
+import kaba4cow.ascii.drawing.BoxDrawer;
+import kaba4cow.ascii.gui.GUIButton;
+import kaba4cow.ascii.gui.GUIFrame;
+import kaba4cow.ascii.gui.GUISeparator;
+import kaba4cow.ascii.gui.GUIText;
 
 public class MessageFrame extends GUIFrame {
 

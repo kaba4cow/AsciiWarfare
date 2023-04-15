@@ -4,9 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import kaba4cow.ascii.core.Engine;
-import kaba4cow.ascii.core.Window;
-import kaba4cow.ascii.drawing.drawers.Drawer;
-import kaba4cow.ascii.drawing.glyphs.Glyphs;
+import kaba4cow.ascii.drawing.Drawer;
+import kaba4cow.ascii.drawing.Glyphs;
 import kaba4cow.ascii.toolbox.files.DataFile;
 import kaba4cow.ascii.toolbox.maths.Maths;
 import kaba4cow.ascii.toolbox.maths.vectors.Vector2i;
@@ -196,7 +195,6 @@ public class Player {
 		if (world.getTurnPlayer() != getIndex())
 			return;
 
-		Window.setDrawCursor(!aiming);
 		if (aiming) {
 			if (Engine.getElapsedTime() % 0.75f < 0.5f) {
 				int mX = world.getCamera().getMouseX() - (int) world.getCamera().getX();

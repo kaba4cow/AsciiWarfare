@@ -5,8 +5,8 @@ import java.util.LinkedHashMap;
 
 import kaba4cow.ascii.core.Input;
 import kaba4cow.ascii.core.Window;
-import kaba4cow.ascii.drawing.gui.GUIButton;
-import kaba4cow.ascii.drawing.gui.GUIFrame;
+import kaba4cow.ascii.gui.GUIButton;
+import kaba4cow.ascii.gui.GUIFrame;
 import kaba4cow.warfare.files.UnitFile;
 import kaba4cow.warfare.files.UnitTypeFile;
 import kaba4cow.warfare.game.Player;

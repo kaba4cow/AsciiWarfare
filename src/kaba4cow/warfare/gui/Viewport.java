@@ -1,8 +1,8 @@
 package kaba4cow.warfare.gui;
 
 import kaba4cow.ascii.core.Window;
+import kaba4cow.ascii.drawing.Drawer;
 import kaba4cow.ascii.drawing.Frame;
-import kaba4cow.ascii.drawing.drawers.Drawer;
 
 public class Viewport extends Frame {
 

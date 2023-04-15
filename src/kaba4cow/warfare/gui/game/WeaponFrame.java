@@ -1,10 +1,10 @@
 package kaba4cow.warfare.gui.game;
 
 import kaba4cow.ascii.core.Window;
-import kaba4cow.ascii.drawing.gui.GUIButton;
-import kaba4cow.ascii.drawing.gui.GUIFrame;
-import kaba4cow.ascii.drawing.gui.GUISeparator;
-import kaba4cow.ascii.drawing.gui.GUIText;
+import kaba4cow.ascii.gui.GUIButton;
+import kaba4cow.ascii.gui.GUIFrame;
+import kaba4cow.ascii.gui.GUISeparator;
+import kaba4cow.ascii.gui.GUIText;
 import kaba4cow.warfare.files.WeaponFile;
 import kaba4cow.warfare.game.Unit;
 import kaba4cow.warfare.gui.GUI;

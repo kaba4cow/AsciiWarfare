@@ -1,8 +1,8 @@
 package kaba4cow.warfare.game;
 
 import kaba4cow.ascii.core.Window;
-import kaba4cow.ascii.drawing.drawers.Drawer;
-import kaba4cow.ascii.drawing.glyphs.Glyphs;
+import kaba4cow.ascii.drawing.Drawer;
+import kaba4cow.ascii.drawing.Glyphs;
 import kaba4cow.ascii.toolbox.Colors;
 import kaba4cow.ascii.toolbox.rng.RNG;
 import kaba4cow.warfare.game.world.Generator;

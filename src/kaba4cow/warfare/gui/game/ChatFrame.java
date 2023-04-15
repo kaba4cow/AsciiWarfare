@@ -1,8 +1,8 @@
 package kaba4cow.warfare.gui.game;
 
 import kaba4cow.ascii.core.Window;
-import kaba4cow.ascii.drawing.gui.GUIFrame;
-import kaba4cow.ascii.drawing.gui.GUITextField;
+import kaba4cow.ascii.gui.GUIFrame;
+import kaba4cow.ascii.gui.GUITextField;
 import kaba4cow.warfare.gui.GUI;
 
 public class ChatFrame extends GUIFrame {

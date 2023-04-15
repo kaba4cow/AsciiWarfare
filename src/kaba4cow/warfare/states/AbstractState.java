@@ -4,11 +4,11 @@ import java.util.function.Consumer;
 
 import kaba4cow.ascii.core.Engine;
 import kaba4cow.ascii.core.Window;
-import kaba4cow.ascii.drawing.drawers.BoxDrawer;
-import kaba4cow.ascii.drawing.drawers.Drawer;
-import kaba4cow.ascii.drawing.glyphs.Glyphs;
-import kaba4cow.ascii.drawing.gui.GUIFrame;
-import kaba4cow.ascii.drawing.gui.GUIProgressBar;
+import kaba4cow.ascii.drawing.BoxDrawer;
+import kaba4cow.ascii.drawing.Drawer;
+import kaba4cow.ascii.drawing.Glyphs;
+import kaba4cow.ascii.gui.GUIFrame;
+import kaba4cow.ascii.gui.GUIProgressBar;
 import kaba4cow.warfare.game.MenuWorld;
 import kaba4cow.warfare.gui.GUI;
 
@@ -31,6 +31,9 @@ public abstract class AbstractState {
 
 	public abstract void render();
 
+	public void onLostFocus() {
+	}
+
 	public static void init() {
 		menuWorld = new MenuWorld();
 
@@ -50,11 +53,10 @@ public abstract class AbstractState {
 	}
 
 	protected static void renderFrame(GUIFrame frame) {
-		frame.render(0, Window.GLYPH_SIZE, 22, Window.getHeight() - Window.GLYPH_SIZE, false);
+		frame.render(0, 16, 22, Window.getHeight() - 16, false);
 	}
 
 	public static void renderProgressBar() {
-		Window.setCursorWaiting(true);
 		BoxDrawer.disableCollision();
 		progressBar.render(Window.getWidth() / 2, Window.getHeight() / 2, Window.getWidth() / 2, 3, true);
 		BoxDrawer.enableCollision();

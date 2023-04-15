@@ -1,11 +1,11 @@
 package kaba4cow.warfare.gui.game;
 
 import kaba4cow.ascii.core.Window;
-import kaba4cow.ascii.drawing.glyphs.Glyphs;
-import kaba4cow.ascii.drawing.gui.GUIButton;
-import kaba4cow.ascii.drawing.gui.GUIFrame;
-import kaba4cow.ascii.drawing.gui.GUISeparator;
-import kaba4cow.ascii.drawing.gui.GUIText;
+import kaba4cow.ascii.drawing.Glyphs;
+import kaba4cow.ascii.gui.GUIButton;
+import kaba4cow.ascii.gui.GUIFrame;
+import kaba4cow.ascii.gui.GUISeparator;
+import kaba4cow.ascii.gui.GUIText;
 import kaba4cow.warfare.Game;
 import kaba4cow.warfare.game.Player;
 import kaba4cow.warfare.game.World;
@@ -19,9 +19,9 @@ public class GameOverFrame extends GUIFrame {
 		setTitle("Game Over");
 
 		if (player == winner)
-			new GUIText(this, -1, "You win! " + Glyphs.STAR);
+			new GUIText(this, -1, "You win! " + Glyphs.BLACK_SMILING_FACE);
 		else
-			new GUIText(this, -1, "You lose! " + Glyphs.CROSS);
+			new GUIText(this, -1, "You lose! " + Glyphs.BLACK_RECTANGLE);
 		new GUISeparator(this, -1, true);
 
 		new GUIText(this, -1, "Time elapsed:");

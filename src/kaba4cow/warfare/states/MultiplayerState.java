@@ -45,6 +45,11 @@ public class MultiplayerState extends AbstractState {
 			AbstractState.renderProgressBar();
 		}
 	}
+	
+	@Override
+	public void onLostFocus() {
+		Game.switchState(MultiplayerPauseState.getInstance());
+	}
 
 	public void generateWorld(DataFile data, int id) {
 		AbstractState.thread("Generating", f -> {

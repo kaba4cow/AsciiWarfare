@@ -1,8 +1,8 @@
 package kaba4cow.warfare.states;
 
 import kaba4cow.ascii.core.Engine;
-import kaba4cow.ascii.drawing.gui.GUIButton;
-import kaba4cow.ascii.drawing.gui.GUIFrame;
+import kaba4cow.ascii.gui.GUIButton;
+import kaba4cow.ascii.gui.GUIFrame;
 import kaba4cow.warfare.Game;
 import kaba4cow.warfare.gui.GUI;
 
@@ -25,6 +25,10 @@ public class MenuState extends AbstractState {
 
 		new GUIButton(frame, -1, "Multiplayer", f -> {
 			Game.switchState(ConnectState.getInstance());
+		});
+
+		new GUIButton(frame, -1, "Settings", f -> {
+			Game.switchState(SettingsState.getInstance());
 		});
 
 		new GUIButton(frame, -1, "Quit", f -> {

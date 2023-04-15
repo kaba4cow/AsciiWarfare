@@ -3,13 +3,14 @@ package kaba4cow.warfare.network;
 import kaba4cow.ascii.MainProgram;
 import kaba4cow.ascii.core.Engine;
 import kaba4cow.ascii.core.Input;
+import kaba4cow.ascii.core.Renderer;
 import kaba4cow.ascii.core.Window;
-import kaba4cow.ascii.drawing.drawers.Drawer;
-import kaba4cow.ascii.drawing.gui.GUIButton;
-import kaba4cow.ascii.drawing.gui.GUIFrame;
-import kaba4cow.ascii.drawing.gui.GUISeparator;
-import kaba4cow.ascii.drawing.gui.GUIText;
-import kaba4cow.ascii.drawing.gui.GUITextField;
+import kaba4cow.ascii.drawing.Drawer;
+import kaba4cow.ascii.gui.GUIButton;
+import kaba4cow.ascii.gui.GUIFrame;
+import kaba4cow.ascii.gui.GUISeparator;
+import kaba4cow.ascii.gui.GUIText;
+import kaba4cow.ascii.gui.GUITextField;
 import kaba4cow.warfare.files.GameFiles;
 import kaba4cow.warfare.gui.GUI;
 import kaba4cow.warfare.network.tcp.Server;
@@ -153,6 +154,7 @@ public class ServerConsole implements MainProgram {
 		GameFiles.init();
 		Engine.init("Ascii Warfare Server", 60);
 		Window.createWindowed(60, 30);
+		Renderer.setFont(1);
 		Engine.start(new ServerConsole());
 	}
 

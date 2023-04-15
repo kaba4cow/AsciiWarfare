@@ -35,16 +35,12 @@ public class Settings {
 		preferences.put("port", serverPort);
 	}
 
-	public static int getWorldSize() {
-		return preferences.getInt("size", 0);
+	public static int getFont() {
+		return preferences.getInt("font", 0);
 	}
 
-	public static int getWorldSeason() {
-		return preferences.getInt("season", 2);
-	}
-
-	public static void setWorldInfo(int worldSeason) {
-		preferences.putInt("season", worldSeason);
+	public static void setFont(int font) {
+		preferences.putInt("font", font);
 	}
 
 }

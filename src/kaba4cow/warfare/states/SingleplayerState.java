@@ -38,6 +38,11 @@ public class SingleplayerState extends AbstractState {
 			AbstractState.renderProgressBar();
 		}
 	}
+	
+	@Override
+	public void onLostFocus() {
+		Game.switchState(SingleplayerPauseState.getInstance());
+	}
 
 	public void generateWorld() {
 		AbstractState.thread("Generating", f -> {

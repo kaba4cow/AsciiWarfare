@@ -13,7 +13,7 @@ public class GameFiles {
 	}
 
 	public static void init() {
-		InputStream is = GameFiles.class.getClassLoader().getResourceAsStream("kaba4cow/warfare/files/DATA");
+		InputStream is = GameFiles.class.getClassLoader().getResourceAsStream("kaba4cow/warfare/data/DATA");
 		BufferedReader reader = new BufferedReader(new InputStreamReader(is));
 
 		TableFile data = TableFile.read(reader);

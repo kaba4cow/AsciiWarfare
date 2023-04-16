@@ -22,8 +22,8 @@ public class SettingsState extends AbstractState {
 		frame = new GUIFrame(GUI.COLOR, false, false).setTitle("Settings");
 
 		fontPanel = new GUIRadioPanel(frame, -1, "Font");
-		for (int font = 0; font < Renderer.getFonts().length; font++)
-			new GUIRadioButton(fontPanel, -1, Renderer.getFonts()[font]);
+		for (int font = 0; font < Renderer.getFontCount(); font++)
+			new GUIRadioButton(fontPanel, -1, Renderer.getFontName(font));
 		fontPanel.setIndex(Renderer.getFont());
 
 		new GUIButton(frame, -1, "Quit", f -> {

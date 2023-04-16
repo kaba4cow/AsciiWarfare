@@ -101,6 +101,8 @@ public class Game implements MainProgram {
 	public static void main(String[] args) {
 		Settings.init();
 		Engine.init("Ascii Warfare", 60);
+		Renderer.setUserFontLocation("kaba4cow/warfare/data/fonts");
+		Renderer.addUserFonts("AT T PC6300", "HP 100LX", "MBytePC230 CGA", "Nix8810 M16", "ToshibaSat", "TridentEarly");
 		if (Settings.isFullscreen())
 			Window.createFullscreen();
 		else

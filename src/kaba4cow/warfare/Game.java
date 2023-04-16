@@ -31,6 +31,7 @@ public class Game implements MainProgram {
 
 	@Override
 	public void init() {
+		Renderer.setFont(Settings.getFont());
 		message = new MessageFrame();
 		showFPS = false;
 		new Thread("Initialization") {
@@ -99,12 +100,11 @@ public class Game implements MainProgram {
 
 	public static void main(String[] args) {
 		Settings.init();
-		Engine.init("Ascii Warfare", 12, 60);
+		Engine.init("Ascii Warfare", 60);
 		if (Settings.isFullscreen())
 			Window.createFullscreen();
 		else
 			Window.createWindowed(DEFAULT_WIDTH, DEFAULT_HEIGHT);
-		Renderer.setFont(Settings.getFont());
 		Engine.start(new Game());
 	}
 

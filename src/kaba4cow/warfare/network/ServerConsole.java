@@ -61,7 +61,7 @@ public class ServerConsole implements MainProgram {
 
 		startFrame = new GUIFrame(GUI.COLOR, false, false).setTitle("Properties");
 		new GUIText(startFrame, -1, "Port");
-		portTextField = new GUITextField(startFrame, -1, "").setCharset("0123456789");
+		portTextField = new GUITextField(startFrame, -1, "").setOnlyDigits().setMaxCharacters(5);
 
 		new GUIButton(startFrame, -1, "Start", f -> {
 			try {
